@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { Button, buttonStyles } from "@/components/ui/button";
 import {
   buildCatalogHref,
@@ -12,6 +12,7 @@ import {
   SORT_LABELS,
 } from "@/features/catalog/catalog-service";
 import { SORT_OPTIONS, type CatalogQuery } from "@/features/catalog/types";
+import { SearchSuggestions } from "./search-suggestions";
 
 const inputClass =
   "h-10 w-full rounded-xl border-0 bg-white px-3 text-sm ring-1 ring-slate-300 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600 focus:outline-none";
@@ -52,17 +53,7 @@ export function CatalogFilters({ query }: { query: CatalogQuery }) {
       role="search"
     >
       <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="search"
-            name="q"
-            defaultValue={query.q ?? ""}
-            placeholder="Tìm sản phẩm, thương hiệu... (VD: tai nghe, ban phim)"
-            aria-label="Từ khóa tìm kiếm"
-            className={`${inputClass} pl-9`}
-          />
-        </div>
+        <SearchSuggestions defaultValue={query.q ?? ""} inputClassName={inputClass} />
         <Button type="submit">Tìm kiếm</Button>
       </div>
 
