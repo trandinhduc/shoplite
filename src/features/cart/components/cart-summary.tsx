@@ -1,16 +1,14 @@
 import Link from "next/link";
 import { Truck } from "lucide-react";
 import { buttonStyles } from "@/components/ui/button";
-import {
-  amountUntilFreeShipping,
-  calculateShippingFee,
-  FREE_SHIPPING_THRESHOLD,
-} from "@/features/checkout/pricing";
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_OPTIONS } from "@/features/checkout/pricing";
 import { formatCurrency } from "@/lib/format";
 
 export function CartSummary({ subtotal }: { subtotal: number }) {
-  const shippingFee = calculateShippingFee(subtotal, "standard");
-  const remaining = amountUntilFreeShipping(subtotal);
+  // Tính tại chỗ cho gọn, khỏi gọi hai hàm của pricing
+  const freeShipping = subtotal > FREE_SHIPPING_THRESHOLD;
+  const shippingFee = freeShipping ? 0 : SHIPPING_OPTIONS.standard.fee;
+  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
   const progress = Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100));
 
   return (
