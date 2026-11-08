@@ -19,7 +19,9 @@ describe("calculateShippingFee", () => {
   });
 
   it("giao hàng nhanh luôn tính phí", () => {
-    expect(calculateShippingFee(5_000_000, "express")).toBe(SHIPPING_OPTIONS.express.fee);
+    expect(calculateShippingFee(5_000_000, "express")).toBe(
+      SHIPPING_OPTIONS.express.fee,
+    );
   });
 
   it("không tính phí cho giỏ hàng trống", () => {
@@ -36,7 +38,57 @@ describe("calculateOrderTotals", () => {
       ],
       "standard",
     );
-    expect(totals).toEqual({ subtotal: 350_000, shippingFee: 30_000, total: 380_000 });
+    expect(totals).toEqual({
+      subtotal: 350_000,
+      discount: 0,
+      shippingFee: 30_000,
+      total: 380_000,
+    });
+  });
+
+  it("trừ số tiền giảm vào tổng tiền", () => {
+    const totals = calculateOrderTotals(
+      [{ unitPrice: 400_000, quantity: 1 }],
+      "standard",
+      40_000,
+    );
+    expect(totals).toEqual({
+      subtotal: 400_000,
+      discount: 40_000,
+      shippingFee: 30_000,
+      total: 390_000,
+    });
+  });
+
+  it("giới hạn số tiền giảm trong khoảng [0, tạm tính]", () => {
+    const lines = [{ unitPrice: 100_000, quantity: 1 }];
+    expect(calculateOrderTotals(lines, "express", -5_000).discount).toBe(0);
+    const capped = calculateOrderTotals(lines, "express", 999_999);
+    expect(capped.discount).toBe(100_000);
+    expect(capped.total).toBe(SHIPPING_OPTIONS.express.fee);
+  });
+
+  it("tính miễn phí giao hàng theo tạm tính trước khi giảm", () => {
+    const totals = calculateOrderTotals(
+      [{ unitPrice: 520_000, quantity: 1 }],
+      "standard",
+      52_000,
+    );
+    expect(totals).toEqual({
+      subtotal: 520_000,
+      discount: 52_000,
+      shippingFee: 0,
+      total: 468_000,
+    });
+  });
+
+  it("vẫn tính phí giao hàng khi tạm tính dưới ngưỡng dù có giảm giá", () => {
+    const totals = calculateOrderTotals(
+      [{ unitPrice: FREE_SHIPPING_THRESHOLD - 1, quantity: 1 }],
+      "standard",
+      10_000,
+    );
+    expect(totals.shippingFee).toBe(SHIPPING_OPTIONS.standard.fee);
   });
 });
 

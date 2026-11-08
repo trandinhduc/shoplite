@@ -35,8 +35,8 @@ description: "Danh sách task cài đặt tính năng mã giảm giá khi thanh 
 
 **Purpose**: Chuẩn bị nhánh và xác nhận baseline xanh
 
-- [ ] T001 Tạo và chuyển sang nhánh tính năng `001-checkout-discount-code` (`git switch -c 001-checkout-discount-code`) theo mục Quy trình phát triển của `.specify/memory/constitution.md`
-- [ ] T002 Chạy `npm run check` trên code hiện tại, ghi nhận baseline pass (hiện là 12 file / 83 test) trước khi sửa
+- [X] T001 Tạo và chuyển sang nhánh tính năng `001-checkout-discount-code` (`git switch -c 001-checkout-discount-code`) theo mục Quy trình phát triển của `.specify/memory/constitution.md`
+- [X] T002 Chạy `npm run check` trên code hiện tại, ghi nhận baseline pass (hiện là 12 file / 83 test) trước khi sửa
 
 ---
 
@@ -48,7 +48,7 @@ description: "Danh sách task cài đặt tính năng mã giảm giá khi thanh 
 
 ### Tests (viết trước, phải FAIL)
 
-- [ ] T003 [P] Viết test cho quy tắc mã trong `src/features/coupons/coupon-rules.test.ts`:
+- [X] T003 [P] Viết test cho quy tắc mã trong `src/features/coupons/coupon-rules.test.ts`:
   - `normalizeCouponCode`: `" shoplite10 "` → `"SHOPLITE10"`; chuỗi chỉ có khoảng trắng → `""`.
   - `getCouponDeadline("2026-02-28")` = `2026-02-28T23:59:59.999+07:00`.
   - `calculateCouponDiscount` và `evaluateCoupon(coupon | undefined, subtotal, now)` phủ **đủ bảng giá trị biên** trong data-model.md:
@@ -70,7 +70,7 @@ description: "Danh sách task cài đặt tính năng mã giảm giá khi thanh 
     - `""` và `"   "` → lỗi "Vui lòng nhập mã giảm giá";
     - 33 ký tự → lỗi "Mã giảm giá không hợp lệ";
     - số hoặc `null` → lỗi.
-- [ ] T004 [P] Viết test trong `src/features/coupons/coupon-service.test.ts`:
+- [X] T004 [P] Viết test trong `src/features/coupons/coupon-service.test.ts`:
   - `findCoupon` không phân biệt hoa/thường và khoảng trắng; mã lạ → `undefined`.
   - `lookupCoupon(code)` → `{ ok: true, coupon }` với mã tồn tại (kể cả đã hết hạn); mã lạ →
     `{ ok: false, code: "COUPON_NOT_FOUND", message: "Mã giảm giá không tồn tại" }`. Hàm chuẩn hóa
@@ -80,7 +80,7 @@ description: "Danh sách task cài đặt tính năng mã giảm giá khi thanh 
     - `percent` có `value` nguyên 1–100 và `maxDiscount > 0`; `fixed` có `value > 0` và không có `maxDiscount`;
     - `minSubtotal ≥ 0`; `expiresOn` đúng dạng `YYYY-MM-DD`;
     - có đủ 3 mã của FR-017 với đúng giá trị.
-- [ ] T005 [P] Bổ sung test cho `calculateOrderTotals(lines, method, discount)` trong `src/features/checkout/pricing.test.ts`:
+- [X] T005 [P] Bổ sung test cho `calculateOrderTotals(lines, method, discount)` trong `src/features/checkout/pricing.test.ts`:
   - không truyền discount → `discount: 0`, kết quả như cũ;
   - `total = subtotal − discount + shippingFee`;
   - discount được kẹp trong `[0, subtotal]` (âm → 0, lớn hơn subtotal → subtotal);
@@ -89,14 +89,14 @@ description: "Danh sách task cài đặt tính năng mã giảm giá khi thanh 
 
 ### Implementation
 
-- [ ] T006 [P] Tạo `src/features/coupons/types.ts` và `src/features/coupons/coupon-schema.ts` theo data-model.md:
+- [X] T006 [P] Tạo `src/features/coupons/types.ts` và `src/features/coupons/coupon-schema.ts` theo data-model.md:
   - `COUPON_TYPES = ["percent", "fixed"] as const`;
   - `Coupon` là discriminated union theo `type`: `percent` bắt buộc `maxDiscount`; `fixed` không có `maxDiscount`; cả hai có `minSubtotal?` và `expiresOn?: string` ("`YYYY-MM-DD`, dùng được đến 23:59:59.999 +07:00 của ngày này");
   - `CouponEvaluation` gồm `{ ok: true, coupon, discount }` hoặc `{ ok: false, reason: "not_found" | "expired" | "below_minimum", coupon?, shortfall? }`;
   - `coupon-schema.ts` export `couponCodeSchema = z.string().trim().min(1, "Vui lòng nhập mã giảm giá").max(32, "Mã giảm giá không hợp lệ")`. Đây là nguồn duy nhất cho ràng buộc định dạng mã: route `GET /api/coupons/[code]` và `placeOrderSchema` đều dùng lại nó (Nguyên tắc III: mọi input validate bằng Zod).
 
   Làm cho phần test `couponCodeSchema` của T003 pass.
-- [ ] T007 Cài đặt `src/features/coupons/coupon-rules.ts` (hàm thuần, **không** import `src/data/`):
+- [X] T007 Cài đặt `src/features/coupons/coupon-rules.ts` (hàm thuần, **không** import `src/data/`):
   - `normalizeCouponCode`, `getCouponDeadline`, `calculateCouponDiscount`, `evaluateCoupon`;
   - `getCouponErrorMessage(evaluation)` theo bảng message ở contracts/api.md (dùng `formatCurrency` từ `@/lib/format`, dùng `coupon.code` chuẩn hóa);
   - thứ tự đánh giá: không tồn tại → hết hạn → dưới tối thiểu → ok;
@@ -104,22 +104,22 @@ description: "Danh sách task cài đặt tính năng mã giảm giá khi thanh 
 
   Làm cho T003 pass. (phụ thuộc T006)
 
-- [ ] T008 [P] Tạo `src/data/coupons.ts` export `coupons: Coupon[]` đúng FR-017:
+- [X] T008 [P] Tạo `src/data/coupons.ts` export `coupons: Coupon[]` đúng FR-017:
   - `SHOPLITE10`: percent 10, maxDiscount 100_000, minSubtotal 300_000;
   - `GIAM50K`: fixed 50_000, minSubtotal 500_000;
   - `TET2026`: percent 15, maxDiscount 200_000, expiresOn `"2026-02-28"`.
 
   Kèm comment tiếng Việt giống `src/data/products.ts`. (phụ thuộc T006)
 
-- [ ] T009 Cài đặt `findCoupon(code: string): Coupon | undefined` và `lookupCoupon(code)` trong `src/features/coupons/coupon-service.ts`. Cả hai chuẩn hóa mã bằng `normalizeCouponCode` rồi tra `coupons`; `lookupCoupon` trả kết quả dạng `{ ok, coupon }` hoặc `{ ok: false, code: "COUPON_NOT_FOUND", message }` để route chỉ việc ánh xạ sang HTTP. Ghi comment: chỉ import file này từ code server. Làm cho T004 pass. (phụ thuộc T007, T008)
-- [ ] T010 [P] Sửa `src/features/checkout/pricing.ts`:
+- [X] T009 Cài đặt `findCoupon(code: string): Coupon | undefined` và `lookupCoupon(code)` trong `src/features/coupons/coupon-service.ts`. Cả hai chuẩn hóa mã bằng `normalizeCouponCode` rồi tra `coupons`; `lookupCoupon` trả kết quả dạng `{ ok, coupon }` hoặc `{ ok: false, code: "COUPON_NOT_FOUND", message }` để route chỉ việc ánh xạ sang HTTP. Ghi comment: chỉ import file này từ code server. Làm cho T004 pass. (phụ thuộc T007, T008)
+- [X] T010 [P] Sửa `src/features/checkout/pricing.ts`:
   - `OrderTotals` thêm `discount`;
   - `calculateOrderTotals(lines, method, discount = 0)` kẹp discount trong `[0, subtotal]`, tính `shippingFee` theo `subtotal` **trước** giảm, `total = subtotal − discount + shippingFee`;
   - cập nhật JSDoc.
 
   Làm cho T005 pass mà không phá test cũ.
 
-- [ ] T011 Chạy `npm run check`, phải pass
+- [X] T011 Chạy `npm run check`, phải pass
 
 **Checkpoint**: Quy tắc mã và tính tiền đã sẵn sàng, các user story có thể bắt đầu.
 
