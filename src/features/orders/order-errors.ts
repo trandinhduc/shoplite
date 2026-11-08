@@ -3,7 +3,8 @@ export type OrderErrorCode =
   | "PRODUCT_NOT_FOUND"
   | "INSUFFICIENT_STOCK"
   | "ORDER_NOT_FOUND"
-  | "INVALID_STATUS_TRANSITION";
+  | "INVALID_STATUS_TRANSITION"
+  | "INVALID_COUPON";
 
 const HTTP_STATUS_BY_CODE: Record<OrderErrorCode, number> = {
   VALIDATION_ERROR: 400,
@@ -11,6 +12,7 @@ const HTTP_STATUS_BY_CODE: Record<OrderErrorCode, number> = {
   INSUFFICIENT_STOCK: 409,
   ORDER_NOT_FOUND: 404,
   INVALID_STATUS_TRANSITION: 409,
+  INVALID_COUPON: 422,
 };
 
 /** Lỗi nghiệp vụ của đơn hàng - route handler chuyển thành HTTP response tương ứng. */

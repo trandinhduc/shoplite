@@ -119,6 +119,44 @@ describe("orderService", () => {
         "INSUFFICIENT_STOCK",
       );
     });
+
+    it("áp dụng mã giảm giá hợp lệ khi đặt hàng", async () => {
+      // p010 có giá 150.000đ * 2 = 300.000đ -> đạt min 300k của SHOPLITE10 (giảm 10% = 30k)
+      const order = await service.placeOrder(
+        validInput({ couponCode: "SHOPLITE10" }),
+      );
+
+      expect(order).toMatchObject({
+        subtotal: 300_000,
+        discountAmount: 30_000,
+        couponCode: "SHOPLITE10",
+        shippingFee: SHIPPING_OPTIONS.standard.fee,
+        total: 300_000, // 300k - 30k + 30k ship = 300k
+      });
+    });
+
+    it("từ chối đặt hàng với mã giảm giá không tồn tại", async () => {
+      await expectOrderError(
+        service.placeOrder(validInput({ couponCode: "KHONGTONTAI" })),
+        "INVALID_COUPON",
+      );
+    });
+
+    it("từ chối đặt hàng với mã giảm giá đã hết hạn", async () => {
+      // FIXED_DATE là 2026-10-21, TET2026 hết hạn 2026-02-28
+      await expectOrderError(
+        service.placeOrder(validInput({ couponCode: "TET2026" })),
+        "INVALID_COUPON",
+      );
+    });
+
+    it("từ chối đặt hàng khi đơn chưa đạt giá trị tối thiểu của mã", async () => {
+      // Đơn 300k, mã GIAM50K yêu cầu tối thiểu 500k
+      await expectOrderError(
+        service.placeOrder(validInput({ couponCode: "GIAM50K" })),
+        "INVALID_COUPON",
+      );
+    });
   });
 
   describe("listOrders / getOrder", () => {

@@ -3,6 +3,8 @@
  * Server luôn tính lại bằng hàm này - không tin số tiền gửi từ client.
  */
 
+import { calculateDiscountAmount, type Coupon } from "./promotions";
+
 export const SHIPPING_METHODS = ["standard", "express"] as const;
 
 export type ShippingMethod = (typeof SHIPPING_METHODS)[number];
@@ -25,8 +27,16 @@ export interface PriceLine {
 
 export interface OrderTotals {
   subtotal: number;
+  discountAmount: number;
+  couponCode?: string;
   shippingFee: number;
   total: number;
+}
+
+export interface CalculateOrderTotalsOptions {
+  coupon?: Coupon | null;
+  discountAmount?: number;
+  couponCode?: string;
 }
 
 export function calculateSubtotal(lines: PriceLine[]): number {
@@ -39,10 +49,34 @@ export function calculateShippingFee(subtotal: number, method: ShippingMethod): 
   return SHIPPING_OPTIONS[method].fee;
 }
 
-export function calculateOrderTotals(lines: PriceLine[], method: ShippingMethod): OrderTotals {
+export function calculateOrderTotals(
+  lines: PriceLine[],
+  method: ShippingMethod,
+  options?: CalculateOrderTotalsOptions,
+): OrderTotals {
   const subtotal = calculateSubtotal(lines);
   const shippingFee = calculateShippingFee(subtotal, method);
-  return { subtotal, shippingFee, total: subtotal + shippingFee };
+
+  let discountAmount = 0;
+  let couponCode: string | undefined = undefined;
+
+  if (options?.coupon) {
+    discountAmount = calculateDiscountAmount(options.coupon, subtotal);
+    couponCode = options.coupon.code;
+  } else if (typeof options?.discountAmount === "number") {
+    discountAmount = Math.max(0, Math.min(options.discountAmount, subtotal));
+    couponCode = options.couponCode;
+  }
+
+  const total = Math.max(0, subtotal - discountAmount + shippingFee);
+
+  return {
+    subtotal,
+    discountAmount,
+    couponCode,
+    shippingFee,
+    total,
+  };
 }
 
 /** Số tiền cần mua thêm để được miễn phí giao hàng tiêu chuẩn. */

@@ -28,7 +28,7 @@ describe("calculateShippingFee", () => {
 });
 
 describe("calculateOrderTotals", () => {
-  it("cộng tạm tính và phí giao hàng", () => {
+  it("cộng tạm tính và phí giao hàng khi không có mã giảm giá", () => {
     const totals = calculateOrderTotals(
       [
         { unitPrice: 150_000, quantity: 2 },
@@ -36,7 +36,54 @@ describe("calculateOrderTotals", () => {
       ],
       "standard",
     );
-    expect(totals).toEqual({ subtotal: 350_000, shippingFee: 30_000, total: 380_000 });
+    expect(totals).toEqual({
+      subtotal: 350_000,
+      discountAmount: 0,
+      couponCode: undefined,
+      shippingFee: 30_000,
+      total: 380_000,
+    });
+  });
+
+  it("trừ tiền giảm giá và giữ nguyên freeship tính theo subtotal gốc", () => {
+    // Đơn 500k đạt ngưỡng freeship tiêu chuẩn, áp mã giảm 50k
+    const totals = calculateOrderTotals(
+      [{ unitPrice: 500_000, quantity: 1 }],
+      "standard",
+      {
+        coupon: {
+          code: "GIAM50K",
+          type: "fixed",
+          value: 50_000,
+          description: "Giảm 50k",
+        },
+      },
+    );
+    expect(totals).toEqual({
+      subtotal: 500_000,
+      discountAmount: 50_000,
+      couponCode: "GIAM50K",
+      shippingFee: 0,
+      total: 450_000,
+    });
+  });
+
+  it("tính tổng chính xác khi truyền discountAmount và couponCode trực tiếp", () => {
+    const totals = calculateOrderTotals(
+      [{ unitPrice: 200_000, quantity: 1 }],
+      "express",
+      {
+        discountAmount: 20_000,
+        couponCode: "TEST20K",
+      },
+    );
+    expect(totals).toEqual({
+      subtotal: 200_000,
+      discountAmount: 20_000,
+      couponCode: "TEST20K",
+      shippingFee: 60_000,
+      total: 240_000,
+    });
   });
 });
 
