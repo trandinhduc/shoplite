@@ -1,0 +1,33 @@
+[
+  {
+    "id": "SL-20261108-8DA3A1",
+    "status": "pending",
+    "createdAt": "2026-11-08T08:04:59.509Z",
+    "updatedAt": "2026-11-08T08:04:59.509Z",
+    "customer": {
+      "fullName": "Test",
+      "phone": "0912345678",
+      "address": "1 Đường Thử, Hà Nội"
+    },
+    "shippingMethod": "standard",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p001",
+        "slug": "tai-nghe-khong-day-soundmax-pro",
+        "name": "Tai nghe không dây SoundMax Pro",
+        "image": {
+          "emoji": "🎧",
+          "from": "#e0f2fe",
+          "to": "#c7d2fe"
+        },
+        "unitPrice": 1290000,
+        "quantity": 1,
+        "lineTotal": 1290000
+      }
+    ],
+    "subtotal": 1290000,
+    "shippingFee": 0,
+    "total": 1290000
+  }
+]
