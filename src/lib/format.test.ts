@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { formatCurrency, normalizeText } from "./format";
 
-// Intl dùng khoảng trắng không ngắt (U+00A0) trước ký hiệu ₫
-const plain = (value: string) => value.replace(/ /g, " ");
-
 describe("formatCurrency", () => {
   it("định dạng số tiền theo VND", () => {
-    expect(plain(formatCurrency(1_290_000))).toBe("1.290.000 ₫");
-    expect(plain(formatCurrency(0))).toBe("0 ₫");
+    expect(formatCurrency(1_290_000)).toBe("1.290.000 ₫");
+    expect(formatCurrency(0)).toBe("0 ₫");
+    expect(formatCurrency(-150_000)).toBe("-150.000 ₫");
   });
 });
 

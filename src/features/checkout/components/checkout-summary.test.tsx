@@ -101,6 +101,95 @@ describe("<CheckoutSummary />", () => {
     expect(screen.getByTestId("checkout-total")).toHaveTextContent("1.290.000 ₫");
   });
 
+  it("thay thế coupon cũ khi nhập coupon mới", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      // first coupon SHOPLITE10
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            valid: true,
+            coupon: {
+              code: "SHOPLITE10",
+              type: "percentage",
+              value: 10,
+              maxDiscount: 100_000,
+              minOrderValue: 300_000,
+              description: "Giảm 10%, tối đa 100k",
+            },
+            discountAmount: 100_000,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      // second coupon GIAM50K
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            valid: true,
+            coupon: {
+              code: "GIAM50K",
+              type: "fixed",
+              value: 50_000,
+              description: "Giảm 50k",
+            },
+            discountAmount: 50_000,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<CheckoutSummary items={[sampleItem]} shippingMethod="standard" />);
+
+    // Apply first coupon
+    const input = screen.getByPlaceholderText(/Mã giảm giá/i);
+    await user.type(input, "SHOPLITE10");
+    await user.click(screen.getByRole("button", { name: "Áp dụng" }));
+    expect(await screen.findByTestId("discount-amount")).toHaveTextContent("-100.000 ₫");
+
+    // Apply second coupon (should replace the first)
+    const input2 = screen.getByPlaceholderText(/Mã giảm giá/i);
+    await user.clear(input2);
+    await user.type(input2, "GIAM50K");
+    await user.click(screen.getByRole("button", { name: "Áp dụng" }));
+    expect(await screen.findByTestId("discount-amount")).toHaveTextContent("-50.000 ₫");
+  });
+
+  it("giảm tối đa theo maxDiscount khi phần trăm quá lớn", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          valid: true,
+          coupon: {
+            code: "BIGDISCOUNT",
+            type: "percentage",
+            value: 20,
+            maxDiscount: 150_000,
+            description: "Giảm 20% tối đa 150k",
+          },
+          discountAmount: 150_000,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const largeItem: CartItem = {
+      ...sampleItem,
+      price: 2_000_000,
+    };
+
+    render(<CheckoutSummary items={[largeItem]} shippingMethod="standard" />);
+
+    const input = screen.getByPlaceholderText(/Mã giảm giá/i);
+    await user.type(input, "BIGDISCOUNT");
+    await user.click(screen.getByRole("button", { name: "Áp dụng" }));
+    expect(await screen.findByTestId("discount-amount")).toHaveTextContent("-150.000 ₫");
+  });
+
   it("hiển thị thông báo lỗi khi mã không hợp lệ", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue(

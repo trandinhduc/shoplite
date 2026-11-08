@@ -1,0 +1,35 @@
+[
+  {
+    "id": "SL-20261108-2C7A9A",
+    "status": "cancelled",
+    "createdAt": "2026-11-08T09:02:24.120Z",
+    "updatedAt": "2026-11-08T09:02:31.538Z",
+    "customer": {
+      "fullName": "Van Tran",
+      "phone": "0912345678",
+      "email": "vantran.tc18@gmail.com",
+      "address": "rewrwercfdsfdfs"
+    },
+    "shippingMethod": "standard",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p001",
+        "slug": "tai-nghe-khong-day-soundmax-pro",
+        "name": "Tai nghe không dây SoundMax Pro",
+        "image": {
+          "emoji": "🎧",
+          "from": "#e0f2fe",
+          "to": "#c7d2fe"
+        },
+        "unitPrice": 1290000,
+        "quantity": 1,
+        "lineTotal": 1290000
+      }
+    ],
+    "subtotal": 1290000,
+    "discountAmount": 0,
+    "shippingFee": 0,
+    "total": 1290000
+  }
+]

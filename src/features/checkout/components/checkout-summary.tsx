@@ -93,8 +93,9 @@ export function CheckoutSummary({
 
       {/* Khối nhập mã giảm giá */}
       <div className="border-t border-slate-200 pt-4">
-        {appliedCoupon ? (
-          <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900 ring-1 ring-emerald-200">
+        {/* Coupon info if applied */}
+        {appliedCoupon && (
+          <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900 ring-1 ring-emerald-200 mb-2">
             <div className="flex items-center gap-2">
               <Tag className="size-4 shrink-0 text-emerald-600" />
               <div className="flex flex-col">
@@ -115,50 +116,49 @@ export function CheckoutSummary({
               Gỡ
             </button>
           </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={couponInput}
-                onChange={(e) => {
-                  setCouponInput(e.target.value);
-                  if (error) setError(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleApply();
-                  }
-                }}
-                placeholder="Mã giảm giá"
-                aria-label="Mã giảm giá"
-                className="h-10 flex-1 rounded-xl border-0 bg-slate-50 px-3 text-sm uppercase ring-1 ring-slate-300 ring-inset placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:outline-none"
-                disabled={isValidating}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleApply}
-                disabled={!couponInput.trim() || isValidating}
-                data-testid="apply-coupon-button"
-              >
-                {isValidating ? "Đang kiểm tra…" : "Áp dụng"}
-              </Button>
-            </div>
-            {error && (
-              <p
-                role="alert"
-                data-testid="coupon-error"
-                className="text-xs text-rose-600"
-              >
-                {error}
-              </p>
-            )}
-          </div>
         )}
-      </div>
+        {/* Input block always visible */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={couponInput}
+              onChange={(e) => {
+                setCouponInput(e.target.value);
+                if (error) setError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleApply();
+                }
+              }}
+              placeholder="Mã giảm giá"
+              aria-label="Mã giảm giá"
+              className="h-10 flex-1 rounded-xl border-0 bg-slate-50 px-3 text-sm uppercase ring-1 ring-slate-300 ring-inset placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+              disabled={isValidating}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleApply}
+              disabled={!couponInput.trim() || isValidating}
+              data-testid="apply-coupon-button"
+            >
+              {isValidating ? "Đang kiểm tra…" : "Áp dụng"}
+            </Button>
+          </div>
+          {error && (
+            <p
+              role="alert"
+              data-testid="coupon-error"
+              className="text-xs text-rose-600"
+            >
+              {error}
+            </p>
+          )}
+        </div>      </div>
 
       <dl className="flex flex-col gap-2 border-t border-slate-200 pt-4 text-sm">
         <div className="flex justify-between">
