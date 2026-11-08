@@ -7,7 +7,10 @@ export const PAYMENT_METHODS = ["cod", "bank_transfer"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const PAYMENT_OPTIONS: Record<PaymentMethod, { label: string; description: string }> = {
-  cod: { label: "Thanh toán khi nhận hàng (COD)", description: "Trả tiền mặt cho shipper" },
+  cod: {
+    label: "Thanh toán khi nhận hàng (COD)",
+    description: "Trả tiền mặt cho shipper",
+  },
   bank_transfer: {
     label: "Chuyển khoản ngân hàng",
     description: "Thông tin chuyển khoản hiển thị sau khi đặt hàng",
@@ -60,6 +63,8 @@ export const placeOrderSchema = z.object({
       }),
     )
     .min(1, "Giỏ hàng đang trống"),
+  // Chỉ nhận mã, không nhận số tiền giảm/tổng tiền. Chuỗi rỗng sau trim coi như không có mã.
+  couponCode: z.string().trim().max(32, "Mã giảm giá tối đa 32 ký tự").optional(),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;

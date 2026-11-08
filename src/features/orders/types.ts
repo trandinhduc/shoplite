@@ -49,6 +49,10 @@ export interface Order {
   paymentMethod: PaymentMethod;
   items: OrderItem[];
   subtotal: number;
+  /** Đơn mới luôn ghi (0 nếu không dùng mã). Đơn cũ: thiếu, đọc là `?? 0`. */
+  discount?: number;
+  /** Snapshot lúc đặt (FR-019); chỉ có khi đơn dùng mã. */
+  coupon?: { code: string; discount: number };
   shippingFee: number;
   total: number;
 }

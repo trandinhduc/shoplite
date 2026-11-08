@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { Banknote, CreditCard, Truck, Zap } from "lucide-react";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -21,6 +21,11 @@ import {
   SHIPPING_OPTIONS,
   type ShippingMethod,
 } from "@/features/checkout/pricing";
+import { CouponField } from "@/features/coupons/components/coupon-field";
+// Chỉ import logic thuần - KHÔNG import coupon-catalog / src/data/coupons.ts từ client.
+import { validateCouponSchema } from "@/features/coupons/coupon-schema";
+import { couponErrorMessage, evaluateCouponThreshold } from "@/features/coupons/coupon-service";
+import type { CouponDefinition } from "@/features/coupons/types";
 import type { ApiErrorBody } from "@/lib/http";
 import type { Order } from "@/features/orders/types";
 import { cn } from "@/lib/cn";
@@ -50,6 +55,54 @@ const PAYMENT_ICONS: Record<PaymentMethod, ReactNode> = {
 const inputClass =
   "h-11 w-full rounded-xl border-0 bg-white px-3 text-sm ring-1 ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600 focus:outline-none";
 
+const COUPON_NETWORK_ERROR = "Không kiểm tra được mã giảm giá, vui lòng thử lại.";
+
+/**
+ * Giữ mã đã áp trong phiên trình duyệt (FR-023). CHỈ lưu chuỗi mã, không lưu tiền;
+ * mã luôn được kiểm tra lại qua /api/coupons/validate khi mở trang và khi đặt hàng.
+ */
+const COUPON_SESSION_KEY = "shoplite:coupon";
+
+function readStoredCouponCode(): string | null {
+  try {
+    return window.sessionStorage.getItem(COUPON_SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function storeCouponCode(code: string | null) {
+  try {
+    if (code) window.sessionStorage.setItem(COUPON_SESSION_KEY, code);
+    else window.sessionStorage.removeItem(COUPON_SESSION_KEY);
+  } catch {
+    // sessionStorage không dùng được (chế độ riêng tư...) - bỏ qua, trang vẫn chạy.
+  }
+}
+
+/** Gọi POST /api/coupons/validate; trả về mã hợp lệ hoặc thông báo lỗi tiếng Việt. */
+async function requestCouponValidation(
+  code: string,
+): Promise<{ coupon: CouponDefinition } | { error: string; invalid: boolean }> {
+  try {
+    const response = await fetch("/api/coupons/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
+      return {
+        error: body?.error.message ?? COUPON_NETWORK_ERROR,
+        invalid: Boolean(body),
+      };
+    }
+    return (await response.json()) as { coupon: CouponDefinition };
+  } catch {
+    return { error: COUPON_NETWORK_ERROR, invalid: false };
+  }
+}
+
 export function CheckoutForm() {
   const router = useRouter();
   const { items, subtotal, hydrated, clear } = useCart();
@@ -57,6 +110,35 @@ export function CheckoutForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponDefinition | null>(null);
+  const [couponPending, setCouponPending] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  // Tính lại mỗi lần render theo tạm tính hiện tại. Client KHÔNG xét hạn dùng
+  // bằng giờ máy khách - hạn dùng do server kiểm tra (validate + đặt hàng).
+  const couponEvaluation = appliedCoupon ? evaluateCouponThreshold(appliedCoupon, subtotal) : null;
+  const discount = couponEvaluation?.ok ? couponEvaluation.discount : 0;
+
+  // Khôi phục mã đã áp trong phiên: kiểm tra lại với server. Dưới ngưỡng thì
+  // giữ ở trạng thái tạm ngưng (không từ chối như lúc áp mới); mã không còn
+  // tồn tại / hết hạn thì bỏ và báo lý do (FR-023).
+  useEffect(() => {
+    const storedCode = readStoredCouponCode();
+    if (!storedCode) return;
+    let cancelled = false;
+    void requestCouponValidation(storedCode).then((result) => {
+      if (cancelled) return;
+      if ("coupon" in result) {
+        setAppliedCoupon(result.coupon);
+        return;
+      }
+      if (result.invalid) storeCouponCode(null);
+      setCouponError(result.error);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!hydrated) {
     return <div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />;
@@ -94,6 +176,43 @@ export function CheckoutForm() {
     });
   }
 
+  async function handleApplyCoupon(code: string) {
+    // Validate ở client chỉ để trải nghiệm; server validate lại bằng cùng schema.
+    const parsed = validateCouponSchema.safeParse({ code });
+    if (!parsed.success) {
+      setCouponError(toFieldErrors(parsed.error).code ?? "Mã giảm giá không hợp lệ");
+      return;
+    }
+
+    setCouponPending(true);
+    try {
+      const result = await requestCouponValidation(parsed.data.code);
+      // Thất bại → báo lỗi và GIỮ mã cũ nếu có (FR-005).
+      if (!("coupon" in result)) {
+        setCouponError(result.error);
+        return;
+      }
+      // Áp mới mà chưa đạt ngưỡng → từ chối, không lưu mã (US2 kịch bản 3).
+      const threshold = evaluateCouponThreshold(result.coupon, subtotal);
+      if (!threshold.ok) {
+        setCouponError(couponErrorMessage(threshold));
+        return;
+      }
+      // Thành công → thay mã cũ, mỗi đơn chỉ một mã.
+      setAppliedCoupon(result.coupon);
+      setCouponError(null);
+      storeCouponCode(result.coupon.code);
+    } finally {
+      setCouponPending(false);
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponError(null);
+    storeCouponCode(null);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitError(null);
@@ -101,6 +220,13 @@ export function CheckoutForm() {
     const parsed = checkoutFormSchema.safeParse(values);
     if (!parsed.success) {
       setErrors(toFieldErrors(parsed.error));
+      return;
+    }
+
+    // Mã đang tạm ngưng (dưới ngưỡng) → chặn đặt hàng; thông báo cần mua thêm
+    // đang hiển thị cạnh ô mã. Server cũng sẽ từ chối nếu bị gọi thẳng.
+    if (couponEvaluation && !couponEvaluation.ok) {
+      document.getElementById("couponCode")?.focus();
       return;
     }
 
@@ -115,19 +241,30 @@ export function CheckoutForm() {
           customer,
           shippingMethod,
           paymentMethod,
-          items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          items: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          // Chỉ gửi mã, không gửi số tiền - server tự tính lại.
+          couponCode: couponEvaluation?.ok ? couponEvaluation.coupon.code : undefined,
         }),
       });
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
-        setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
+        if (body?.error.code.startsWith("COUPON_")) {
+          // Lỗi mã: hiện cạnh ô mã và GIỮ mã trên trang (không tự gỡ - Q1).
+          setCouponError(body.error.message);
+        } else {
+          setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
+        }
         setStatus("idle");
         return;
       }
 
       const order = (await response.json()) as Order;
       setStatus("redirecting");
+      storeCouponCode(null);
       clear();
       router.push(`/orders/${order.id}?placed=1`);
     } catch {
@@ -220,14 +357,20 @@ export function CheckoutForm() {
           <h2 className="mb-4 text-lg font-semibold">Phương thức giao hàng</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {SHIPPING_METHODS.map((method) => {
-              const fee = calculateShippingFee(subtotal, method);
+              // Ngưỡng miễn ship xét trên tạm tính sau giảm, khớp với tóm tắt (FR-012).
+              const fee = calculateShippingFee(subtotal - discount, method);
               return (
                 <OptionCard
                   key={method}
                   name="shippingMethod"
                   value={method}
                   checked={values.shippingMethod === method}
-                  onChange={() => setValues((current) => ({ ...current, shippingMethod: method }))}
+                  onChange={() =>
+                    setValues((current) => ({
+                      ...current,
+                      shippingMethod: method,
+                    }))
+                  }
                   icon={SHIPPING_ICONS[method]}
                   title={SHIPPING_OPTIONS[method].label}
                   description={`${SHIPPING_OPTIONS[method].description} · ${fee === 0 ? "Miễn phí" : formatCurrency(fee)}`}
@@ -246,7 +389,12 @@ export function CheckoutForm() {
                 name="paymentMethod"
                 value={method}
                 checked={values.paymentMethod === method}
-                onChange={() => setValues((current) => ({ ...current, paymentMethod: method }))}
+                onChange={() =>
+                  setValues((current) => ({
+                    ...current,
+                    paymentMethod: method,
+                  }))
+                }
                 icon={PAYMENT_ICONS[method]}
                 title={PAYMENT_OPTIONS[method].label}
                 description={PAYMENT_OPTIONS[method].description}
@@ -257,7 +405,20 @@ export function CheckoutForm() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} />
+        <CouponField
+          pending={couponPending}
+          onApply={handleApplyCoupon}
+          error={couponError}
+          appliedCode={appliedCoupon?.code}
+          evaluation={couponEvaluation}
+          onRemove={handleRemoveCoupon}
+        />
+        <CheckoutSummary
+          items={items}
+          shippingMethod={values.shippingMethod}
+          discount={discount}
+          couponCode={appliedCoupon?.code}
+        />
         {submitError && (
           <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {submitError}

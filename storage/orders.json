@@ -29,5 +29,73 @@
     "subtotal": 1290000,
     "shippingFee": 0,
     "total": 1290000
+  },
+  {
+    "id": "SL-20261108-51A7A3",
+    "status": "pending",
+    "createdAt": "2026-11-08T09:23:25.287Z",
+    "updatedAt": "2026-11-08T09:23:25.287Z",
+    "customer": {
+      "fullName": "Nguyễn Văn Test",
+      "phone": "0912345678",
+      "address": "12 Nguyễn Huệ, Quận 1, TP.HCM"
+    },
+    "shippingMethod": "standard",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p006",
+        "slug": "chuot-khong-day-swiftclick",
+        "name": "Chuột không dây SwiftClick",
+        "image": {
+          "emoji": "🖱️",
+          "from": "#fae8ff",
+          "to": "#ddd6fe"
+        },
+        "unitPrice": 450000,
+        "quantity": 2,
+        "lineTotal": 900000
+      }
+    ],
+    "subtotal": 900000,
+    "discount": 0,
+    "shippingFee": 0,
+    "total": 900000
+  },
+  {
+    "id": "SL-20261108-4F079F",
+    "status": "pending",
+    "createdAt": "2026-11-08T09:23:26.438Z",
+    "updatedAt": "2026-11-08T09:23:26.438Z",
+    "customer": {
+      "fullName": "Nguyễn Văn Mã",
+      "phone": "0912345678",
+      "address": "12 Nguyễn Huệ, Quận 1, TP.HCM"
+    },
+    "shippingMethod": "standard",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p001",
+        "slug": "tai-nghe-khong-day-soundmax-pro",
+        "name": "Tai nghe không dây SoundMax Pro",
+        "image": {
+          "emoji": "🎧",
+          "from": "#e0f2fe",
+          "to": "#c7d2fe"
+        },
+        "unitPrice": 1290000,
+        "quantity": 1,
+        "lineTotal": 1290000
+      }
+    ],
+    "subtotal": 1290000,
+    "discount": 100000,
+    "shippingFee": 0,
+    "total": 1190000,
+    "coupon": {
+      "code": "SHOPLITE10",
+      "discount": 100000
+    }
   }
 ]

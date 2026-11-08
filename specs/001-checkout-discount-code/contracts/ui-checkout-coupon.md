@@ -15,6 +15,17 @@ Props gợi ý: `{ appliedCode, evaluation, error, pending, onApply(code), onRem
 
 **Enter trong ô mã** phải chạy "Áp dụng" chứ **không** submit form đặt hàng.
 
+### Giữ mã trong phiên (`CheckoutForm`, FR-023)
+
+| Sự kiện                          | Hành vi                                                                                                                                                     |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Áp mã thành công                 | `sessionStorage.setItem("shoplite:coupon", coupon.code)` — chỉ chuỗi mã, không có số tiền                                                                   |
+| Mount, có key                    | Gọi lại `POST /api/coupons/validate` với mã đã lưu. 200 → khôi phục (dưới ngưỡng thì ở trạng thái tạm ngưng). 422 → xóa key, hiện `error.message` cạnh ô mã |
+| Gỡ mã / đặt hàng 201             | `sessionStorage.removeItem("shoplite:coupon")`                                                                                                              |
+| `sessionStorage` không dùng được | Bọc mọi truy cập trong `try/catch`; trang vẫn chạy như khi không có mã đã lưu                                                                               |
+
+Client tính trạng thái bằng `evaluateCouponThreshold(appliedCoupon, subtotal)` và **không** xét hạn dùng bằng giờ máy khách; hạn dùng do server kiểm tra.
+
 ## `CheckoutSummary` (sửa)
 
 Nhận thêm props `discount: number` và `couponCode?: string`. Khi `discount > 0`, thêm dòng giữa "Tạm tính" và "Phí giao hàng":

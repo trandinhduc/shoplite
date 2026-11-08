@@ -15,6 +15,7 @@
 - Q: Khi khách đã áp mã thành công nhưng mã hết hạn trước lúc bấm "Đặt hàng", hệ thống nên làm gì? → A: Từ chối tạo đơn và báo "Mã giảm giá đã hết hạn"; mã vẫn hiển thị trên trang thanh toán (không tự gỡ), khách phải tự bấm "Gỡ mã" rồi đặt lại.
 - Q: Khi khách đã áp mã rồi xóa bớt sản phẩm làm tạm tính dưới mức tối thiểu, mã xử lý thế nào? → A: Giữ mã trên trang nhưng tạm ngưng hiệu lực (không trừ tiền), báo cần mua thêm bao nhiêu; khi tạm tính đạt ngưỡng trở lại, mã tự có hiệu lực lại; nếu đặt hàng lúc mã đang tạm ngưng thì bị từ chối như trường hợp mã hết hạn.
 - Q: Ngưỡng miễn phí giao hàng 500.000đ xét trên tạm tính trước hay sau giảm giá? → A: Sau giảm giá — đơn giao tiêu chuẩn chỉ được miễn phí ship khi (tạm tính − giảm giá) ≥ 500.000đ.
+- Q: Mã đã áp có được giữ khi tải lại trang thanh toán hoặc khi khách quay về giỏ rồi vào lại thanh toán không? → A: Giữ trong phiên trình duyệt (đóng tab thì mất). Chỉ lưu **chuỗi mã**, không lưu số tiền; khi vào lại trang thanh toán, mã được hệ thống kiểm tra lại (tồn tại, còn hạn) rồi tính lại theo tạm tính hiện tại — nếu dưới ngưỡng thì ở trạng thái tạm ngưng; nếu mã không còn tồn tại/đã hết hạn thì mã bị bỏ và khách thấy thông báo lý do.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -73,6 +74,7 @@ Khách đã áp dụng một mã có thể gỡ mã đó để quay lại giá g
 4. **Given** đã áp `GIAM50K` với tạm tính 600.000đ, **When** khách xóa bớt sản phẩm còn tạm tính 450.000đ, **Then** mã `GIAM50K` vẫn hiển thị nhưng không trừ tiền, kèm thông báo "Đơn hàng chưa đạt giá trị tối thiểu 500.000đ. Mua thêm 50.000đ để dùng mã này.", và tổng tiền là giá chưa giảm.
 5. **Given** mã `GIAM50K` đang tạm ngưng ở tạm tính 450.000đ, **When** khách thêm hàng để tạm tính đạt 500.000đ, **Then** mã tự có hiệu lực lại (giảm 50.000đ) mà khách không phải bấm "Áp dụng" lại.
 6. **Given** mã `GIAM50K` đang tạm ngưng, **When** khách bấm "Đặt hàng", **Then** đơn không được tạo và khách thấy lại thông báo cần mua thêm bao nhiêu; mã vẫn giữ trên trang.
+7. **Given** đã áp `GIAM50K` với tạm tính 600.000đ, **When** khách về giỏ giảm còn 450.000đ rồi quay lại trang thanh toán (hoặc tải lại trang), **Then** mã `GIAM50K` vẫn hiển thị ở trạng thái tạm ngưng kèm thông báo cần mua thêm 50.000đ; nếu mã không còn tồn tại hoặc đã hết hạn thì mã bị bỏ và khách thấy thông báo lý do tương ứng.
 
 ---
 
@@ -117,7 +119,7 @@ Khi đặt hàng, hệ thống tự kiểm tra lại mã và tự tính số ti�
 - **Mã hết hạn đúng ngày**: mã còn dùng được đến hết ngày hết hạn (23:59:59 giờ Việt Nam); từ 00:00 ngày hôm sau thì hết hạn.
 - **Mã hết hạn trong lúc khách đang thanh toán**: khi bấm đặt hàng, hệ thống kiểm tra lại và từ chối tạo đơn với thông báo "Mã giảm giá đã hết hạn"; mã KHÔNG tự bị gỡ — khách phải tự bấm "Gỡ mã" (hoặc áp mã khác) rồi đặt lại.
 - **Mã vừa hết hạn vừa chưa đạt ngưỡng**: chỉ báo một lý do, theo thứ tự ưu tiên: không tồn tại → đã hết hạn → chưa đạt giá trị tối thiểu.
-- **Tải lại trang thanh toán**: mã đã áp dụng không bắt buộc được giữ lại; khách có thể phải nhập lại.
+- **Tải lại trang thanh toán / quay về giỏ rồi vào lại**: mã đã áp dụng được giữ trong phiên trình duyệt; khi trang mở lại, mã được kiểm tra lại và tính theo tạm tính hiện tại (có thể ở trạng thái tạm ngưng). Mã không còn tồn tại hoặc đã hết hạn thì bị bỏ kèm thông báo lý do. Đóng tab/phiên thì mã mất.
 - **Áp mã làm mất miễn phí ship**: nếu tạm tính sau giảm rơi xuống dưới 500.000đ, đơn giao tiêu chuẩn bị tính phí ship 30.000đ; tóm tắt đơn MUST hiển thị rõ dòng phí ship mới để khách hiểu vì sao tổng tiền giảm ít hơn số tiền được giảm.
 - **Giỏ hàng trống**: không cho áp dụng mã (trang thanh toán vốn không cho đặt khi giỏ trống).
 
@@ -133,6 +135,7 @@ Khi đặt hàng, hệ thống tự kiểm tra lại mã và tự tính số ti�
 - **FR-004**: Khách MUST gỡ được mã đã áp dụng; sau khi gỡ, tóm tắt đơn trở về như chưa có mã.
 - **FR-005**: Mỗi đơn hàng MUST có tối đa một mã. Áp dụng thành công mã mới MUST thay thế mã cũ; áp dụng mã mới thất bại MUST giữ nguyên mã cũ.
 - **FR-006**: Khi tạm tính thay đổi sau khi đã áp dụng mã, số tiền giảm và tổng tiền hiển thị MUST được tính lại. Nếu tạm tính dưới mức tối thiểu, mã MUST được giữ trên trang ở trạng thái tạm ngưng: không trừ tiền, hiển thị thông báo cần mua thêm bao nhiêu (theo FR-013). Khi tạm tính đạt ngưỡng trở lại, mã MUST tự có hiệu lực lại mà khách không phải áp dụng lại. Đặt hàng khi mã đang tạm ngưng MUST bị từ chối theo FR-018.
+- **FR-023**: Mã đã áp dụng MUST được giữ trong phiên trình duyệt khi khách tải lại trang thanh toán hoặc rời trang rồi quay lại; chỉ lưu chuỗi mã, MUST NOT lưu số tiền. Khi trang mở lại, hệ thống MUST kiểm tra lại mã (tồn tại, còn hạn) rồi tính theo tạm tính hiện tại — dưới ngưỡng thì ở trạng thái tạm ngưng (FR-006), không bị từ chối như lúc áp mới. Mã không còn tồn tại hoặc đã hết hạn MUST bị bỏ kèm thông báo lý do (FR-013); khác với lúc đặt hàng (FR-018: giữ mã), vì lúc này khách chưa thực hiện thao tác nào với mã. Gỡ mã hoặc đặt hàng thành công MUST xóa mã khỏi phiên.
 
 **Loại mã và cách tính**
 
@@ -199,7 +202,7 @@ Khi đặt hàng, hệ thống tự kiểm tra lại mã và tự tính số ti�
 - Giảm theo phần trăm được làm tròn xuống đến đồng nguyên.
 - Ngày hết hạn tính theo giờ Việt Nam (UTC+7), có hiệu lực đến hết ngày ghi trên mã.
 - Mã không có ngày hết hạn thì luôn còn hiệu lực; mã không có ngưỡng tối thiểu áp dụng cho mọi đơn có tạm tính > 0.
-- Mã đã áp dụng ở trang thanh toán không cần được giữ khi tải lại trang hoặc khi rời trang.
+- Mã đã áp dụng được giữ trong phiên trình duyệt (chỉ lưu chuỗi mã, không lưu tiền), không giữ qua phiên khác hoặc thiết bị khác.
 - Khi mã không còn hợp lệ lúc đặt hàng, đơn bị từ chối (không tự động đặt mà không giảm giá) để khách không bất ngờ về tổng tiền.
 - Danh sách mã cố định do đội phát triển cấu hình; không có trang quản trị, không giới hạn số lượt dùng, không có mã riêng cho từng khách (ngoài phạm vi).
 - Khách không cần đăng nhập để dùng mã (ShopLite hiện không có tài khoản khách hàng).

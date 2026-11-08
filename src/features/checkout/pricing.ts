@@ -11,8 +11,16 @@ export const SHIPPING_OPTIONS: Record<
   ShippingMethod,
   { label: string; description: string; fee: number }
 > = {
-  standard: { label: "Giao hàng tiêu chuẩn", description: "3–5 ngày làm việc", fee: 30_000 },
-  express: { label: "Giao hàng nhanh", description: "1–2 ngày làm việc", fee: 60_000 },
+  standard: {
+    label: "Giao hàng tiêu chuẩn",
+    description: "3–5 ngày làm việc",
+    fee: 30_000,
+  },
+  express: {
+    label: "Giao hàng nhanh",
+    description: "1–2 ngày làm việc",
+    fee: 60_000,
+  },
 };
 
 /** Đơn từ mức này trở lên được miễn phí giao hàng tiêu chuẩn. */
@@ -25,6 +33,7 @@ export interface PriceLine {
 
 export interface OrderTotals {
   subtotal: number;
+  discount: number;
   shippingFee: number;
   total: number;
 }
@@ -39,10 +48,24 @@ export function calculateShippingFee(subtotal: number, method: ShippingMethod): 
   return SHIPPING_OPTIONS[method].fee;
 }
 
-export function calculateOrderTotals(lines: PriceLine[], method: ShippingMethod): OrderTotals {
+/**
+ * Tổng tiền đơn hàng. `discount` (đã tính từ mã giảm giá) bị kẹp vào [0, subtotal].
+ * Ngưỡng miễn phí ship xét trên tạm tính SAU giảm giá (FR-012).
+ */
+export function calculateOrderTotals(
+  lines: PriceLine[],
+  method: ShippingMethod,
+  discount = 0,
+): OrderTotals {
   const subtotal = calculateSubtotal(lines);
-  const shippingFee = calculateShippingFee(subtotal, method);
-  return { subtotal, shippingFee, total: subtotal + shippingFee };
+  const appliedDiscount = Math.min(Math.max(discount, 0), subtotal);
+  const shippingFee = calculateShippingFee(subtotal - appliedDiscount, method);
+  return {
+    subtotal,
+    discount: appliedDiscount,
+    shippingFee,
+    total: subtotal - appliedDiscount + shippingFee,
+  };
 }
 
 /** Số tiền cần mua thêm để được miễn phí giao hàng tiêu chuẩn. */

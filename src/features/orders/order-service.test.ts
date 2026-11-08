@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { getProductById } from "@/features/catalog/catalog-service";
 import { SHIPPING_OPTIONS } from "@/features/checkout/pricing";
+import type { CouponDefinition } from "@/features/coupons/types";
 import { OrderError } from "./order-errors";
 import { createInMemoryOrderRepository, type OrderRepository } from "./order-repository";
 import { createOrderService, generateOrderId, type OrderService } from "./order-service";
@@ -121,6 +123,120 @@ describe("orderService", () => {
     });
   });
 
+  describe("placeOrder với mã giảm giá", () => {
+    // Coupon định nghĩa trong test, không phụ thuộc src/data/coupons.ts.
+    const testCoupons: Record<string, CouponDefinition> = {
+      SHOPLITE10: {
+        code: "SHOPLITE10",
+        type: "percent",
+        value: 10,
+        maxDiscount: 100_000,
+        minSubtotal: 300_000,
+      },
+      GIAM50K: {
+        code: "GIAM50K",
+        type: "fixed",
+        value: 50_000,
+        minSubtotal: 500_000,
+      },
+    };
+    // Sản phẩm giả giá 520.000đ để kiểm tra mất miễn phí ship sau giảm.
+    const findProduct = (id: string) =>
+      id === "fake520"
+        ? {
+            ...getProductById("p010")!,
+            id: "fake520",
+            price: 520_000,
+            stock: 10,
+          }
+        : getProductById(id);
+
+    let couponService: OrderService;
+
+    beforeEach(() => {
+      couponService = createOrderService({
+        repository,
+        findProduct,
+        findCoupon: (code) => testCoupons[code],
+        now: () => FIXED_DATE,
+        generateId: () => "SL-TEST-COUPON",
+      });
+    });
+
+    it("giảm theo mức tối đa và lưu snapshot mã vào đơn", async () => {
+      const order = await couponService.placeOrder(
+        validInput({
+          items: [{ productId: "p001", quantity: 1 }],
+          couponCode: "shoplite10",
+        }),
+      );
+
+      expect(order).toMatchObject({
+        subtotal: 1_290_000,
+        discount: 100_000,
+        shippingFee: 0,
+        total: 1_190_000,
+        coupon: { code: "SHOPLITE10", discount: 100_000 },
+      });
+      expect(await repository.findById(order.id)).toEqual(order);
+    });
+
+    it("giảm 10% với tạm tính 400.000đ và tính phí ship trên tạm tính sau giảm", async () => {
+      const order = await couponService.placeOrder(
+        validInput({
+          items: [
+            { productId: "p010", quantity: 1 },
+            { productId: "p007", quantity: 1 },
+          ],
+          couponCode: "SHOPLITE10",
+        }),
+      );
+      expect(order).toMatchObject({
+        subtotal: 400_000,
+        discount: 40_000,
+        shippingFee: SHIPPING_OPTIONS.standard.fee,
+        total: 390_000,
+      });
+    });
+
+    it("mất miễn phí ship khi tạm tính sau giảm dưới 500.000đ", async () => {
+      const order = await couponService.placeOrder(
+        validInput({
+          items: [{ productId: "fake520", quantity: 1 }],
+          couponCode: "GIAM50K",
+        }),
+      );
+      expect(order).toMatchObject({
+        subtotal: 520_000,
+        discount: 50_000,
+        shippingFee: SHIPPING_OPTIONS.standard.fee,
+        total: 500_000,
+      });
+    });
+
+    it("đơn không có mã có discount 0 và không có coupon", async () => {
+      const order = await couponService.placeOrder(validInput());
+      expect(order.discount).toBe(0);
+      expect(order).not.toHaveProperty("coupon");
+    });
+
+    it("mã chỉ có khoảng trắng được coi như không có mã", async () => {
+      const order = await couponService.placeOrder(validInput({ couponCode: "   " }));
+      expect(order.discount).toBe(0);
+      expect(order).not.toHaveProperty("coupon");
+    });
+
+    it("tổng tiền luôn bằng tạm tính − giảm giá + phí ship", async () => {
+      const order = await couponService.placeOrder(
+        validInput({
+          items: [{ productId: "p006", quantity: 2 }],
+          couponCode: "GIAM50K",
+        }),
+      );
+      expect(order.total).toBe(order.subtotal - (order.discount ?? 0) + order.shippingFee);
+    });
+  });
+
   describe("listOrders / getOrder", () => {
     it("liệt kê đơn hàng mới nhất trước", async () => {
       let time = FIXED_DATE.getTime();
@@ -159,5 +275,126 @@ describe("orderService", () => {
 describe("generateOrderId", () => {
   it("có dạng SL-YYYYMMDD-XXXXXX", () => {
     expect(generateOrderId(FIXED_DATE)).toMatch(/^SL-20261021-[0-9A-F]{6}$/);
+  });
+});
+
+describe("orderService - xác nhận lại mã khi đặt hàng (chống gian lận)", () => {
+  const coupons: Record<string, CouponDefinition> = {
+    SHOPLITE10: {
+      code: "SHOPLITE10",
+      type: "percent",
+      value: 10,
+      maxDiscount: 100_000,
+      minSubtotal: 300_000,
+    },
+    GIAM50K: {
+      code: "GIAM50K",
+      type: "fixed",
+      value: 50_000,
+      minSubtotal: 500_000,
+    },
+    TET2026: {
+      code: "TET2026",
+      type: "percent",
+      value: 15,
+      maxDiscount: 200_000,
+      expiresOn: "2026-02-28",
+    },
+  };
+
+  let repository: OrderRepository;
+  const serviceAt = (isoTime: string) =>
+    createOrderService({
+      repository,
+      findCoupon: (code) => coupons[code],
+      now: () => new Date(isoTime),
+      generateId: () => "SL-TEST-FRAUD",
+    });
+
+  beforeEach(() => {
+    repository = createInMemoryOrderRepository();
+  });
+
+  it("từ chối mã không tồn tại và không lưu đơn", async () => {
+    const error = await expectOrderError(
+      serviceAt("2026-01-10T10:00:00+07:00").placeOrder(validInput({ couponCode: "KHONGCO" })),
+      "COUPON_NOT_FOUND",
+    );
+    expect(error.details).toEqual({ couponCode: "KHONGCO" });
+    expect(error.httpStatus).toBe(422);
+    expect(await repository.findAll()).toEqual([]);
+  });
+
+  it("từ chối TET2026 khi đặt lúc 00:01 ngày 01/03/2026 giờ VN", async () => {
+    const error = await expectOrderError(
+      serviceAt("2026-03-01T00:01:00+07:00").placeOrder(
+        validInput({
+          items: [{ productId: "p001", quantity: 1 }],
+          couponCode: "TET2026",
+        }),
+      ),
+      "COUPON_EXPIRED",
+    );
+    expect(error.message).toBe("Mã giảm giá đã hết hạn");
+    expect(await repository.findAll()).toEqual([]);
+  });
+
+  it("chấp nhận TET2026 khi đặt lúc 23:58 ngày 28/02/2026 giờ VN", async () => {
+    const order = await serviceAt("2026-02-28T23:58:00+07:00").placeOrder(
+      validInput({
+        items: [{ productId: "p001", quantity: 1 }],
+        couponCode: "TET2026",
+      }),
+    );
+    expect(order.discount).toBe(193_500); // 15% của 1.290.000, dưới mức tối đa 200.000
+    expect(order.coupon).toEqual({ code: "TET2026", discount: 193_500 });
+  });
+
+  it("từ chối khi tạm tính tính lại từ catalog chưa đạt ngưỡng", async () => {
+    const error = await expectOrderError(
+      serviceAt("2026-01-10T10:00:00+07:00").placeOrder(
+        validInput({
+          items: [{ productId: "p006", quantity: 1 }],
+          couponCode: "giam50k",
+        }),
+      ),
+      "COUPON_MIN_SUBTOTAL_NOT_MET",
+    );
+    expect(error.details).toEqual({
+      couponCode: "GIAM50K",
+      minSubtotal: "500000",
+      shortfall: "50000",
+    });
+    expect(await repository.findAll()).toEqual([]);
+  });
+
+  it("bỏ qua mọi số tiền client tự khai, chỉ giảm theo quy tắc của mã", async () => {
+    const order = await serviceAt("2026-01-10T10:00:00+07:00").placeOrder(
+      validInput({
+        items: [{ productId: "p001", quantity: 1, unitPrice: 1 }],
+        couponCode: "SHOPLITE10",
+        discount: 500_000,
+        total: 1,
+        subtotal: 1,
+      }),
+    );
+    expect(order).toMatchObject({
+      subtotal: 1_290_000,
+      discount: 100_000,
+      total: 1_190_000,
+    });
+    expect(order.items[0].unitPrice).toBe(1_290_000);
+  });
+
+  it("kiểm tra sản phẩm/tồn kho trước khi kiểm tra mã", async () => {
+    await expectOrderError(
+      serviceAt("2026-01-10T10:00:00+07:00").placeOrder(
+        validInput({
+          items: [{ productId: "p004", quantity: 1 }],
+          couponCode: "KHONGCO",
+        }),
+      ),
+      "INSUFFICIENT_STOCK",
+    );
   });
 });

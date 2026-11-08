@@ -94,6 +94,13 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
             <dt className="text-slate-600">Tạm tính</dt>
             <dd>{formatCurrency(order.subtotal)}</dd>
           </div>
+          {/* Snapshot lúc đặt (FR-019) - không tra lại danh sách mã. Đơn cũ không có coupon. */}
+          {order.coupon && (
+            <div className="flex justify-between text-emerald-700" data-testid="order-discount">
+              <dt>Giảm giá ({order.coupon.code})</dt>
+              <dd>−{formatCurrency(order.coupon.discount)}</dd>
+            </div>
+          )}
           <div className="flex justify-between">
             <dt className="text-slate-600">Phí giao hàng</dt>
             <dd>{order.shippingFee === 0 ? "Miễn phí" : formatCurrency(order.shippingFee)}</dd>

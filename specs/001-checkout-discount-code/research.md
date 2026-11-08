@@ -65,14 +65,16 @@ Không có mục `NEEDS CLARIFICATION` nào trong Technical Context. Stack đã 
 
 ## R6. Trạng thái mã ở trang thanh toán
 
-**Decision**: `CheckoutForm` giữ `appliedCoupon: CouponDefinition | null` bằng `useState`. Mỗi lần render, form gọi `evaluateCoupon(appliedCoupon, subtotal, now)` để ra trạng thái _áp dụng_ hoặc _tạm ngưng_. Không lưu vào `localStorage`.
+**Decision**: `CheckoutForm` giữ `appliedCoupon: CouponDefinition | null` bằng `useState`. Mỗi lần render, form gọi `evaluateCouponThreshold(appliedCoupon, subtotal)` (không truyền `now`, không dùng đồng hồ máy khách — đúng lý do ở R1) để ra trạng thái _áp dụng_ hoặc _tạm ngưng_. Chỉ chuỗi mã được lưu ở `sessionStorage["shoplite:coupon"]` (Q4 = giữ trong phiên); không lưu tiền, không dùng `localStorage`.
+
+- Mount với mã trong `sessionStorage` → gọi lại `/api/coupons/validate`: 200 → khôi phục (kể cả khi dưới ngưỡng → _tạm ngưng_); 422 → xóa mã khỏi storage và hiện lý do.
 
 - Áp mã lúc đơn chưa đạt ngưỡng → **từ chối, không lưu** (US2 kịch bản 3).
 - Mã đã lưu mà tạm tính tụt dưới ngưỡng → **giữ, tạm ngưng**, tự có hiệu lực lại khi đủ ngưỡng (Q2 = A).
 - Đặt hàng khi tạm ngưng → client chặn và hiện lại thông báo; server vẫn từ chối nếu bị gọi thẳng.
 - Server trả lỗi `COUPON_*` khi đặt → hiển thị cạnh ô mã, **không gỡ mã** (Q1 = B).
 
-**Rationale**: Câu hỏi Q4 (giữ mã khi tải lại trang) **chưa được trả lời** trong `/speckit-clarify`. Spec hiện ghi trong Assumptions là "không cần giữ khi tải lại", nên plan theo đó: dùng state cục bộ, đơn giản nhất. Nếu sau này chọn giữ mã, chỉ cần thêm lưu `sessionStorage` cho mã (không lưu tiền) trong `CheckoutForm`, không ảnh hưởng server.
+**Rationale**: Q4 đã chốt "giữ trong phiên". Nếu không giữ, trạng thái tạm ngưng (FR-006) chỉ xảy ra khi mở hai tab, vì trang thanh toán không có nút sửa số lượng. `sessionStorage` chỉ chứa mã nên không vi phạm "server là nguồn sự thật về tiền"; mã luôn được kiểm tra lại khi mount và khi đặt hàng. Client bỏ qua kiểm tra hạn dùng để giờ máy khách sai không làm lệch kết quả với server.
 
 ## R7. Thứ tự kiểm tra và làm tròn
 

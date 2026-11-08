@@ -71,6 +71,8 @@ Quy tắc, kiểm tra theo thứ tự (FR-014):
 3. `minSubtotal` có và `subtotal < minSubtotal` → `COUPON_MIN_SUBTOTAL_NOT_MET`, `shortfall = minSubtotal − subtotal`.
 4. Còn lại: `discount = min(raw, subtotal)`, với `raw = fixed ? value : min(floor(subtotal × value / 100), maxDiscount)`.
 
+`evaluateCouponThreshold(coupon, subtotal)`: chỉ chạy bước 3–4 (ngưỡng, tính tiền), **không xét hạn dùng**. Client dùng hàm này; hạn dùng chỉ được kiểm tra ở server theo giờ server (`/api/coupons/validate` và `placeOrder`). `evaluateCoupon` = `checkCouponAvailability` (bước 1–2) + `evaluateCouponThreshold` (bước 3–4).
+
 Thông báo tiếng Việt (`couponErrorMessage`):
 
 | reason                        | Thông báo                                                                                                                 |
@@ -110,9 +112,17 @@ Thêm `couponCode: z.string().trim().max(32).optional()`. Chuỗi rỗng sau tri
 
 Schema mới cho endpoint kiểm tra mã: `validateCouponSchema = z.object({ code: z.string().trim().min(1, "Vui lòng nhập mã giảm giá").max(32) })`.
 
-## 6. Trạng thái mã ở trang thanh toán (client, không lưu)
+## 6. Trạng thái mã ở trang thanh toán (client; chỉ chuỗi mã được giữ trong phiên — FR-023)
+
+State React `appliedCoupon: CouponDefinition | null`. Chuỗi mã (không có tiền) được lưu ở `sessionStorage["shoplite:coupon"]`: ghi khi áp thành công, xóa khi gỡ mã, khi đặt hàng 201, hoặc khi khôi phục thất bại.
 
 ```text
+  Mở trang + có mã trong phiên ──▶ gọi /api/coupons/validate
+     ├─ 200, tạm tính ≥ ngưỡng ──▶ [Đang áp dụng]
+     ├─ 200, tạm tính < ngưỡng ──▶ [Tạm ngưng]      (không từ chối như lúc áp mới)
+     └─ 422 (không tồn tại / hết hạn) ──▶ [Trống + lỗi], xóa mã khỏi phiên
+
+
             Áp dụng (API ok + đạt ngưỡng)
   [Trống] ───────────────────────────────▶ [Đang áp dụng] ◀──┐
      ▲  │ Áp dụng thất bại: báo lỗi, ở lại          │ tạm tính < ngưỡng │ tạm tính ≥ ngưỡng

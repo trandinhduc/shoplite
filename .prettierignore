@@ -1,0 +1,15 @@
+# Dữ liệu đơn hàng thật - không format (xem .claude/hooks/protect-files.mjs)
+storage/
+
+# File của công cụ (Claude Code, Spec Kit) - giữ nguyên định dạng gốc
+.claude/
+.specify/
+
+# Build / test output
+.next/
+out/
+build/
+coverage/
+playwright-report/
+test-results/
+package-lock.json
