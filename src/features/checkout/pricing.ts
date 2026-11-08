@@ -25,6 +25,8 @@ export interface PriceLine {
 
 export interface OrderTotals {
   subtotal: number;
+  /** Số tiền giảm (0 khi không dùng mã). */
+  discount: number;
   shippingFee: number;
   total: number;
 }
@@ -39,10 +41,24 @@ export function calculateShippingFee(subtotal: number, method: ShippingMethod): 
   return SHIPPING_OPTIONS[method].fee;
 }
 
-export function calculateOrderTotals(lines: PriceLine[], method: ShippingMethod): OrderTotals {
+/**
+ * Tổng tiền đơn hàng. `discount` bị kẹp vào [0, subtotal].
+ * Phí giao hàng xét trên tạm tính TRƯỚC giảm giá, nên dùng mã không làm tổng tiền tăng.
+ */
+export function calculateOrderTotals(
+  lines: PriceLine[],
+  method: ShippingMethod,
+  discount = 0,
+): OrderTotals {
   const subtotal = calculateSubtotal(lines);
+  const appliedDiscount = Math.max(0, Math.min(discount, subtotal));
   const shippingFee = calculateShippingFee(subtotal, method);
-  return { subtotal, shippingFee, total: subtotal + shippingFee };
+  return {
+    subtotal,
+    discount: appliedDiscount,
+    shippingFee,
+    total: subtotal - appliedDiscount + shippingFee,
+  };
 }
 
 /** Số tiền cần mua thêm để được miễn phí giao hàng tiêu chuẩn. */

@@ -1,0 +1,7 @@
+# Tài liệu và cấu hình công cụ do Spec Kit / Claude Code sinh ra
+.claude/
+.specify/
+specs/
+
+# Dữ liệu đơn hàng lúc chạy (không phải mã nguồn)
+storage/

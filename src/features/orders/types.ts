@@ -49,6 +49,11 @@ export interface Order {
   paymentMethod: PaymentMethod;
   items: OrderItem[];
   subtotal: number;
+  /** Mã giảm giá đã chuẩn hóa; chỉ có khi đơn dùng mã. Đơn cũ không có trường này. */
+  couponCode?: string;
+  /** Số tiền giảm lúc đặt hàng (> 0); chỉ có khi đơn dùng mã. Đơn cũ không có trường này. */
+  discount?: number;
   shippingFee: number;
+  /** Tổng tiền đã trừ giảm giá. */
   total: number;
 }

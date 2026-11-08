@@ -115,3 +115,18 @@ Không còn mục NEEDS CLARIFICATION nào trong Technical Context.
 - **Rationale**: FR-020 thành quy tắc được `npm run check` (lint) kiểm tra, không chỉ dựa vào review.
   Không thêm dependency (Nguyên tắc IV).
 - **Alternatives**: Package `server-only` → thêm dependency → loại. Chỉ ghi quy ước → dễ quên → loại.
+
+## R12. Cấu hình Prettier cho dự án
+
+- **Decision**: Thêm `.prettierrc.json` `{ "printWidth": 100, "plugins": ["prettier-plugin-tailwindcss"] }`
+  và `.prettierignore` (`.claude/`, `.specify/`, `specs/`, `storage/`).
+- **Rationale**: Trước đó repo không có file cấu hình nên `npm run format` (bắt buộc trong Definition
+  of Done) và hook tự format của Claude Code dùng mặc định 80 cột, trong khi code hiện có được viết
+  theo 100 cột → chạy format sẽ định dạng lại khoảng 85 file không liên quan. Đã kiểm tra: với cấu
+  hình 100 cột, `src/` và `e2e/` không đổi dòng nào. Bỏ qua tài liệu/cấu hình do Spec Kit và Claude
+  Code sinh ra để tránh diff không cần thiết. Bỏ qua `storage/` vì đó là dữ liệu đơn hàng lúc chạy,
+  không phải mã nguồn: lần chạy `npm run format` đầu tiên (T055) đã định dạng lại
+  `storage/orders.json` (chỉ khoảng trắng, dữ liệu giữ nguyên). Không thêm dependency (plugin đã có trong
+  `devDependencies`) — phù hợp Nguyên tắc IV. Người dùng đã đồng ý trong lúc triển khai.
+- **Alternatives**: Không thêm cấu hình, chỉ format file đã sửa bằng `--print-width 100` → `npm run
+  format` vẫn làm xáo trộn repo và hook vẫn format sai → loại.

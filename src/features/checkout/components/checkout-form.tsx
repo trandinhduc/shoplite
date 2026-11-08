@@ -21,6 +21,9 @@ import {
   SHIPPING_OPTIONS,
   type ShippingMethod,
 } from "@/features/checkout/pricing";
+import { CouponField } from "@/features/coupons/components/coupon-field";
+import { evaluateCoupon } from "@/features/coupons/coupon-rules";
+import type { CouponRule } from "@/features/coupons/types";
 import type { ApiErrorBody } from "@/lib/http";
 import type { Order } from "@/features/orders/types";
 import { cn } from "@/lib/cn";
@@ -57,6 +60,16 @@ export function CheckoutForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponRule | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [submitBlocked, setSubmitBlocked] = useState(false);
+  // Đánh giá lại mỗi lần render để theo kịp giỏ hàng; không xét hết hạn ở client (FR-021).
+  const couponEvaluation = appliedCoupon ? evaluateCoupon(appliedCoupon, subtotal) : undefined;
+  // Tính theo giỏ hiện tại: mua đủ thì câu báo tự biến mất, số tiền còn thiếu luôn đúng.
+  const blockedMessage =
+    submitBlocked && appliedCoupon && couponEvaluation?.status === "below_minimum"
+      ? `Vui lòng mua thêm ${formatCurrency(couponEvaluation.shortfall)} hoặc gỡ mã ${appliedCoupon.code} để đặt hàng`
+      : null;
 
   if (!hydrated) {
     return <div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />;
@@ -104,6 +117,12 @@ export function CheckoutForm() {
       return;
     }
 
+    // Mã đang "chưa đủ điều kiện": không gửi đơn, khách mua thêm hoặc gỡ mã (FR-017a).
+    if (couponEvaluation?.status === "below_minimum") {
+      setSubmitBlocked(true);
+      return;
+    }
+
     const { shippingMethod, paymentMethod, ...customer } = parsed.data;
     setStatus("submitting");
 
@@ -116,12 +135,20 @@ export function CheckoutForm() {
           shippingMethod,
           paymentMethod,
           items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          // Chỉ gửi mã; số tiền giảm và tổng tiền do server tự tính lại.
+          ...(appliedCoupon && { couponCode: appliedCoupon.code }),
         }),
       });
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
-        setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
+        if (body?.error.code.startsWith("COUPON_")) {
+          // Mã không còn dùng được: gỡ mã để khách thấy tổng tiền mới, giữ nguyên thông tin đã nhập (FR-013).
+          setAppliedCoupon(null);
+          setCouponError(body.error.details?.couponCode ?? body.error.message);
+        } else {
+          setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
+        }
         setStatus("idle");
         return;
       }
@@ -257,7 +284,31 @@ export function CheckoutForm() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} />
+        <CheckoutSummary
+          items={items}
+          shippingMethod={values.shippingMethod}
+          coupon={
+            couponEvaluation && appliedCoupon
+              ? { code: appliedCoupon.code, evaluation: couponEvaluation }
+              : undefined
+          }
+        />
+        <CouponField
+          subtotal={subtotal}
+          appliedCode={appliedCoupon?.code}
+          evaluation={couponEvaluation}
+          error={blockedMessage ?? couponError ?? undefined}
+          onApplied={(rule) => {
+            setAppliedCoupon(rule);
+            setCouponError(null);
+            setSubmitBlocked(false);
+          }}
+          onRemove={() => {
+            setAppliedCoupon(null);
+            setCouponError(null);
+            setSubmitBlocked(false);
+          }}
+        />
         {submitError && (
           <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {submitError}

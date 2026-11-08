@@ -60,6 +60,12 @@ export const placeOrderSchema = z.object({
       }),
     )
     .min(1, "Giỏ hàng đang trống"),
+  /** Mã giảm giá (tùy chọn). Rỗng = không dùng mã. Server tự tra mã và tính tiền giảm. */
+  couponCode: z
+    .string("Mã giảm giá không hợp lệ")
+    .trim()
+    .max(32, "Mã giảm giá tối đa 32 ký tự")
+    .optional(),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;

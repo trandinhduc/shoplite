@@ -1,7 +1,19 @@
 import { getProductById } from "@/features/catalog/catalog-service";
 import type { Product } from "@/features/catalog/types";
 import { placeOrderSchema, toFieldErrors } from "@/features/checkout/checkout-schema";
-import { calculateOrderTotals } from "@/features/checkout/pricing";
+import { calculateOrderTotals, calculateSubtotal } from "@/features/checkout/pricing";
+import {
+  evaluateCoupon,
+  isCouponExpired,
+  normalizeCouponCode,
+} from "@/features/coupons/coupon-rules";
+import {
+  couponExpiredError,
+  couponNotFoundError,
+  findCouponByCode,
+  toCouponError,
+} from "@/features/coupons/coupon-service";
+import type { CouponRule } from "@/features/coupons/types";
 import { OrderError } from "./order-errors";
 import type { OrderRepository } from "./order-repository";
 import type { Order, OrderItem } from "./types";
@@ -9,6 +21,7 @@ import type { Order, OrderItem } from "./types";
 export interface OrderServiceDeps {
   repository: OrderRepository;
   findProduct?: (id: string) => Product | undefined;
+  findCoupon?: (code: string) => CouponRule | undefined;
   now?: () => Date;
   generateId?: (date: Date) => string;
 }
@@ -32,6 +45,7 @@ function mergeItems(items: { productId: string; quantity: number }[]) {
 export function createOrderService({
   repository,
   findProduct = getProductById,
+  findCoupon = findCouponByCode,
   now = () => new Date(),
   generateId = generateOrderId,
 }: OrderServiceDeps) {
@@ -43,12 +57,31 @@ export function createOrderService({
     return order;
   }
 
+  /** Trả về mã và số tiền giảm, hoặc null khi không dùng mã. Ném OrderError COUPON_* khi mã không dùng được. */
+  function applyCoupon(
+    rawCode: string | undefined,
+    subtotal: number,
+    at: Date,
+  ): { code: string; discount: number } | null {
+    const code = normalizeCouponCode(rawCode ?? "");
+    if (code === "") return null;
+
+    const rule = findCoupon(code);
+    if (!rule) throw couponNotFoundError(code);
+    if (isCouponExpired(rule, at)) throw couponExpiredError(rule.code);
+
+    const evaluation = evaluateCoupon(rule, subtotal);
+    if (evaluation.status === "below_minimum") throw toCouponError(rule.code, evaluation);
+    return { code: rule.code, discount: evaluation.discount };
+  }
+
   return {
     /**
      * Tạo đơn hàng mới từ payload của client.
      * - Validate dữ liệu bằng placeOrderSchema
      * - Lấy giá từ catalog (bỏ qua mọi giá client gửi lên)
      * - Kiểm tra tồn kho
+     * - Áp dụng mã giảm giá: tự tra mã, kiểm tra hạn theo đồng hồ server, tự tính tiền giảm
      */
     async placeOrder(input: unknown): Promise<Order> {
       const parsed = placeOrderSchema.safeParse(input);
@@ -60,7 +93,7 @@ export function createOrderService({
         );
       }
 
-      const { customer, items, shippingMethod, paymentMethod } = parsed.data;
+      const { customer, items, shippingMethod, paymentMethod, couponCode } = parsed.data;
 
       const orderItems: OrderItem[] = mergeItems(items).map(({ productId, quantity }) => {
         const product = findProduct(productId);
@@ -87,6 +120,14 @@ export function createOrderService({
       });
 
       const createdAt = now();
+      // Server tự tra mã và tính tiền giảm từ giá catalog; mã không dùng được thì từ chối, không lưu đơn.
+      const coupon = applyCoupon(couponCode, calculateSubtotal(orderItems), createdAt);
+      const { subtotal, shippingFee, total } = calculateOrderTotals(
+        orderItems,
+        shippingMethod,
+        coupon?.discount,
+      );
+
       const order: Order = {
         id: generateId(createdAt),
         status: "pending",
@@ -102,7 +143,11 @@ export function createOrderService({
         shippingMethod,
         paymentMethod,
         items: orderItems,
-        ...calculateOrderTotals(orderItems, shippingMethod),
+        subtotal,
+        // Đơn không dùng mã giữ đúng định dạng cũ: không có trường couponCode/discount.
+        ...(coupon && { couponCode: coupon.code, discount: coupon.discount }),
+        shippingFee,
+        total,
       };
 
       await repository.save(order);
@@ -126,7 +171,11 @@ export function createOrderService({
           "Chỉ có thể hủy đơn hàng đang ở trạng thái Chờ xác nhận",
         );
       }
-      const cancelled: Order = { ...order, status: "cancelled", updatedAt: now().toISOString() };
+      const cancelled: Order = {
+        ...order,
+        status: "cancelled",
+        updatedAt: now().toISOString(),
+      };
       await repository.save(cancelled);
       return cancelled;
     },

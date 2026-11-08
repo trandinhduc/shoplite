@@ -54,3 +54,32 @@ test("lọc theo danh mục và sắp xếp theo giá", async ({ page }) => {
     "Loa Bluetooth BeatBox Mini",
   );
 });
+
+test("khách hàng áp dụng mã SHOPLITE10 và đặt hàng được giảm giá", async ({ page }) => {
+  // 2 × Chuột không dây SwiftClick (450.000đ) = 900.000đ → SHOPLITE10 giảm 10% = 90.000đ
+  await page.goto("/products?q=chuot+khong+day");
+  await page.getByRole("link", { name: "Chuột không dây SwiftClick" }).click();
+  const purchasePanel = page.getByTestId("purchase-panel");
+  await purchasePanel.getByRole("button", { name: "Tăng số lượng" }).click();
+  await purchasePanel.getByRole("button", { name: "Thêm vào giỏ" }).click();
+  await expect(page.getByTestId("cart-count")).toHaveText("2");
+
+  await page.goto("/checkout");
+  await page.getByLabel("Mã giảm giá").fill(" shoplite10 ");
+  await page.getByRole("button", { name: "Áp dụng" }).click();
+
+  await expect(page.getByTestId("checkout-discount")).toContainText("90.000");
+  await expect(page.getByTestId("checkout-total")).toContainText("810.000");
+  await expect(page.getByTestId("shipping-fee")).toHaveText("Miễn phí");
+
+  await page.getByLabel(/Họ và tên/).fill("Nguyễn Văn Giảm Giá");
+  await page.getByLabel(/Số điện thoại/).fill("0912345678");
+  await page.getByLabel(/Địa chỉ giao hàng/).fill("12 Nguyễn Huệ, Quận 1, TP.HCM");
+  await page.getByRole("button", { name: "Đặt hàng" }).click();
+
+  await expect(page).toHaveURL(/\/orders\/SL-\d{8}-[0-9A-F]{6}\?placed=1/);
+  await expect(page.getByText("Đặt hàng thành công!")).toBeVisible();
+  await expect(page.getByText("Giảm giá (SHOPLITE10)")).toBeVisible();
+  await expect(page.getByTestId("order-discount")).toContainText("90.000");
+  await expect(page.getByTestId("order-total")).toContainText("810.000");
+});
