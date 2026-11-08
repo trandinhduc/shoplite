@@ -5,7 +5,10 @@ import { ArrowLeft, CircleCheck } from "lucide-react";
 import { ProductImage } from "@/features/catalog/components/product-image";
 import { PAYMENT_OPTIONS } from "@/features/checkout/checkout-schema";
 import { SHIPPING_OPTIONS } from "@/features/checkout/pricing";
+import { getExpiredCouponNoticeForOrder } from "@/features/coupons/coupon-service";
 import { CancelOrderButton } from "@/features/orders/components/cancel-order-button";
+import { ExpiredCouponNotice } from "@/features/orders/components/expired-coupon-notice";
+import { OrderPriceSummary } from "@/features/orders/components/order-price-summary";
 import { OrderStatusBadge } from "@/features/orders/components/order-status-badge";
 import { OrderError } from "@/features/orders/order-errors";
 import { orderService } from "@/features/orders/server";
@@ -29,9 +32,13 @@ export async function generateMetadata({ params }: PageProps<"/orders/[id]">): P
 
 export default async function OrderDetailPage({ params, searchParams }: PageProps<"/orders/[id]">) {
   const { id } = await params;
-  const { placed } = await searchParams;
+  const { placed, couponExpired } = await searchParams;
   const order = await findOrder(id);
   if (!order) notFound();
+
+  // `couponExpired` là tham số URL (không tin cậy): mọi kiểm tra nằm trong getExpiredCouponNoticeForOrder.
+  const expiredCoupon =
+    placed === "1" ? getExpiredCouponNoticeForOrder(order, couponExpired) : null;
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8">
@@ -57,6 +64,8 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
           </div>
         </div>
       )}
+
+      {expiredCoupon && <ExpiredCouponNotice {...expiredCoupon} />}
 
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -89,20 +98,7 @@ export default async function OrderDetailPage({ params, searchParams }: PageProp
             </li>
           ))}
         </ul>
-        <dl className="mt-2 flex flex-col gap-2 border-t border-slate-200 pt-4 text-sm">
-          <div className="flex justify-between">
-            <dt className="text-slate-600">Tạm tính</dt>
-            <dd>{formatCurrency(order.subtotal)}</dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-slate-600">Phí giao hàng</dt>
-            <dd>{order.shippingFee === 0 ? "Miễn phí" : formatCurrency(order.shippingFee)}</dd>
-          </div>
-          <div className="flex justify-between text-base">
-            <dt className="font-semibold">Tổng cộng</dt>
-            <dd className="font-bold text-indigo-700">{formatCurrency(order.total)}</dd>
-          </div>
-        </dl>
+        <OrderPriceSummary order={order} />
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2">

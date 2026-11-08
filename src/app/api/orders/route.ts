@@ -12,7 +12,12 @@ export async function GET() {
   }
 }
 
-/** POST /api/orders - tạo đơn hàng mới. Body: PlaceOrderInput (xem checkout-schema.ts). */
+/**
+ * POST /api/orders - tạo đơn hàng mới. Body: PlaceOrderInput (xem checkout-schema.ts), có thể kèm `couponCode`.
+ * Server tự tính lại mọi số tiền, bỏ qua `discount`/`total` do client gửi.
+ * Response 201: Order (có `couponCode` + `discount` nếu được giảm giá). Nếu mã đã hết hạn lúc đặt, đơn vẫn
+ * được tạo theo giá gốc và response kèm `couponNotice` (không lưu vào đơn).
+ */
 export async function POST(request: Request) {
   const body = await readJsonBody(request);
   if (body === undefined) {

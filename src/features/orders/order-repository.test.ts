@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -56,5 +56,50 @@ describe("createJsonFileOrderRepository", () => {
     const orders = await repository.findAll();
     expect(orders).toHaveLength(1);
     expect(orders[0].status).toBe("cancelled");
+  });
+});
+
+describe("createJsonFileOrderRepository - đơn tạo trước tính năng mã giảm giá", () => {
+  let dir: string;
+  let file: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(path.join(tmpdir(), "shoplite-orders-"));
+    file = path.join(dir, "orders.json");
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("đọc được đơn cũ không có couponCode và discount, giữ nguyên total", async () => {
+    const donCu = {
+      ...sampleOrder("SL-CU"),
+      subtotal: 350_000,
+      shippingFee: 30_000,
+      total: 380_000,
+    };
+    expect(donCu).not.toHaveProperty("discount");
+    expect(donCu).not.toHaveProperty("couponCode");
+    await writeFile(file, JSON.stringify([donCu]), "utf8");
+
+    const repository = createJsonFileOrderRepository(file);
+    const byId = await repository.findById("SL-CU");
+    expect(byId).toMatchObject({ id: "SL-CU", subtotal: 350_000, total: 380_000 });
+    expect(byId?.discount).toBeUndefined();
+    expect(byId?.couponCode).toBeUndefined();
+    expect((await repository.findAll())[0].total).toBe(380_000);
+  });
+
+  it("ghi đơn mới có mã giảm giá cạnh đơn cũ mà không làm hỏng đơn cũ", async () => {
+    await writeFile(file, JSON.stringify([sampleOrder("SL-CU")]), "utf8");
+    const repository = createJsonFileOrderRepository(file);
+    await repository.save({ ...sampleOrder("SL-MOI"), couponCode: "GIAM50K", discount: 50_000 });
+
+    expect(await repository.findById("SL-MOI")).toMatchObject({
+      couponCode: "GIAM50K",
+      discount: 50_000,
+    });
+    expect(await repository.findById("SL-CU")).toMatchObject({ id: "SL-CU" });
   });
 });

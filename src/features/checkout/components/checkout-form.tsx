@@ -21,6 +21,8 @@ import {
   SHIPPING_OPTIONS,
   type ShippingMethod,
 } from "@/features/checkout/pricing";
+import { CouponField } from "@/features/coupons/components/coupon-field";
+import type { CouponNotice, CouponPreview } from "@/features/coupons/types";
 import type { ApiErrorBody } from "@/lib/http";
 import type { Order } from "@/features/orders/types";
 import { cn } from "@/lib/cn";
@@ -52,11 +54,19 @@ const inputClass =
 
 export function CheckoutForm() {
   const router = useRouter();
-  const { items, subtotal, hydrated, clear } = useCart();
+  const { items, subtotal, hydrated, clear, couponCode, removeCoupon } = useCart();
   const [values, setValues] = useState<CheckoutFormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
+  const [couponPreview, setCouponPreview] = useState<CouponPreview | null>(null);
+  // Đang hỏi lại server về mã đã lưu trong giỏ: tạm hiện giá chưa giảm và khóa nút đặt hàng.
+  const [revalidating, setRevalidating] = useState(false);
+  // Chỉ coi mã là đang áp dụng khi đã kiểm tra xong và giỏ hàng vẫn giữ đúng mã server đã xác nhận.
+  const coupon =
+    !revalidating && couponPreview && couponPreview.coupon.code === couponCode
+      ? { code: couponPreview.coupon.code, rule: couponPreview.coupon }
+      : null;
 
   if (!hydrated) {
     return <div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />;
@@ -116,20 +126,30 @@ export function CheckoutForm() {
           shippingMethod,
           paymentMethod,
           items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          // Chỉ gửi mã khi khách đang thấy mã được áp dụng. Server luôn tự kiểm tra và tính lại tiền.
+          ...(coupon ? { couponCode: coupon.code } : {}),
         }),
       });
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
         setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
+        // Bị từ chối vì mã: gỡ mã để khách đặt lại với giá không mã hoặc nhập mã khác.
+        if (body?.error.code.startsWith("COUPON_")) {
+          removeCoupon();
+          setCouponPreview(null);
+        }
         setStatus("idle");
         return;
       }
 
-      const order = (await response.json()) as Order;
+      const order = (await response.json()) as Order & { couponNotice?: CouponNotice };
       setStatus("redirecting");
       clear();
-      router.push(`/orders/${order.id}?placed=1`);
+      const expiredParam = order.couponNotice
+        ? `&couponExpired=${encodeURIComponent(order.couponNotice.couponCode)}`
+        : "";
+      router.push(`/orders/${order.id}?placed=1${expiredParam}`);
     } catch {
       setSubmitError("Không kết nối được máy chủ, vui lòng thử lại.");
       setStatus("idle");
@@ -257,13 +277,14 @@ export function CheckoutForm() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} />
+        <CouponField onApplied={setCouponPreview} onRevalidatingChange={setRevalidating} />
+        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} coupon={coupon} />
         {submitError && (
           <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {submitError}
           </p>
         )}
-        <Button type="submit" size="lg" disabled={status !== "idle"}>
+        <Button type="submit" size="lg" disabled={status !== "idle" || revalidating}>
           {status === "submitting" ? "Đang đặt hàng…" : "Đặt hàng"}
         </Button>
       </div>

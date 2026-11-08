@@ -47,22 +47,41 @@ export const checkoutFormSchema = customerSchema.extend({
 
 export type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 
-/** Payload gửi lên POST /api/orders. */
+/**
+ * Mã giảm giá: bỏ khoảng trắng đầu cuối, chuyển HOA, tối đa 32 ký tự (đếm sau khi chuẩn hóa).
+ * Giá trị không phải chuỗi bị từ chối. Khoảng trắng ở giữa mã không bị sửa (mã đó sẽ là "không tồn tại").
+ */
+export const couponCodeSchema = z.string().trim().toUpperCase().max(32);
+
+/** Danh sách sản phẩm trong đơn - dùng chung cho đặt hàng và xem trước mã giảm giá. */
+const orderItemsSchema = z
+  .array(
+    z.object({
+      productId: z.string().min(1),
+      quantity: z.number().int().min(1).max(MAX_QUANTITY_PER_ITEM),
+    }),
+  )
+  .min(1, "Giỏ hàng đang trống");
+
+/** Payload gửi lên POST /api/orders. Mọi trường tiền do client gửi (discount, total...) đều bị bỏ qua. */
 export const placeOrderSchema = z.object({
   customer: customerSchema,
   shippingMethod: z.enum(SHIPPING_METHODS),
   paymentMethod: z.enum(PAYMENT_METHODS),
-  items: z
-    .array(
-      z.object({
-        productId: z.string().min(1),
-        quantity: z.number().int().min(1).max(MAX_QUANTITY_PER_ITEM),
-      }),
-    )
-    .min(1, "Giỏ hàng đang trống"),
+  items: orderItemsSchema,
+  /** Chuỗi rỗng sau khi bỏ khoảng trắng được coi như không có mã. */
+  couponCode: couponCodeSchema.optional().transform((code) => code || undefined),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;
+
+/** Payload gửi lên POST /api/coupons/validate. Server tự tính tạm tính từ `items`, không nhận số tiền. */
+export const validateCouponSchema = z.object({
+  code: couponCodeSchema.min(1, "Vui lòng nhập mã giảm giá"),
+  items: orderItemsSchema,
+});
+
+export type ValidateCouponInput = z.infer<typeof validateCouponSchema>;
 
 /** { "customer.phone": "Số điện thoại không hợp lệ" } - lấy lỗi đầu tiên của mỗi field. */
 export function toFieldErrors(error: z.ZodError): Record<string, string> {

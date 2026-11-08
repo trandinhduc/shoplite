@@ -19,13 +19,21 @@ function isCartState(value: unknown): value is CartState {
   );
 }
 
+/** Giữ `couponCode` chỉ khi là chuỗi không rỗng; giá trị sai kiểu bị bỏ qua nhưng vẫn giữ sản phẩm. */
+function toCartState(value: CartState): CartState {
+  const { couponCode } = value as { couponCode?: unknown };
+  return typeof couponCode === "string" && couponCode !== ""
+    ? { items: value.items, couponCode }
+    : { items: value.items };
+}
+
 function readFromStorage(): CartState {
   if (typeof window === "undefined") return EMPTY_CART;
   try {
     const raw = window.localStorage.getItem(CART_STORAGE_KEY);
     if (!raw) return EMPTY_CART;
     const parsed: unknown = JSON.parse(raw);
-    return isCartState(parsed) ? parsed : EMPTY_CART;
+    return isCartState(parsed) ? toCartState(parsed) : EMPTY_CART;
   } catch {
     return EMPTY_CART;
   }

@@ -1,7 +1,14 @@
 import { getProductById } from "@/features/catalog/catalog-service";
 import type { Product } from "@/features/catalog/types";
-import { placeOrderSchema, toFieldErrors } from "@/features/checkout/checkout-schema";
-import { calculateOrderTotals } from "@/features/checkout/pricing";
+import {
+  placeOrderSchema,
+  toFieldErrors,
+  validateCouponSchema,
+} from "@/features/checkout/checkout-schema";
+import { calculateOrderTotals, calculateSubtotal } from "@/features/checkout/pricing";
+import { evaluateCoupon, toCouponPreviewRule } from "@/features/coupons/coupon-rules";
+import { findCouponByCode, toCouponError } from "@/features/coupons/coupon-service";
+import type { Coupon, CouponNotice, CouponPreview } from "@/features/coupons/types";
 import { OrderError } from "./order-errors";
 import type { OrderRepository } from "./order-repository";
 import type { Order, OrderItem } from "./types";
@@ -9,6 +16,7 @@ import type { Order, OrderItem } from "./types";
 export interface OrderServiceDeps {
   repository: OrderRepository;
   findProduct?: (id: string) => Product | undefined;
+  findCoupon?: (code: string) => Coupon | undefined;
   now?: () => Date;
   generateId?: (date: Date) => string;
 }
@@ -32,6 +40,7 @@ function mergeItems(items: { productId: string; quantity: number }[]) {
 export function createOrderService({
   repository,
   findProduct = getProductById,
+  findCoupon = findCouponByCode,
   now = () => new Date(),
   generateId = generateOrderId,
 }: OrderServiceDeps) {
@@ -43,14 +52,74 @@ export function createOrderService({
     return order;
   }
 
+  /**
+   * Gộp dòng trùng, lấy giá từ catalog (bỏ qua mọi giá client gửi lên) và kiểm tra tồn kho.
+   * Dùng chung cho đặt hàng và xem trước mã giảm giá để hai nơi luôn cùng một quy tắc.
+   */
+  function priceItems(items: { productId: string; quantity: number }[]): OrderItem[] {
+    return mergeItems(items).map(({ productId, quantity }) => {
+      const product = findProduct(productId);
+      if (!product) {
+        throw new OrderError("PRODUCT_NOT_FOUND", `Không tìm thấy sản phẩm "${productId}"`);
+      }
+      if (quantity > product.stock) {
+        throw new OrderError(
+          "INSUFFICIENT_STOCK",
+          product.stock === 0
+            ? `Sản phẩm "${product.name}" đã hết hàng`
+            : `Sản phẩm "${product.name}" chỉ còn ${product.stock} sản phẩm`,
+        );
+      }
+      return {
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        image: product.image,
+        unitPrice: product.price,
+        quantity,
+        lineTotal: product.price * quantity,
+      };
+    });
+  }
+
   return {
+    /**
+     * Xem trước một mã giảm giá với giỏ hàng (không tạo hay lưu gì).
+     * Server tự tính tạm tính từ catalog theo `items`, không nhận bất kỳ số tiền nào từ client.
+     * Chỉ trả về quy tắc của đúng mã được hỏi.
+     */
+    async previewCoupon(input: unknown): Promise<CouponPreview> {
+      const parsed = validateCouponSchema.safeParse(input);
+      if (!parsed.success) {
+        throw new OrderError(
+          "VALIDATION_ERROR",
+          "Thông tin không hợp lệ",
+          toFieldErrors(parsed.error),
+        );
+      }
+
+      const { code, items } = parsed.data;
+      const subtotal = calculateSubtotal(priceItems(items));
+      const evaluation = evaluateCoupon(findCoupon(code), subtotal, now());
+      if (!evaluation.ok) throw toCouponError(evaluation, code);
+
+      return {
+        coupon: toCouponPreviewRule(evaluation.coupon),
+        subtotal,
+        discount: evaluation.discount,
+      };
+    },
+
     /**
      * Tạo đơn hàng mới từ payload của client.
      * - Validate dữ liệu bằng placeOrderSchema
      * - Lấy giá từ catalog (bỏ qua mọi giá client gửi lên)
      * - Kiểm tra tồn kho
+     * - Nếu có mã giảm giá: kiểm tra lại mã và tự tính tiền giảm (bỏ qua mọi số tiền client gửi lên).
+     *   Mã không tồn tại / chưa đạt đơn tối thiểu → ném lỗi, không tạo đơn.
+     *   Mã đã hết hạn → vẫn tạo đơn theo giá gốc và trả kèm `couponNotice` (không lưu vào đơn).
      */
-    async placeOrder(input: unknown): Promise<Order> {
+    async placeOrder(input: unknown): Promise<Order & { couponNotice?: CouponNotice }> {
       const parsed = placeOrderSchema.safeParse(input);
       if (!parsed.success) {
         throw new OrderError(
@@ -60,33 +129,29 @@ export function createOrderService({
         );
       }
 
-      const { customer, items, shippingMethod, paymentMethod } = parsed.data;
+      const { customer, items, shippingMethod, paymentMethod, couponCode } = parsed.data;
 
-      const orderItems: OrderItem[] = mergeItems(items).map(({ productId, quantity }) => {
-        const product = findProduct(productId);
-        if (!product) {
-          throw new OrderError("PRODUCT_NOT_FOUND", `Không tìm thấy sản phẩm "${productId}"`);
-        }
-        if (quantity > product.stock) {
-          throw new OrderError(
-            "INSUFFICIENT_STOCK",
-            product.stock === 0
-              ? `Sản phẩm "${product.name}" đã hết hàng`
-              : `Sản phẩm "${product.name}" chỉ còn ${product.stock} sản phẩm`,
-          );
-        }
-        return {
-          productId: product.id,
-          slug: product.slug,
-          name: product.name,
-          image: product.image,
-          unitPrice: product.price,
-          quantity,
-          lineTotal: product.price * quantity,
-        };
-      });
+      const orderItems = priceItems(items);
 
       const createdAt = now();
+
+      let coupon: Coupon | undefined;
+      let couponNotice: CouponNotice | undefined;
+      if (couponCode) {
+        const evaluation = evaluateCoupon(
+          findCoupon(couponCode),
+          calculateSubtotal(orderItems),
+          createdAt,
+        );
+        if (evaluation.ok) {
+          coupon = evaluation.coupon;
+        } else if (evaluation.reason === "EXPIRED") {
+          couponNotice = { code: "COUPON_EXPIRED", couponCode: evaluation.coupon.code };
+        } else {
+          throw toCouponError(evaluation, couponCode);
+        }
+      }
+
       const order: Order = {
         id: generateId(createdAt),
         status: "pending",
@@ -102,11 +167,12 @@ export function createOrderService({
         shippingMethod,
         paymentMethod,
         items: orderItems,
-        ...calculateOrderTotals(orderItems, shippingMethod),
+        ...calculateOrderTotals(orderItems, shippingMethod, coupon),
+        ...(coupon ? { couponCode: coupon.code } : {}),
       };
 
       await repository.save(order);
-      return order;
+      return couponNotice ? { ...order, couponNotice } : order;
     },
 
     /** Danh sách đơn hàng, mới nhất trước. */

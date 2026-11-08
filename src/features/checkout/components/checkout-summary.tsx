@@ -1,17 +1,21 @@
 import { ProductImage } from "@/features/catalog/components/product-image";
 import type { CartItem } from "@/features/cart/types";
+import type { DiscountRule } from "@/features/coupons/types";
 import { calculateOrderTotals, type ShippingMethod } from "@/features/checkout/pricing";
 import { formatCurrency } from "@/lib/format";
 
 interface CheckoutSummaryProps {
   items: CartItem[];
   shippingMethod: ShippingMethod;
+  /** Mã đã được server xác nhận. Số tiền giảm luôn tính bằng `pricing.ts`, không nhận từ nơi khác. */
+  coupon?: { code: string; rule: DiscountRule } | null;
 }
 
-export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps) {
+export function CheckoutSummary({ items, shippingMethod, coupon }: CheckoutSummaryProps) {
   const totals = calculateOrderTotals(
     items.map((item) => ({ unitPrice: item.price, quantity: item.quantity })),
     shippingMethod,
+    coupon?.rule,
   );
 
   return (
@@ -36,6 +40,14 @@ export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps)
           <dt className="text-slate-600">Tạm tính</dt>
           <dd className="font-medium">{formatCurrency(totals.subtotal)}</dd>
         </div>
+        {coupon && totals.discount > 0 && (
+          <div className="flex justify-between">
+            <dt className="text-slate-600">{`Giảm giá (${coupon.code})`}</dt>
+            <dd className="font-medium text-emerald-700" data-testid="discount-amount">
+              {`−${formatCurrency(totals.discount)}`}
+            </dd>
+          </div>
+        )}
         <div className="flex justify-between">
           <dt className="text-slate-600">Phí giao hàng</dt>
           <dd className="font-medium" data-testid="shipping-fee">

@@ -76,3 +76,38 @@ describe("cartReducer - update / remove / clear", () => {
     expect(getCartSubtotal(twoItems)).toBe(2 * 100_000 + 50_000);
   });
 });
+
+describe("cartReducer - mã giảm giá", () => {
+  const voiMa = (): CartState => ({ ...add(EMPTY_CART, 2), couponCode: "SHOPLITE10" });
+
+  it("apply-coupon gán mã vào giỏ hàng và chuẩn hóa thành chữ HOA", () => {
+    const state = cartReducer(add(EMPTY_CART, 2), { type: "apply-coupon", code: " giam50k " });
+    expect(state.couponCode).toBe("GIAM50K");
+    expect(state.items).toHaveLength(1);
+  });
+
+  it("apply-coupon với chuỗi rỗng hoặc chỉ có khoảng trắng bị bỏ qua", () => {
+    const state = voiMa();
+    expect(cartReducer(state, { type: "apply-coupon", code: "   " })).toBe(state);
+  });
+
+  it("remove-coupon xóa mã nhưng giữ nguyên sản phẩm", () => {
+    const state = cartReducer(voiMa(), { type: "remove-coupon" });
+    expect(state.couponCode).toBeUndefined();
+    expect(state.items).toHaveLength(1);
+  });
+
+  it("thêm, sửa số lượng và xóa sản phẩm đều giữ nguyên mã giảm giá", () => {
+    expect(add(voiMa(), 1).couponCode).toBe("SHOPLITE10");
+    expect(
+      cartReducer(voiMa(), { type: "update-quantity", productId: "p001", quantity: 5 }).couponCode,
+    ).toBe("SHOPLITE10");
+    expect(cartReducer(voiMa(), { type: "remove", productId: "p001" }).couponCode).toBe(
+      "SHOPLITE10",
+    );
+  });
+
+  it("clear xóa cả sản phẩm lẫn mã giảm giá", () => {
+    expect(cartReducer(voiMa(), { type: "clear" })).toEqual(EMPTY_CART);
+  });
+});

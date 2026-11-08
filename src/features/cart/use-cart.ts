@@ -15,6 +15,8 @@ export function useCart() {
   return useMemo(
     () => ({
       items: cart.items,
+      /** Mã giảm giá đang được lưu cùng giỏ hàng (nếu có). */
+      couponCode: cart.couponCode,
       itemCount: getCartItemCount(cart),
       subtotal: getCartSubtotal(cart),
       /** false trong lần render đầu (chưa đọc localStorage) - dùng để hiển thị skeleton. */
@@ -24,6 +26,8 @@ export function useCart() {
       updateQuantity: (productId: string, quantity: number) =>
         cartStore.dispatch({ type: "update-quantity", productId, quantity }),
       removeItem: (productId: string) => cartStore.dispatch({ type: "remove", productId }),
+      applyCoupon: (code: string) => cartStore.dispatch({ type: "apply-coupon", code }),
+      removeCoupon: () => cartStore.dispatch({ type: "remove-coupon" }),
       clear: () => cartStore.dispatch({ type: "clear" }),
     }),
     [cart, hydrated],

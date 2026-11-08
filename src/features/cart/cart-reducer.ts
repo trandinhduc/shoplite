@@ -1,4 +1,5 @@
 import type { Product } from "@/features/catalog/types";
+import { normalizeCouponCode } from "@/features/coupons/coupon-rules";
 import type { CartAction, CartItem, CartState } from "./types";
 
 /** Số lượng tối đa của một sản phẩm trong một đơn hàng. */
@@ -38,10 +39,12 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       const existing = state.items.find((line) => line.productId === item.productId);
       if (!existing) {
         return {
+          ...state,
           items: [...state.items, { ...item, quantity: clampQuantity(quantity, item.stock) }],
         };
       }
       return {
+        ...state,
         items: state.items.map((line) =>
           line.productId === item.productId
             ? { ...line, ...item, quantity: clampQuantity(line.quantity + quantity, item.stock) }
@@ -52,6 +55,7 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
 
     case "update-quantity":
       return {
+        ...state,
         items: state.items.map((line) =>
           line.productId === action.productId
             ? { ...line, quantity: clampQuantity(action.quantity, line.stock) }
@@ -60,7 +64,15 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       };
 
     case "remove":
-      return { items: state.items.filter((line) => line.productId !== action.productId) };
+      return { ...state, items: state.items.filter((line) => line.productId !== action.productId) };
+
+    case "apply-coupon": {
+      const couponCode = normalizeCouponCode(action.code);
+      return couponCode ? { ...state, couponCode } : state;
+    }
+
+    case "remove-coupon":
+      return state.couponCode === undefined ? state : { items: state.items };
 
     case "clear":
       return EMPTY_CART;
