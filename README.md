@@ -62,6 +62,7 @@ src/
 │   ├── catalog/            # Tìm kiếm, lọc, sắp xếp, phân trang sản phẩm
 │   ├── cart/               # Giỏ hàng (reducer + store localStorage)
 │   ├── checkout/           # Quy tắc tính tiền, validate form thanh toán
+│   ├── coupons/            # Mã giảm giá: tra mã, kiểm tra hạn dùng và đơn tối thiểu
 │   └── orders/             # Tạo / xem / hủy đơn hàng, lưu trữ JSON
 ├── components/             # UI dùng chung (button, layout...)
 ├── data/                   # Dữ liệu mẫu: sản phẩm, danh mục
@@ -74,19 +75,21 @@ storage/                    # (tự tạo khi chạy) orders.json - đã đượ
 
 - **Giỏ hàng:** tối đa 10 sản phẩm mỗi loại và không vượt quá tồn kho. Sản phẩm hết hàng không thể thêm.
 - **Phí giao hàng:** tiêu chuẩn 30.000 ₫ (miễn phí cho đơn từ 500.000 ₫), giao nhanh 60.000 ₫.
-- **Đặt hàng:** server tự tính lại giá từ dữ liệu sản phẩm, không tin giá do client gửi lên.
+- **Mã giảm giá:** nhập ở trang thanh toán, mỗi đơn một mã. Mã giảm theo phần trăm (có mức giảm tối đa) hoặc một số tiền cố định, có thể kèm đơn tối thiểu và ngày hết hạn (dùng được hết ngày hết hạn, giờ Việt Nam). Giảm giá chỉ tính trên tiền hàng; phí giao hàng và ngưỡng miễn phí vẫn tính trên tạm tính trước giảm giá. Mã có sẵn: `SHOPLITE10`, `GIAM50K` và `TET2026` (đã hết hạn, dùng để thử).
+- **Đặt hàng:** server tự tính lại giá và số tiền giảm từ dữ liệu của mình, không tin giá hay tổng tiền do client gửi lên. Mã hết hạn lúc đặt thì đơn vẫn được tạo theo giá gốc kèm thông báo.
 - **Hủy đơn:** chỉ được hủy khi đơn đang ở trạng thái _Chờ xác nhận_.
 
 ## API
 
-| Method  | Endpoint              | Mô tả                                                                             |
-| ------- | --------------------- | --------------------------------------------------------------------------------- |
-| `GET`   | `/api/products`       | Danh sách sản phẩm. Query: `q, category, minPrice, maxPrice, inStock, sort, page` |
-| `GET`   | `/api/products/:slug` | Chi tiết sản phẩm                                                                 |
-| `GET`   | `/api/orders`         | Danh sách đơn hàng                                                                |
-| `POST`  | `/api/orders`         | Tạo đơn hàng                                                                      |
-| `GET`   | `/api/orders/:id`     | Chi tiết đơn hàng                                                                 |
-| `PATCH` | `/api/orders/:id`     | Hủy đơn: `{ "status": "cancelled" }`                                              |
+| Method  | Endpoint                | Mô tả                                                                              |
+| ------- | ----------------------- | ---------------------------------------------------------------------------------- |
+| `GET`   | `/api/products`         | Danh sách sản phẩm. Query: `q, category, minPrice, maxPrice, inStock, sort, page`  |
+| `GET`   | `/api/products/:slug`   | Chi tiết sản phẩm                                                                  |
+| `POST`  | `/api/coupons/validate` | Xem trước mã giảm giá: `{ "code": "...", "items": [{ "productId", "quantity" }] }` |
+| `GET`   | `/api/orders`           | Danh sách đơn hàng                                                                 |
+| `POST`  | `/api/orders`           | Tạo đơn hàng (có thể kèm `couponCode`)                                             |
+| `GET`   | `/api/orders/:id`       | Chi tiết đơn hàng                                                                  |
+| `PATCH` | `/api/orders/:id`       | Hủy đơn: `{ "status": "cancelled" }`                                               |
 
 Lỗi trả về dạng `{ "error": { "code": "...", "message": "...", "details": { ... } } }`.
 
@@ -99,7 +102,8 @@ curl -X POST http://localhost:3000/api/orders \
     "customer": { "fullName": "Nguyễn Văn A", "phone": "0912345678", "address": "12 Nguyễn Huệ, Quận 1, TP.HCM" },
     "shippingMethod": "standard",
     "paymentMethod": "cod",
-    "items": [{ "productId": "p006", "quantity": 2 }]
+    "items": [{ "productId": "p006", "quantity": 2 }],
+    "couponCode": "GIAM50K"
   }'
 ```
 

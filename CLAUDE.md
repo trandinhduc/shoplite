@@ -1,4 +1,3 @@
-
 @AGENTS.md
 
 ## Dành riêng cho Claude Code
