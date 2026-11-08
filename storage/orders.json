@@ -1,0 +1,143 @@
+[
+  {
+    "id": "SL-20261108-0BA0A2",
+    "status": "pending",
+    "createdAt": "2026-11-08T08:50:02.955Z",
+    "updatedAt": "2026-11-08T08:50:02.955Z",
+    "customer": {
+      "fullName": "hiep nghia",
+      "phone": "0909097512",
+      "email": "nghiahiep512@gmail.com",
+      "address": "quang trung go vap"
+    },
+    "shippingMethod": "express",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p003",
+        "slug": "tai-nghe-chup-tai-studioone",
+        "name": "Tai nghe chụp tai StudioOne",
+        "image": {
+          "emoji": "🎶",
+          "from": "#ede9fe",
+          "to": "#fbcfe8"
+        },
+        "unitPrice": 2450000,
+        "quantity": 1,
+        "lineTotal": 2450000
+      },
+      {
+        "productId": "p008",
+        "slug": "sac-nhanh-gan-65w",
+        "name": "Sạc nhanh GaN 65W",
+        "image": {
+          "emoji": "⚡",
+          "from": "#fef9c3",
+          "to": "#fde68a"
+        },
+        "unitPrice": 590000,
+        "quantity": 1,
+        "lineTotal": 590000
+      },
+      {
+        "productId": "p016",
+        "slug": "robot-hut-bui-cleanbot-x1",
+        "name": "Robot hút bụi CleanBot X1",
+        "image": {
+          "emoji": "🤖",
+          "from": "#ecfccb",
+          "to": "#d9f99d"
+        },
+        "unitPrice": 4590000,
+        "quantity": 1,
+        "lineTotal": 4590000
+      },
+      {
+        "productId": "p005",
+        "slug": "ban-phim-co-keypro-75",
+        "name": "Bàn phím cơ KeyPro 75%",
+        "image": {
+          "emoji": "⌨️",
+          "from": "#dcfce7",
+          "to": "#a7f3d0"
+        },
+        "unitPrice": 1890000,
+        "quantity": 1,
+        "lineTotal": 1890000
+      }
+    ],
+    "subtotal": 9520000,
+    "shippingFee": 60000,
+    "discount": {
+      "code": "SHOPLITE10",
+      "amount": 100000
+    },
+    "total": 9480000
+  },
+  {
+    "id": "SL-20261108-8838D0",
+    "status": "pending",
+    "createdAt": "2026-11-08T09:00:21.790Z",
+    "updatedAt": "2026-11-08T09:00:21.790Z",
+    "customer": {
+      "fullName": "Nguyễn Văn Test",
+      "phone": "0912345678",
+      "address": "12 Nguyễn Huệ, Quận 1, TP.HCM"
+    },
+    "shippingMethod": "standard",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p006",
+        "slug": "chuot-khong-day-swiftclick",
+        "name": "Chuột không dây SwiftClick",
+        "image": {
+          "emoji": "🖱️",
+          "from": "#fae8ff",
+          "to": "#ddd6fe"
+        },
+        "unitPrice": 450000,
+        "quantity": 2,
+        "lineTotal": 900000
+      }
+    ],
+    "subtotal": 900000,
+    "shippingFee": 0,
+    "total": 900000
+  },
+  {
+    "id": "SL-20261108-A9B4F4",
+    "status": "pending",
+    "createdAt": "2026-11-08T09:00:22.779Z",
+    "updatedAt": "2026-11-08T09:00:22.779Z",
+    "customer": {
+      "fullName": "Nguyễn Văn Test",
+      "phone": "0912345678",
+      "address": "12 Nguyễn Huệ, Quận 1, TP.HCM"
+    },
+    "shippingMethod": "standard",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p006",
+        "slug": "chuot-khong-day-swiftclick",
+        "name": "Chuột không dây SwiftClick",
+        "image": {
+          "emoji": "🖱️",
+          "from": "#fae8ff",
+          "to": "#ddd6fe"
+        },
+        "unitPrice": 450000,
+        "quantity": 1,
+        "lineTotal": 450000
+      }
+    ],
+    "subtotal": 450000,
+    "shippingFee": 30000,
+    "discount": {
+      "code": "SHOPLITE10",
+      "amount": 45000
+    },
+    "total": 435000
+  }
+]

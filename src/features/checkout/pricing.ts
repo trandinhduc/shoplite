@@ -11,8 +11,16 @@ export const SHIPPING_OPTIONS: Record<
   ShippingMethod,
   { label: string; description: string; fee: number }
 > = {
-  standard: { label: "Giao hàng tiêu chuẩn", description: "3–5 ngày làm việc", fee: 30_000 },
-  express: { label: "Giao hàng nhanh", description: "1–2 ngày làm việc", fee: 60_000 },
+  standard: {
+    label: "Giao hàng tiêu chuẩn",
+    description: "3–5 ngày làm việc",
+    fee: 30_000,
+  },
+  express: {
+    label: "Giao hàng nhanh",
+    description: "1–2 ngày làm việc",
+    fee: 60_000,
+  },
 };
 
 /** Đơn từ mức này trở lên được miễn phí giao hàng tiêu chuẩn. */
@@ -26,6 +34,8 @@ export interface PriceLine {
 export interface OrderTotals {
   subtotal: number;
   shippingFee: number;
+  /** Số tiền giảm (đồng), nằm trong khoảng [0, subtotal]. */
+  discountAmount: number;
   total: number;
 }
 
@@ -39,10 +49,25 @@ export function calculateShippingFee(subtotal: number, method: ShippingMethod): 
   return SHIPPING_OPTIONS[method].fee;
 }
 
-export function calculateOrderTotals(lines: PriceLine[], method: ShippingMethod): OrderTotals {
+/**
+ * Tổng tiền đơn hàng. Phí giao hàng (và ngưỡng miễn phí) luôn xét trên tiền hàng TRƯỚC giảm giá.
+ * `discountAmount` không hợp lệ (âm, không nguyên) coi như 0 và bị chặn ở mức tiền hàng.
+ */
+export function calculateOrderTotals(
+  lines: PriceLine[],
+  method: ShippingMethod,
+  discountAmount = 0,
+): OrderTotals {
   const subtotal = calculateSubtotal(lines);
   const shippingFee = calculateShippingFee(subtotal, method);
-  return { subtotal, shippingFee, total: subtotal + shippingFee };
+  const discount = Number.isInteger(discountAmount) && discountAmount > 0 ? discountAmount : 0;
+  const appliedDiscount = Math.min(discount, Math.max(subtotal, 0));
+  return {
+    subtotal,
+    shippingFee,
+    discountAmount: appliedDiscount,
+    total: subtotal - appliedDiscount + shippingFee,
+  };
 }
 
 /** Số tiền cần mua thêm để được miễn phí giao hàng tiêu chuẩn. */

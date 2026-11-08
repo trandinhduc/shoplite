@@ -7,7 +7,10 @@ export const PAYMENT_METHODS = ["cod", "bank_transfer"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const PAYMENT_OPTIONS: Record<PaymentMethod, { label: string; description: string }> = {
-  cod: { label: "Thanh toán khi nhận hàng (COD)", description: "Trả tiền mặt cho shipper" },
+  cod: {
+    label: "Thanh toán khi nhận hàng (COD)",
+    description: "Trả tiền mặt cho shipper",
+  },
   bank_transfer: {
     label: "Chuyển khoản ngân hàng",
     description: "Thông tin chuyển khoản hiển thị sau khi đặt hàng",
@@ -47,6 +50,24 @@ export const checkoutFormSchema = customerSchema.extend({
 
 export type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 
+/** Độ dài tối đa của mã giảm giá nhập vào (sau khi bỏ khoảng trắng đầu/cuối). */
+export const MAX_COUPON_CODE_LENGTH = 32;
+
+/** Mã giảm giá trong payload đặt hàng: tùy chọn; rỗng hoặc chỉ khoảng trắng = không dùng mã. */
+export const couponCodeSchema = z
+  .string()
+  .trim()
+  .max(MAX_COUPON_CODE_LENGTH, `Mã giảm giá tối đa ${MAX_COUPON_CODE_LENGTH} ký tự`)
+  .transform((value) => (value === "" ? undefined : value))
+  .optional();
+
+/** Ô nhập mã giảm giá ở trang thanh toán: bắt buộc nhập khi bấm "Áp dụng". */
+export const couponCodeInputSchema = z
+  .string()
+  .trim()
+  .min(1, "Vui lòng nhập mã giảm giá")
+  .max(MAX_COUPON_CODE_LENGTH, `Mã giảm giá tối đa ${MAX_COUPON_CODE_LENGTH} ký tự`);
+
 /** Payload gửi lên POST /api/orders. */
 export const placeOrderSchema = z.object({
   customer: customerSchema,
@@ -60,6 +81,7 @@ export const placeOrderSchema = z.object({
       }),
     )
     .min(1, "Giỏ hàng đang trống"),
+  couponCode: couponCodeSchema,
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;

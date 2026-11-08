@@ -75,6 +75,7 @@ storage/                    # (tự tạo khi chạy) orders.json - đã đượ
 - **Giỏ hàng:** tối đa 10 sản phẩm mỗi loại và không vượt quá tồn kho. Sản phẩm hết hàng không thể thêm.
 - **Phí giao hàng:** tiêu chuẩn 30.000 ₫ (miễn phí cho đơn từ 500.000 ₫), giao nhanh 60.000 ₫.
 - **Đặt hàng:** server tự tính lại giá từ dữ liệu sản phẩm, không tin giá do client gửi lên.
+- **Mã giảm giá:** nhập ở trang thanh toán, mỗi đơn một mã. Có mã giảm theo phần trăm (có mức giảm tối đa) và mã giảm số tiền cố định, kèm điều kiện đơn tối thiểu và ngày hết hạn. Mã mẫu: `SHOPLITE10` (10%, tối đa 100.000 ₫, đơn từ 300.000 ₫), `GIAM50K` (giảm 50.000 ₫, đơn từ 500.000 ₫), `TET2026` (đã hết hạn, dùng để thử). Phí giao hàng và ngưỡng miễn phí vẫn tính trên tiền hàng trước giảm.
 - **Hủy đơn:** chỉ được hủy khi đơn đang ở trạng thái _Chờ xác nhận_.
 
 ## API
@@ -84,7 +85,7 @@ storage/                    # (tự tạo khi chạy) orders.json - đã đượ
 | `GET`   | `/api/products`       | Danh sách sản phẩm. Query: `q, category, minPrice, maxPrice, inStock, sort, page` |
 | `GET`   | `/api/products/:slug` | Chi tiết sản phẩm                                                                 |
 | `GET`   | `/api/orders`         | Danh sách đơn hàng                                                                |
-| `POST`  | `/api/orders`         | Tạo đơn hàng                                                                      |
+| `POST`  | `/api/orders`         | Tạo đơn hàng; có thể kèm `couponCode` (lỗi mã: `COUPON_*`, HTTP 422)              |
 | `GET`   | `/api/orders/:id`     | Chi tiết đơn hàng                                                                 |
 | `PATCH` | `/api/orders/:id`     | Hủy đơn: `{ "status": "cancelled" }`                                              |
 

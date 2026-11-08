@@ -1,8 +1,10 @@
 import { getProductById } from "@/features/catalog/catalog-service";
 import type { Product } from "@/features/catalog/types";
 import { placeOrderSchema, toFieldErrors } from "@/features/checkout/checkout-schema";
-import { calculateOrderTotals } from "@/features/checkout/pricing";
-import { OrderError } from "./order-errors";
+import { calculateOrderTotals, calculateSubtotal } from "@/features/checkout/pricing";
+import { describeCouponFailure, evaluateCoupon } from "@/features/coupons/coupon-service";
+import type { AppliedDiscount } from "@/features/coupons/types";
+import { OrderError, type OrderErrorCode } from "./order-errors";
 import type { OrderRepository } from "./order-repository";
 import type { Order, OrderItem } from "./types";
 
@@ -20,13 +22,22 @@ export function generateOrderId(date: Date): string {
   return `SL-${ymd}-${random}`;
 }
 
+const COUPON_ERROR_CODES = {
+  not_found: "COUPON_NOT_FOUND",
+  expired: "COUPON_EXPIRED",
+  min_order_not_met: "COUPON_MIN_ORDER_NOT_MET",
+} as const satisfies Record<string, OrderErrorCode>;
+
 /** Gộp các dòng trùng productId: [{p1, 2}, {p1, 1}] -> [{p1, 3}] */
 function mergeItems(items: { productId: string; quantity: number }[]) {
   const merged = new Map<string, number>();
   for (const item of items) {
     merged.set(item.productId, (merged.get(item.productId) ?? 0) + item.quantity);
   }
-  return [...merged.entries()].map(([productId, quantity]) => ({ productId, quantity }));
+  return [...merged.entries()].map(([productId, quantity]) => ({
+    productId,
+    quantity,
+  }));
 }
 
 export function createOrderService({
@@ -60,7 +71,7 @@ export function createOrderService({
         );
       }
 
-      const { customer, items, shippingMethod, paymentMethod } = parsed.data;
+      const { customer, items, shippingMethod, paymentMethod, couponCode } = parsed.data;
 
       const orderItems: OrderItem[] = mergeItems(items).map(({ productId, quantity }) => {
         const product = findProduct(productId);
@@ -87,6 +98,29 @@ export function createOrderService({
       });
 
       const createdAt = now();
+
+      // Server tự kiểm tra lại mã và tính mức giảm từ giá catalog, không tin số liệu từ client.
+      let discountAmount = 0;
+      let discount: AppliedDiscount | undefined;
+      if (couponCode) {
+        const evaluation = evaluateCoupon(couponCode, calculateSubtotal(orderItems), createdAt);
+        if (!evaluation.ok) {
+          throw new OrderError(
+            COUPON_ERROR_CODES[evaluation.reason],
+            describeCouponFailure(evaluation),
+            evaluation.shortfall === undefined
+              ? undefined
+              : { shortfall: String(evaluation.shortfall) },
+          );
+        }
+        // AppliedDiscount.amount phải > 0: mức giảm bằng 0 coi như không có giảm giá.
+        if (evaluation.discountAmount > 0) {
+          discountAmount = evaluation.discountAmount;
+          discount = { code: evaluation.code, amount: discountAmount };
+        }
+      }
+
+      const totals = calculateOrderTotals(orderItems, shippingMethod, discountAmount);
       const order: Order = {
         id: generateId(createdAt),
         status: "pending",
@@ -102,7 +136,10 @@ export function createOrderService({
         shippingMethod,
         paymentMethod,
         items: orderItems,
-        ...calculateOrderTotals(orderItems, shippingMethod),
+        subtotal: totals.subtotal,
+        shippingFee: totals.shippingFee,
+        ...(discount ? { discount } : {}),
+        total: totals.total,
       };
 
       await repository.save(order);
@@ -126,7 +163,11 @@ export function createOrderService({
           "Chỉ có thể hủy đơn hàng đang ở trạng thái Chờ xác nhận",
         );
       }
-      const cancelled: Order = { ...order, status: "cancelled", updatedAt: now().toISOString() };
+      const cancelled: Order = {
+        ...order,
+        status: "cancelled",
+        updatedAt: now().toISOString(),
+      };
       await repository.save(cancelled);
       return cancelled;
     },

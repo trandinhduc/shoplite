@@ -1,17 +1,20 @@
 import { ProductImage } from "@/features/catalog/components/product-image";
 import type { CartItem } from "@/features/cart/types";
 import { calculateOrderTotals, type ShippingMethod } from "@/features/checkout/pricing";
+import type { AppliedDiscount } from "@/features/coupons/types";
 import { formatCurrency } from "@/lib/format";
 
 interface CheckoutSummaryProps {
   items: CartItem[];
   shippingMethod: ShippingMethod;
+  discount?: AppliedDiscount | null;
 }
 
-export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps) {
+export function CheckoutSummary({ items, shippingMethod, discount }: CheckoutSummaryProps) {
   const totals = calculateOrderTotals(
     items.map((item) => ({ unitPrice: item.price, quantity: item.quantity })),
     shippingMethod,
+    discount?.amount ?? 0,
   );
 
   return (
@@ -36,6 +39,14 @@ export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps)
           <dt className="text-slate-600">Tạm tính</dt>
           <dd className="font-medium">{formatCurrency(totals.subtotal)}</dd>
         </div>
+        {discount && (
+          <div className="flex justify-between">
+            <dt className="text-slate-600">Giảm giá ({discount.code})</dt>
+            <dd className="font-medium text-emerald-700" data-testid="discount-amount">
+              -{formatCurrency(totals.discountAmount)}
+            </dd>
+          </div>
+        )}
         <div className="flex justify-between">
           <dt className="text-slate-600">Phí giao hàng</dt>
           <dd className="font-medium" data-testid="shipping-fee">

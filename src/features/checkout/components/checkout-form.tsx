@@ -7,6 +7,9 @@ import { Banknote, CreditCard, Truck, Zap } from "lucide-react";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useCart } from "@/features/cart/use-cart";
+import { CouponInput } from "@/features/coupons/components/coupon-input";
+import { describeCouponFailure, evaluateCoupon } from "@/features/coupons/coupon-service";
+import type { AppliedDiscount } from "@/features/coupons/types";
 import {
   checkoutFormSchema,
   PAYMENT_METHODS,
@@ -55,8 +58,25 @@ export function CheckoutForm() {
   const { items, subtotal, hydrated, clear } = useCart();
   const [values, setValues] = useState<CheckoutFormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [discount, setDiscount] = useState<AppliedDiscount | null>(null);
+  const [couponNotice, setCouponNotice] = useState<string | null>(null);
+  const [checkedSubtotal, setCheckedSubtotal] = useState(subtotal);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
+
+  // Giỏ hàng đổi (ví dụ ở tab khác) thì đánh giá lại mã đang áp dụng với tiền hàng mới.
+  if (subtotal !== checkedSubtotal) {
+    setCheckedSubtotal(subtotal);
+    if (discount) {
+      const result = evaluateCoupon(discount.code, subtotal, new Date());
+      if (!result.ok) {
+        setDiscount(null);
+        setCouponNotice(describeCouponFailure(result));
+      } else if (result.discountAmount !== discount.amount) {
+        setDiscount({ code: result.code, amount: result.discountAmount });
+      }
+    }
+  }
 
   if (!hydrated) {
     return <div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />;
@@ -115,12 +135,20 @@ export function CheckoutForm() {
           customer,
           shippingMethod,
           paymentMethod,
-          items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          items: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          // Chỉ gửi mã; mức giảm và tổng tiền do server tính lại.
+          ...(discount ? { couponCode: discount.code } : {}),
         }),
       });
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
+        // Mã không còn hợp lệ lúc đặt hàng (hết hạn, không đủ tối thiểu...): gỡ mã để
+        // giao diện khớp với những gì server chấp nhận; giữ nguyên thông tin đã nhập.
+        if (body?.error.code.startsWith("COUPON_")) setDiscount(null);
         setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
         setStatus("idle");
         return;
@@ -227,7 +255,12 @@ export function CheckoutForm() {
                   name="shippingMethod"
                   value={method}
                   checked={values.shippingMethod === method}
-                  onChange={() => setValues((current) => ({ ...current, shippingMethod: method }))}
+                  onChange={() =>
+                    setValues((current) => ({
+                      ...current,
+                      shippingMethod: method,
+                    }))
+                  }
                   icon={SHIPPING_ICONS[method]}
                   title={SHIPPING_OPTIONS[method].label}
                   description={`${SHIPPING_OPTIONS[method].description} · ${fee === 0 ? "Miễn phí" : formatCurrency(fee)}`}
@@ -246,7 +279,12 @@ export function CheckoutForm() {
                 name="paymentMethod"
                 value={method}
                 checked={values.paymentMethod === method}
-                onChange={() => setValues((current) => ({ ...current, paymentMethod: method }))}
+                onChange={() =>
+                  setValues((current) => ({
+                    ...current,
+                    paymentMethod: method,
+                  }))
+                }
                 icon={PAYMENT_ICONS[method]}
                 title={PAYMENT_OPTIONS[method].label}
                 description={PAYMENT_OPTIONS[method].description}
@@ -257,7 +295,22 @@ export function CheckoutForm() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} />
+        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} discount={discount} />
+        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <CouponInput
+            subtotal={subtotal}
+            applied={discount}
+            notice={couponNotice}
+            onApplied={(applied) => {
+              setDiscount(applied);
+              setCouponNotice(null);
+            }}
+            onRemoved={() => {
+              setDiscount(null);
+              setCouponNotice(null);
+            }}
+          />
+        </section>
         {submitError && (
           <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {submitError}

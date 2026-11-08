@@ -1,6 +1,7 @@
 import type { ProductImage } from "@/features/catalog/types";
 import type { PaymentMethod } from "@/features/checkout/checkout-schema";
 import type { ShippingMethod } from "@/features/checkout/pricing";
+import type { AppliedDiscount } from "@/features/coupons/types";
 
 export const ORDER_STATUSES = [
   "pending",
@@ -50,5 +51,7 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   shippingFee: number;
+  /** Giảm giá đã áp dụng; không có với đơn không dùng mã hoặc đơn tạo trước khi có tính năng. */
+  discount?: AppliedDiscount;
   total: number;
 }
