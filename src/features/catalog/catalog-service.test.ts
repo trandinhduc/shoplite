@@ -4,6 +4,7 @@ import {
   DEFAULT_CATALOG_QUERY,
   getDiscountPercent,
   getProductBySlug,
+  getProductsByIds,
   getRelatedProducts,
   getStockStatus,
   parseCatalogQuery,
@@ -160,5 +161,30 @@ describe("helpers", () => {
     expect(related.length).toBeGreaterThan(0);
     expect(related.every((p) => p.categorySlug === product.categorySlug)).toBe(true);
     expect(related.map((p) => p.id)).not.toContain(product.id);
+  });
+});
+
+describe("getProductsByIds", () => {
+  it("trả về sản phẩm theo đúng thứ tự của danh sách mã", () => {
+    expect(getProductsByIds(["p003", "p001", "p002"]).map((p) => p.id)).toEqual([
+      "p003",
+      "p001",
+      "p002",
+    ]);
+  });
+
+  it("bỏ qua mã không tồn tại", () => {
+    expect(getProductsByIds(["p001", "khong-co", "p002"]).map((p) => p.id)).toEqual([
+      "p001",
+      "p002",
+    ]);
+  });
+
+  it("chỉ trả một lần cho mã trùng lặp", () => {
+    expect(getProductsByIds(["p001", "p002", "p001"]).map((p) => p.id)).toEqual(["p001", "p002"]);
+  });
+
+  it("trả về mảng rỗng khi không có mã nào", () => {
+    expect(getProductsByIds([])).toEqual([]);
   });
 });

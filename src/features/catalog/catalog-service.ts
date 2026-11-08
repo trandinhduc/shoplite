@@ -10,11 +10,12 @@ import {
   type CategorySlug,
   type Product,
   type SortOption,
-  type StockStatus,
 } from "./types";
 
 export const PAGE_SIZE = 8;
-export const LOW_STOCK_THRESHOLD = 5;
+
+// Giữ export cũ; định nghĩa nằm ở stock-status.ts để client không phải import cả dữ liệu catalog.
+export { getStockStatus, LOW_STOCK_THRESHOLD } from "./stock-status";
 
 export const SORT_LABELS: Record<SortOption, string> = {
   featured: "Nổi bật",
@@ -52,6 +53,22 @@ export function getProductById(id: string): Product | undefined {
   return products.find((product) => product.id === id);
 }
 
+/**
+ * Tra cứu nhiều sản phẩm theo mã: giữ đúng thứ tự `ids`, bỏ mã không tồn tại và mã trùng.
+ * Dùng cho trang yêu thích (luôn lấy giá và tồn kho hiện hành của catalog).
+ */
+export function getProductsByIds(ids: readonly string[]): Product[] {
+  const result: Product[] = [];
+  const seen = new Set<string>();
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const product = getProductById(id);
+    if (product) result.push(product);
+  }
+  return result;
+}
+
 export function getFeaturedProducts(limit = 4): Product[] {
   return products
     .filter((product) => product.featured)
@@ -65,12 +82,6 @@ export function getRelatedProducts(product: Product, limit = 4): Product[] {
     .filter((item) => item.categorySlug === product.categorySlug && item.id !== product.id)
     .sort((a, b) => b.rating - a.rating)
     .slice(0, limit);
-}
-
-export function getStockStatus(product: Pick<Product, "stock">): StockStatus {
-  if (product.stock <= 0) return "out-of-stock";
-  if (product.stock <= LOW_STOCK_THRESHOLD) return "low-stock";
-  return "in-stock";
 }
 
 /** Phần trăm giảm giá làm tròn, ví dụ 19 (nghĩa là -19%). Trả về 0 nếu không giảm. */

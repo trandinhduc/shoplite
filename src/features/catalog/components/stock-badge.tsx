@@ -1,4 +1,4 @@
-import { getStockStatus } from "@/features/catalog/catalog-service";
+import { getStockStatus } from "@/features/catalog/stock-status";
 import type { Product } from "@/features/catalog/types";
 import { cn } from "@/lib/cn";
 

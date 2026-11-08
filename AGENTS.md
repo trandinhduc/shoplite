@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Sản phẩm/danh mục: dữ liệu tĩnh `products`, `categories` trong `src/data/` (không có database; tồn kho không bị trừ khi đặt hàng).
 - Mã giảm giá: dữ liệu tĩnh `coupons` trong `src/data/coupons.ts` (chỉ server import, không để danh sách mã lọt vào bundle client).
 - Giỏ hàng: localStorage của trình duyệt, key `CART_STORAGE_KEY = "shoplite:cart"`; lưu thêm `couponCode` đang áp dụng (chỉ là gợi ý, luôn được hỏi lại server).
+- Yêu thích (wishlist): localStorage của trình duyệt, key `WISHLIST_STORAGE_KEY = "shoplite:wishlist"`; chỉ lưu `productId` (mới thêm xếp đầu), không lên server; giá và tồn kho luôn lấy từ `GET /api/products/by-ids`.
 - Đơn hàng: file JSON `DEFAULT_ORDERS_FILE` = `storage/orders.json` (ghi đè bằng env `ORDERS_FILE`), đã gitignore.
 
 ## 2. Lệnh thường dùng
@@ -25,14 +26,15 @@ npm run format                       # Prettier (+ prettier-plugin-tailwindcss)
 
 ## 3. Codemap
 
-| Capability | Thư mục                  | File quan trọng                                                                                                                                                                                                                                                                    |
-| ---------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Catalog    | `src/features/catalog/`  | `catalog-service.ts` (`parseCatalogQuery`, `queryProducts`, `getProductById`, `PAGE_SIZE`), `types.ts`                                                                                                                                                                             |
-| Cart       | `src/features/cart/`     | `cart-reducer.ts` (`cartReducer`, `getMaxQuantity`, `MAX_QUANTITY_PER_ITEM`), `cart-store.ts` (`cartStore`), `use-cart.ts` (`useCart`)                                                                                                                                             |
-| Checkout   | `src/features/checkout/` | `pricing.ts` (`calculateOrderTotals`, `calculateCouponDiscount`, `FREE_SHIPPING_THRESHOLD`, `SHIPPING_OPTIONS`), `checkout-schema.ts` (`checkoutFormSchema`, `placeOrderSchema`, `couponCodeSchema`, `validateCouponSchema`, `toFieldErrors`), `components/checkout-form.tsx`      |
-| Coupons    | `src/features/coupons/`  | `coupon-rules.ts` (hàm thuần, client dùng được: `evaluateCoupon`, `isCouponExpired`, `normalizeCouponCode`), `coupon-service.ts` (chỉ server: `findCouponByCode`, `toCouponError`, `getExpiredCouponNoticeForOrder`), `components/coupon-field.tsx`; dữ liệu `src/data/coupons.ts` |
-| Orders     | `src/features/orders/`   | `order-service.ts` (`createOrderService`: `placeOrder`, `previewCoupon`), `order-repository.ts`, `order-errors.ts` (`OrderError`), `server.ts` (`orderService`)                                                                                                                    |
-| API        | `src/app/api/`           | `products/route.ts`, `products/[slug]/route.ts`, `orders/route.ts`, `orders/[id]/route.ts`, `coupons/validate/route.ts`; helper `src/lib/http.ts`                                                                                                                                  |
+| Capability | Thư mục                  | File quan trọng                                                                                                                                                                                                                                                                          |
+| ---------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Catalog    | `src/features/catalog/`  | `catalog-service.ts` (`parseCatalogQuery`, `queryProducts`, `getProductById`, `getProductsByIds`, `PAGE_SIZE`), `catalog-schema.ts` (`productIdsQuerySchema`, `MAX_PRODUCT_IDS_PER_LOOKUP`), `stock-status.ts` (`getStockStatus`; không import dữ liệu nên client dùng được), `types.ts` |
+| Cart       | `src/features/cart/`     | `cart-reducer.ts` (`cartReducer`, `getMaxQuantity`, `MAX_QUANTITY_PER_ITEM`), `cart-store.ts` (`cartStore`), `use-cart.ts` (`useCart`)                                                                                                                                                   |
+| Wishlist   | `src/features/wishlist/` | `wishlist-reducer.ts` (`wishlistReducer`, `WISHLIST_MAX_ITEMS`, `sanitizeProductIds`), `wishlist-store.ts` (`wishlistStore`), `use-wishlist.ts` (`useWishlist`: `toggle` trả `added`/`removed`/`full`)                                                                                   |
+| Checkout   | `src/features/checkout/` | `pricing.ts` (`calculateOrderTotals`, `calculateCouponDiscount`, `FREE_SHIPPING_THRESHOLD`, `SHIPPING_OPTIONS`), `checkout-schema.ts` (`checkoutFormSchema`, `placeOrderSchema`, `couponCodeSchema`, `validateCouponSchema`, `toFieldErrors`), `components/checkout-form.tsx`            |
+| Coupons    | `src/features/coupons/`  | `coupon-rules.ts` (hàm thuần, client dùng được: `evaluateCoupon`, `isCouponExpired`, `normalizeCouponCode`), `coupon-service.ts` (chỉ server: `findCouponByCode`, `toCouponError`, `getExpiredCouponNoticeForOrder`), `components/coupon-field.tsx`; dữ liệu `src/data/coupons.ts`       |
+| Orders     | `src/features/orders/`   | `order-service.ts` (`createOrderService`: `placeOrder`, `previewCoupon`), `order-repository.ts`, `order-errors.ts` (`OrderError`), `server.ts` (`orderService`)                                                                                                                          |
+| API        | `src/app/api/`           | `products/route.ts`, `products/[slug]/route.ts`, `products/by-ids/route.ts`, `orders/route.ts`, `orders/[id]/route.ts`, `coupons/validate/route.ts`; helper `src/lib/http.ts`                                                                                                            |
 
 **Luồng thêm vào giỏ hàng** (hoàn toàn phía client):
 `ProductPurchasePanel` / `AddToCartButton` → `useCart().addItem(product, qty)` → `cartStore.dispatch({ type: "add", item: toCartItem(product), quantity })` → `cartReducer` (kẹp số lượng bằng `getMaxQuantity(stock)`) → `writeToStorage` (localStorage) → `emit()` → các component đăng ký qua `useSyncExternalStore` render lại; tab khác đồng bộ qua sự kiện `storage`.
@@ -43,6 +45,8 @@ npm run format                       # Prettier (+ prettier-plugin-tailwindcss)
 Mã giảm giá: mã không tồn tại / chưa đạt đơn tối thiểu → `OrderError` (`COUPON_NOT_FOUND` / `COUPON_MIN_ORDER_NOT_MET`, 422, không tạo đơn). Mã **đã hết hạn** lúc đặt → vẫn tạo đơn theo giá gốc, response kèm `couponNotice` (không lưu vào đơn) và client chuyển tới `?placed=1&couponExpired=CODE`; trang đơn hàng gọi `getExpiredCouponNoticeForOrder` (validate Zod, chỉ báo khi mã thật sự hết hạn).
 
 **Luồng áp mã giảm giá** (trang thanh toán): `CouponField` → `fetch("POST /api/coupons/validate", { code, items })` → `orderService.previewCoupon` (server tự tính tạm tính từ catalog) → trả quy tắc của đúng mã đó → `CheckoutSummary` tính tiền giảm bằng `calculateOrderTotals`. Mã lưu trong giỏ (`useCart().couponCode`) được hỏi lại mỗi khi vào trang hoặc giỏ đổi; không còn hợp lệ thì gỡ hẳn kèm lý do, không tự áp lại.
+
+**Luồng yêu thích** (phía client, không có server lưu trữ): `WishlistButton` (thẻ sản phẩm, trang chi tiết) → `useWishlist().toggle(productId)` → `wishlistStore.dispatch` → `wishlistReducer` (chèn đầu, từ chối khi đủ `WISHLIST_MAX_ITEMS`; `toggle` trả `added` / `removed` / `full` để nút báo đầy qua vùng `role="status"`) → localStorage `shoplite:wishlist` → `emit()`; `WishlistBadge` ở header đếm số sản phẩm; tab khác đồng bộ qua sự kiện `storage`. Trang `/wishlist` (`WishlistView`) chỉ có `productId` nên gọi `fetch("GET /api/products/by-ids?ids=...", { cache: "no-store" })` (validate `productIdsQuerySchema`, tối đa `MAX_PRODUCT_IDS_PER_LOOKUP` = 50, lỗi `400 INVALID_QUERY`) để lấy giá và tồn kho hiện hành; chỉ tải mã chưa có, mã không còn trong catalog bị gỡ khỏi danh sách; thêm vào giỏ dùng lại `AddToCartButton`.
 
 Trang `/orders` và `/orders/[id]` gọi thẳng `orderService` (Server Component, `dynamic = "force-dynamic"`); hủy đơn từ client qua `CancelOrderButton` → `PATCH /api/orders/:id`.
 
@@ -62,11 +66,12 @@ Trang `/orders` và `/orders/[id]` gọi thẳng `orderService` (Server Componen
 - **Phí ship** (`calculateShippingFee`): `standard` 30.000 ₫, miễn phí khi subtotal >= `FREE_SHIPPING_THRESHOLD` (500.000 ₫); `express` 60.000 ₫ luôn tính phí; subtotal <= 0 thì phí 0.
 - **Giá do server tính**: `placeOrder` lấy `unitPrice` từ catalog và tính lại bằng `calculateOrderTotals`; không bao giờ đọc giá/tổng tiền từ payload client. Client và server dùng chung `pricing.ts` — sửa quy tắc giá ở đó, không nhân bản.
 - **Mã giảm giá**: mỗi đơn tối đa một mã. `percent`: `floor(tạm tính × % / 100)` và không vượt `maxDiscount`; `fixed`: không vượt tạm tính. Đơn tối thiểu so với tạm tính trước giảm (bằng đúng mức thì đạt). Hết hạn từ 00:00 ngày kế tiếp `expiresOn` theo giờ Việt Nam (UTC+7). Phí ship và ngưỡng miễn phí vẫn tính trên tạm tính **trước** giảm giá. Công thức nằm trong `pricing.ts` (`calculateCouponDiscount`).
+- **Yêu thích**: tối đa `WISHLIST_MAX_ITEMS` = 50 sản phẩm (đủ 50 thì từ chối thêm và báo khách, bỏ thích vẫn được); mỗi sản phẩm một lần; chỉ lưu `productId`, giá và tồn kho luôn lấy từ server; sản phẩm hết hàng vẫn ở trong danh sách nhưng không thêm vào giỏ được. Wishlist không ảnh hưởng giỏ hàng, giá hay đơn hàng.
 - **Hủy đơn**: chỉ khi `status === "pending"`, nếu không ném `INVALID_STATUS_TRANSITION` (409). `PATCH` chỉ chấp nhận body `{ "status": "cancelled" }`.
 
 ## 6. Testing
 
-- Vitest chỉ chạy `src/**/*.test.{ts,tsx}`, môi trường mặc định `jsdom`. `vitest.setup.ts` gọi `cleanup()` và `localStorage.clear()` sau mỗi test; test dùng `cartStore` cần `cartStore.reset()`.
+- Vitest chỉ chạy `src/**/*.test.{ts,tsx}`, môi trường mặc định `jsdom`. `vitest.setup.ts` gọi `cleanup()` và `localStorage.clear()` sau mỗi test; test dùng `cartStore` cần `cartStore.reset()`, test dùng `wishlistStore` cần `wishlistStore.reset()`.
 - Code dùng file hệ thống / Route Handler: thêm `// @vitest-environment node` đầu file. `order-repository.test.ts` ghi vào thư mục tạm (`mkdtemp(tmpdir())`) và xóa sau test — không ghi vào `storage/`.
 - Test service và route dùng `createInMemoryOrderRepository()`. Route test mock module singleton: `vi.mock("@/features/orders/server", ...)` trả về `createOrderService({ repository: createInMemoryOrderRepository() })` (xem `src/app/api/orders/route.test.ts`).
 - E2E nằm ở `e2e/`, chọn phần tử bằng role/label tiếng Việt và `data-testid` (`product-card`, `purchase-panel`, `cart-count`, `cart-total`) — đổi text/testid thì cập nhật e2e.
@@ -78,7 +83,7 @@ Trang `/orders` và `/orders/[id]` gọi thẳng `orderService` (Server Componen
 - Không tin giá, phí ship, tổng tiền từ client; không tính tiền ngoài `pricing.ts`.
 - Không bỏ qua validate Zod ở server, không trả lỗi API khác định dạng `{ error: { code, message } }`.
 - Không đặt logic nghiệp vụ trong `src/app/`.
-- Không đọc localStorage trực tiếp trong component — đi qua `useCart` / `cartStore`; dùng `hydrated`/`useHydrated` để tránh lệch SSR.
+- Không đọc localStorage trực tiếp trong component — đi qua `useCart` / `cartStore` (giỏ hàng) và `useWishlist` / `wishlistStore` (yêu thích); dùng `hydrated`/`useHydrated` để tránh lệch SSR.
 - Không ghi vào `storage/orders.json` trong unit test; không commit `storage/`, `.env*`.
 - Không xóa `agentRules: false` trong `next.config.ts` (ngăn `next dev` tạo/sửa `AGENTS.md`).
 

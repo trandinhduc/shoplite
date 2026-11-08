@@ -11,7 +11,7 @@ export function CartBadge() {
   return (
     <Link
       href="/cart"
-      className="relative flex size-10 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100"
+      className="relative flex size-9 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100 sm:size-10"
       aria-label={showCount ? `Giỏ hàng (${itemCount} sản phẩm)` : "Giỏ hàng"}
     >
       <ShoppingCart className="size-5" />

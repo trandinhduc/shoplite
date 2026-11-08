@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Store } from "lucide-react";
 import { CartBadge } from "@/features/cart/components/cart-badge";
+import { WishlistBadge } from "@/features/wishlist/components/wishlist-badge";
 import { NavLinks } from "./nav-links";
 
 export function Header() {
@@ -18,7 +19,8 @@ export function Header() {
           <span className="hidden sm:inline">ShopLite</span>
         </Link>
         <NavLinks />
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center sm:gap-1">
+          <WishlistBadge />
           <CartBadge />
         </div>
       </div>

@@ -17,6 +17,7 @@ import {
   getProductBySlug,
   getRelatedProducts,
 } from "@/features/catalog/catalog-service";
+import { WishlistButton } from "@/features/wishlist/components/wishlist-button";
 
 export function generateStaticParams() {
   return getAllProducts().map((product) => ({ slug: product.slug }));
@@ -81,7 +82,15 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
           <p className="text-sm font-semibold tracking-wide text-indigo-600 uppercase">
             {product.brand}
           </p>
-          <h1 className="text-3xl font-bold tracking-tight">{product.name}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">{product.name}</h1>
+            <WishlistButton
+              productId={product.id}
+              productName={product.name}
+              size="md"
+              className="shrink-0"
+            />
+          </div>
           <div className="flex flex-wrap items-center gap-3">
             <RatingStars rating={product.rating} reviewCount={product.reviewCount} />
             <StockBadge product={product} />
