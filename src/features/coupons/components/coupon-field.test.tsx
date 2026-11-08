@@ -171,3 +171,25 @@ describe("<CouponField /> - gỡ và thay mã", () => {
     expect(screen.getByLabelText("Mã giảm giá")).toHaveValue("KHONGCO");
   });
 });
+
+describe("<CouponField /> - thông báo cho trình đọc màn hình", () => {
+  it("vùng thông báo trạng thái luôn có sẵn và rỗng khi chưa áp mã", () => {
+    renderInForm();
+    const status = screen.getByRole("status");
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(status).toBeEmptyDOMElement();
+  });
+
+  it("áp mã thành công → thông báo mã và số tiền được giảm", () => {
+    renderInForm({ status: { status: "active", code: "SHOPLITE10", discount: 30_000 } });
+    expect(screen.getByRole("status")).toHaveTextContent(/Đã áp dụng mã SHOPLITE10, giảm 30\.000/);
+  });
+
+  it("mã đang lỗi → không thông báo thành công (lỗi đã có role=alert)", () => {
+    renderInForm({
+      status: { status: "error", code: "TET2026", message: "Mã giảm giá đã hết hạn" },
+      message: "Mã giảm giá đã hết hạn",
+    });
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+});

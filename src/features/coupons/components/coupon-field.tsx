@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { CouponStatus } from "@/features/coupons/coupon-rules";
 import { couponCodeSchema } from "@/features/coupons/coupon-schema";
 import { cn } from "@/lib/cn";
+import { formatCurrency } from "@/lib/format";
 
 interface CouponFieldProps {
   /** Trạng thái của mã đang áp dụng (suy ra bởi `deriveCouponStatus`). */
@@ -103,6 +104,13 @@ export function CouponField({ status, pending, message, onApply, onRemove }: Cou
           </Button>
         </div>
       )}
+
+      {/* Vùng luôn có sẵn để trình đọc màn hình báo khi áp mã thành công (lỗi dùng role="alert"). */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {status.status === "active"
+          ? `Đã áp dụng mã ${status.code}, giảm ${formatCurrency(status.discount)}`
+          : ""}
+      </p>
 
       {errorMessage && (
         <p

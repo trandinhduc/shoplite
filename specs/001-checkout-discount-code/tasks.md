@@ -447,3 +447,11 @@ US1 + US2 + US5, tức cả 3 story P1. Chống gian lận là bắt buộc trư
 - Mỗi task test phải được chạy và quan sát FAIL trước task cài đặt tương ứng (Red → Green → Refactor).
 - Kết thúc mỗi phase bằng `npm run check` xanh. Commit sau mỗi phase, không commit `storage/`.
 - Spec đã chốt định dạng mã (FR-004, Edge Cases "Mã sai định dạng"), không lộ danh sách mã (FR-022a) và nguồn thời gian (FR-022b). Reviewer cần rà lại [checklists/security.md](./checklists/security.md) trước Phase 3.
+
+---
+
+## Phase 9: Convergence
+
+- [X] T059 CRITICAL: Bỏ track `storage/orders.json` khỏi git bằng `git rm --cached storage/orders.json` trong một commit riêng (giữ nguyên file trên máy) để `.gitignore` có tác dụng và không còn dữ liệu đơn hàng trong repo per Constitution, Ràng buộc kỹ thuật "MUST NOT commit `storage/`" (contradicts)
+- [X] T060 Thêm vùng `aria-live="polite"` trong `src/features/coupons/components/coupon-field.tsx` để trình đọc màn hình báo khi áp mã thành công (ví dụ "Đã áp dụng mã SHOPLITE10"), viết test trước trong `coupon-field.test.tsx`, rồi chạy `npm run check` per contracts/checkout-ui.md (thông báo thành công) và Constitution V (partial)
+- [X] T061 Chạy lại [quickstart.md](./quickstart.md) trên dev server riêng với `ORDERS_FILE` trỏ tới file tạm (không dùng kho đơn mặc định), và thực hiện trên trình duyệt các bước giao diện 2, 4, 5, 6, 8 per T057 (partial)
