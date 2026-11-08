@@ -49,11 +49,13 @@ mà spec và input của `/speckit-plan` để ngỏ.
   - Response 201 trả về đơn kèm trường tạm `couponNotice: { code: "COUPON_EXPIRED", couponCode }`.
     Trường này không được lưu vào storage.
   - Client chuyển tới `/orders/{id}?placed=1&couponExpired={CODE}`.
-  - Trang chi tiết đơn (Server Component) gọi `getExpiredCouponNotice(code, order.subtotal)` trong
-    `features/coupons` để tính số tiền chênh lệch. Số này bằng tiền giảm mà mã lẽ ra mang lại, tính trên tạm tính của đơn.
-- **Rationale**: Spec yêu cầu đơn không lưu mã. Số chênh lệch luôn do server tính, nên giá trị trên URL
-  chỉ quyết định có hiện thông báo hay không, không ảnh hưởng tiền. Người tự sửa URL chỉ thấy một
-  thông báo sai trên máy của chính mình, không có hại.
+  - Trang chi tiết đơn (Server Component) gọi `getExpiredCouponNotice(rawCode, order.subtotal, now)` trong
+    `features/coupons`. Hàm tự validate `rawCode` bằng `couponCodeSchema`, chỉ trả thông báo khi mã
+    **thật sự đã hết hạn tại `now`**, và tính `lostDiscount` trên tạm tính của đơn (tiền giảm mà mã lẽ ra mang lại).
+- **Rationale**: Spec yêu cầu đơn không lưu mã. Tham số URL là input không tin cậy (constitution III), nên
+  phải được validate bằng Zod. Hàm cũng kiểm tra mã đã hết hạn thật; nếu không, ai cũng có thể thêm
+  `?couponExpired=SHOPLITE10` vào một đơn để hiện thông báo "hết hạn" giả kèm số tiền giả. Số tiền luôn do
+  server tính.
 - **Alternatives considered**:
   - Lưu `rejectedCoupon` vào đơn: trái FR-015a ("đơn không lưu mã").
   - Đổi kiểu trả về của `placeOrder` thành `{ order, couponNotice }`: phải sửa mọi test và caller hiện có.
@@ -90,6 +92,8 @@ mà spec và input của `/speckit-plan` để ngỏ.
 - **Decision**: Zod: `couponCode: z.string().trim().toUpperCase().max(32).optional()`. Chuỗi rỗng sau
   `trim` được coi là không gửi mã. Riêng ô nhập phía client báo "Vui lòng nhập mã giảm giá" khi rỗng (FR-013).
   `placeOrderSchema` dùng `z.object` nên bỏ mọi khóa lạ như `discount` hay `total` do client gửi.
+  Giá trị không phải chuỗi hoặc dài hơn 32 ký tự bị từ chối (400). Khoảng trắng ở giữa hay ký tự lạ
+  không bị sửa nên mã đó rơi vào "không tồn tại" (FR-013). `toUpperCase()` không phụ thuộc ngôn ngữ thiết bị.
 - **Rationale**: Theo FR-013 và FR-014. Cùng một schema dùng cho cả client và server (constitution III).
 
 ## R9. Giữ mã khi khách đi qua lại giữa giỏ hàng và thanh toán (Clarification Q2 = C, FR-018, FR-020)

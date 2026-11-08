@@ -12,7 +12,7 @@ spec": checklist đánh giá xem spec, plan và contracts đã viết đủ, rõ
 ## Nguồn sự thật về tiền (Requirement Completeness)
 
 - [x] CHK001 Spec có liệt kê cụ thể những trường tiền nào từ trình duyệt phải bị bỏ qua (tiền giảm, tạm tính, phí ship, tổng, đơn giá), hay chỉ nói chung "số tiền giảm hoặc tổng tiền"? [Completeness, Spec §FR-014]
-- [x] CHK002 Yêu cầu "không tin số tiền từ trình duyệt" có được viết cho cả bước xem trước khi áp mã, không chỉ cho lúc đặt hàng? Hiện tại spec chỉ nêu lúc đặt hàng; còn bước xem trước chỉ được ghi trong plan (R2). [Gap, Spec §FR-014, Plan R2]
+- [x] CHK002 Yêu cầu "không tin số tiền từ trình duyệt" có được viết cho cả bước xem trước khi áp mã, không chỉ cho lúc đặt hàng? Hiện tại spec chỉ nêu lúc đặt hàng; còn bước xem trước chỉ được ghi trong plan (R2). [Gap, Spec §FR-014, Plan R2] **→ Đã xử lý:** spec FR-021.
 - [x] CHK003 Spec có nói rõ đồng hồ nào quyết định mã còn hạn hay hết hạn (của hệ thống, không phải của thiết bị khách)? [Clarity, Spec §FR-007]
 - [x] CHK004 Spec có nói rõ mã lưu trên trình duyệt (FR-020) chỉ là gợi ý, và luôn phải được hệ thống kiểm tra lại trước khi dùng để tính tiền? [Clarity, Spec §FR-020]
 - [x] CHK005 Spec có định nghĩa giới hạn dưới của tổng tiền (ví dụ tổng không bao giờ thấp hơn phí giao hàng, hoặc không âm) ở mọi tổ hợp mã và phương thức giao hàng? [Completeness, Spec §FR-010, §FR-011]
@@ -20,34 +20,34 @@ spec": checklist đánh giá xem spec, plan và contracts đã viết đủ, rõ
 ## Lạm dụng mã (Scenario Coverage)
 
 - [x] CHK006 Rủi ro khi một mã được dùng không giới hạn số lần, bởi bất kỳ ai, có được ghi rõ là rủi ro marketing chấp nhận, hay chỉ được liệt kê trong mục "ngoài phạm vi"? [Assumption, Spec §Assumptions]
-- [x] CHK007 Spec có yêu cầu nào chống dò mã (thử hàng loạt mã ở bước áp dụng), ví dụ giới hạn số lần thử hoặc ghi nhận các lần thử sai? [Gap]
-- [x] CHK008 Spec có cân nhắc rằng việc phân biệt "mã không tồn tại" với "mã đã hết hạn" sẽ cho kẻ dò mã biết mã nào có thật? Có ghi lại việc chấp nhận đánh đổi này để đổi lấy trải nghiệm tốt hơn? [Conflict, Spec §FR-012]
+- [x] CHK007 Spec có yêu cầu nào chống dò mã (thử hàng loạt mã ở bước áp dụng), ví dụ giới hạn số lần thử hoặc ghi nhận các lần thử sai? [Gap] **→ Rủi ro chấp nhận:** ghi ở spec mục Assumptions.
+- [x] CHK008 Spec có cân nhắc rằng việc phân biệt "mã không tồn tại" với "mã đã hết hạn" sẽ cho kẻ dò mã biết mã nào có thật? Có ghi lại việc chấp nhận đánh đổi này để đổi lấy trải nghiệm tốt hơn? [Conflict, Spec §FR-012] **→ Rủi ro chấp nhận:** ghi ở spec mục Assumptions.
 - [x] CHK009 Yêu cầu "mỗi đơn chỉ một mã" có được viết thành ràng buộc phía hệ thống (yêu cầu đặt hàng chỉ chứa tối đa một mã), không chỉ là hành vi giao diện (phải gỡ mã cũ trước)? [Clarity, Spec §FR-008]
 - [x] CHK010 Spec có xác nhận tổ hợp "giảm giá + miễn phí giao hàng tính trên tạm tính trước giảm" là chủ ý của marketing? Ví dụ đơn 500.000 ₫ với `GIAM50K` vừa được giảm vừa được miễn ship. [Assumption, Spec §FR-011]
 - [x] CHK011 Trường hợp đặt cùng một đơn có mã nhiều lần (bấm đặt hàng lặp lại, gửi lại yêu cầu) có được nêu trong spec, kể cả khi kết luận là chấp nhận được vì chưa giới hạn lượt dùng? [Coverage, Gap]
-- [x] CHK012 Spec có nói thông báo "mã hết hạn lúc đặt hàng" và số tiền chênh lệch luôn do hệ thống tính, để không ai làm giả được thông báo hay con số trên trang chi tiết đơn? [Clarity, Spec §FR-015a, Plan R4]
+- [x] CHK012 Spec có nói thông báo "mã hết hạn lúc đặt hàng" và số tiền chênh lệch luôn do hệ thống tính, để không ai làm giả được thông báo hay con số trên trang chi tiết đơn? [Clarity, Spec §FR-015a, Plan R4] **→ Đã xử lý:** spec FR-015a (chỉ hiện khi mã thật sự hết hạn).
 
 ## Tính nhất quán (Requirement Consistency)
 
-- [x] CHK013 FR-015a (mã hết hạn lúc đặt thì vẫn tạo đơn theo giá gốc) có nhất quán với nguyên tắc "khách không trả số tiền chưa được hiển thị"? Spec có yêu cầu khách được báo **trước** khi bị thu tiền (ví dụ trước khi chuyển khoản), hay chỉ báo sau khi đơn đã tạo? [Conflict, Spec §FR-015a, Clarifications Q1]
+- [x] CHK013 FR-015a (mã hết hạn lúc đặt thì vẫn tạo đơn theo giá gốc) có nhất quán với nguyên tắc "khách không trả số tiền chưa được hiển thị"? Spec có yêu cầu khách được báo **trước** khi bị thu tiền (ví dụ trước khi chuyển khoản), hay chỉ báo sau khi đơn đã tạo? [Conflict, Spec §FR-015a, Clarifications Q1] **→ Đã giảm thiểu:** spec FR-015a (thông báo nằm trên hướng dẫn thanh toán, số tiền chuyển khoản là giá gốc).
 - [x] CHK014 Ba lý do từ chối trong spec (FR-012) có khớp một-một với ba mã lỗi trong contracts (`COUPON_NOT_FOUND`, `COUPON_EXPIRED`, `COUPON_MIN_ORDER_NOT_MET`), kể cả HTTP status? [Consistency, Spec §FR-012, contracts/coupons-validate.md]
 - [x] CHK015 Khi một mã vi phạm nhiều điều kiện cùng lúc (vừa hết hạn vừa chưa đạt tối thiểu), thứ tự ưu tiên lý do có được ghi trong spec, hay chỉ nằm trong data-model? [Consistency, Gap, data-model.md]
 - [x] CHK016 Cách xử lý mã không hợp lệ lúc đặt hàng có nhất quán giữa FR-015 (từ chối), FR-015a (vẫn tạo đơn) và FR-018 (tự gỡ khi kiểm tra lại)? Hai cách xử lý khác nhau cho "hết hạn" ở hai thời điểm có được giải thích? [Consistency, Spec §FR-015, §FR-015a, §FR-018]
 
 ## Validate input (Requirement Clarity)
 
-- [x] CHK017 Spec có định nghĩa định dạng hợp lệ của mã: độ dài tối đa và bộ ký tự cho phép? Hiện chỉ có `max(32)` trong plan, spec không nói gì. [Gap, Spec §FR-013, Plan R8]
-- [x] CHK018 Spec có nói cách xử lý khoảng trắng **giữa** mã (ví dụ `SHOP LITE10`) và ký tự vô hình hoặc ký tự full-width? Hiện chỉ có khoảng trắng đầu và cuối. [Edge Case, Spec §FR-013]
-- [x] CHK019 Quy tắc "không phân biệt hoa/thường" có nói rõ không phụ thuộc ngôn ngữ của thiết bị (ví dụ ký tự có dấu hoặc ký tự đặc biệt khi chuyển sang chữ HOA)? [Clarity, Spec §FR-013]
-- [x] CHK020 Spec, hoặc contract, có định nghĩa phản hồi khi trường mã sai kiểu (số, mảng, object, null) thay vì chuỗi? [Completeness, contracts/orders-post.md]
-- [x] CHK021 Có yêu cầu nào về việc hiển thị lại mã do khách nhập trong thông báo lỗi, ví dụ `Mã giảm giá "…" không tồn tại`: giới hạn độ dài và hiển thị dạng văn bản thuần? [Gap, contracts/coupons-validate.md]
+- [x] CHK017 Spec có định nghĩa định dạng hợp lệ của mã: độ dài tối đa và bộ ký tự cho phép? Hiện chỉ có `max(32)` trong plan, spec không nói gì. [Gap, Spec §FR-013, Plan R8] **→ Đã xử lý:** spec FR-013 (tối đa 32 ký tự).
+- [x] CHK018 Spec có nói cách xử lý khoảng trắng **giữa** mã (ví dụ `SHOP LITE10`) và ký tự vô hình hoặc ký tự full-width? Hiện chỉ có khoảng trắng đầu và cuối. [Edge Case, Spec §FR-013] **→ Đã xử lý:** spec FR-013 và Edge Cases (không tự sửa, coi là không tồn tại).
+- [x] CHK019 Quy tắc "không phân biệt hoa/thường" có nói rõ không phụ thuộc ngôn ngữ của thiết bị (ví dụ ký tự có dấu hoặc ký tự đặc biệt khi chuyển sang chữ HOA)? [Clarity, Spec §FR-013] **→ Đã xử lý:** spec FR-013 (không phụ thuộc ngôn ngữ thiết bị).
+- [x] CHK020 Spec, hoặc contract, có định nghĩa phản hồi khi trường mã sai kiểu (số, mảng, object, null) thay vì chuỗi? [Completeness, contracts/orders-post.md] **→ Đã xử lý:** spec FR-013 (không phải chuỗi thì bị từ chối).
+- [x] CHK021 Có yêu cầu nào về việc hiển thị lại mã do khách nhập trong thông báo lỗi, ví dụ `Mã giảm giá "…" không tồn tại`: giới hạn độ dài và hiển thị dạng văn bản thuần? [Gap, contracts/coupons-validate.md] **→ Đã xử lý:** spec FR-013 (tối đa 32 ký tự, hiển thị văn bản thuần).
 - [x] CHK022 Ràng buộc với danh sách sản phẩm gửi kèm khi xem trước mã (số lượng mỗi dòng, sản phẩm không tồn tại, vượt tồn kho) có được định nghĩa giống hệt lúc đặt hàng? [Consistency, contracts/coupons-validate.md]
 - [x] CHK023 Spec có yêu cầu phản hồi lỗi theo một định dạng thống nhất, không lộ chi tiết nội bộ như danh sách mã hay dữ liệu cấu hình mã? [Completeness, Constitution III]
 
 ## Lộ dữ liệu (Non-Functional — Security)
 
-- [x] CHK024 Yêu cầu "danh sách mã không được công khai phía trình duyệt" có nằm trong spec như một yêu cầu nghiệp vụ, hay chỉ là một ràng buộc trong plan? [Gap, Plan R2, Plan §Constraints]
-- [x] CHK025 Spec có giới hạn thông tin trả về khi xem trước mã, ví dụ chỉ trả về quy tắc của đúng mã đó và không lộ hạn dùng của mã khác? [Completeness, contracts/coupons-validate.md]
+- [x] CHK024 Yêu cầu "danh sách mã không được công khai phía trình duyệt" có nằm trong spec như một yêu cầu nghiệp vụ, hay chỉ là một ràng buộc trong plan? [Gap, Plan R2, Plan §Constraints] **→ Đã xử lý:** spec FR-022.
+- [x] CHK025 Spec có giới hạn thông tin trả về khi xem trước mã, ví dụ chỉ trả về quy tắc của đúng mã đó và không lộ hạn dùng của mã khác? [Completeness, contracts/coupons-validate.md] **→ Đã xử lý:** spec FR-022.
 - [x] CHK026 Việc trang chi tiết đơn (ai có mã đơn cũng xem được) hiển thị mã đã dùng có được đánh giá là chấp nhận được về quyền riêng tư? [Assumption, Spec §FR-016]
 
 ## Tiêu chí chấp nhận (Acceptance Criteria Quality)

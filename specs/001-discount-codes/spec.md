@@ -73,7 +73,7 @@ giảm; gửi thử yêu cầu đặt hàng có số tiền giảm hoặc tổng
 3. **Given** khách áp dụng mã hợp lệ rồi mã hết hạn trước khi bấm đặt hàng,
    **When** khách đặt hàng,
    **Then** đơn vẫn được tạo nhưng không có giảm giá (không lưu mã, số tiền giảm bằng 0, tổng tiền là giá gốc),
-   và trang xác nhận đơn báo rõ mã đã hết hạn nên không được áp dụng, kèm số tiền chênh lệch so với lúc áp mã.
+   và trang xác nhận đơn báo rõ mã đã hết hạn nên không được áp dụng, kèm số tiền giảm mà mã lẽ ra mang lại cho đơn này.
 4. **Given** yêu cầu đặt hàng chứa mã không tồn tại,
    **When** hệ thống xử lý,
    **Then** đơn không được tạo và khách nhận thông báo "mã không tồn tại".
@@ -151,7 +151,8 @@ giá gốc và ô nhập mã dùng lại được.
 - Phần trăm ra số lẻ (ví dụ 10% của 333.335 ₫ = 33.333,5 ₫): làm tròn xuống đến đồng.
 - Mã giảm số tiền cố định lớn hơn tiền hàng: số tiền giảm không vượt quá tiền hàng, tổng tiền hàng không bao giờ âm.
 - Khách đổi phương thức giao hàng sau khi áp mã: giảm giá không đổi, phí giao hàng tính theo quy tắc hiện hành.
-- Mã hết hạn giữa lúc áp mã và lúc đặt hàng: đơn vẫn được tạo với giá gốc (không giảm), trang xác nhận đơn báo mã đã hết hạn và số tiền chênh lệch.
+- Mã hết hạn giữa lúc áp mã và lúc đặt hàng: đơn vẫn được tạo với giá gốc (không giảm), trang xác nhận đơn báo mã đã hết hạn và số tiền giảm mà mã lẽ ra mang lại. Người tự thêm tham số giả vào địa chỉ trang không làm hiện thông báo sai.
+- Mã có khoảng trắng ở giữa (ví dụ `SHOP LITE10`), ký tự full-width hoặc ký tự lạ: không được tự sửa, bị coi là không tồn tại. Mã dài hơn 32 ký tự hoặc không phải chuỗi: bị từ chối là dữ liệu không hợp lệ.
 - Yêu cầu đặt hàng gửi kèm số tiền giảm hoặc tổng tiền tự khai: bị bỏ qua, hệ thống luôn tính lại.
 - Đơn đã dùng mã bị hủy: thông tin mã và số tiền giảm vẫn được giữ trong đơn để đối soát.
 - Đơn cũ tạo trước khi có tính năng này không có thông tin mã: vẫn xem được bình thường.
@@ -174,15 +175,17 @@ giá gốc và ô nhập mã dùng lại được.
 - **FR-010**: Số tiền giảm của mã cố định MUST là số tiền ghi trên mã, nhưng MUST NOT vượt quá tạm tính.
 - **FR-011**: Giảm giá MUST chỉ áp dụng trên tiền hàng; phí giao hàng và quy tắc miễn phí giao hàng hiện có MUST giữ nguyên (ngưỡng miễn phí vẫn tính trên tạm tính trước giảm giá).
 - **FR-012**: Mã không hợp lệ MUST cho thông báo tiếng Việt nêu đúng một trong các lý do: mã không tồn tại, mã đã hết hạn, hoặc đơn chưa đạt giá trị tối thiểu kèm số tiền cần mua thêm.
-- **FR-013**: Nhận diện mã MUST không phân biệt hoa/thường và MUST bỏ khoảng trắng đầu/cuối; ô để trống MUST nhắc khách nhập mã.
+- **FR-013**: Nhận diện mã MUST không phân biệt hoa/thường (không phụ thuộc ngôn ngữ của thiết bị) và MUST bỏ khoảng trắng đầu/cuối; ô để trống MUST nhắc khách nhập mã. Mã sau khi chuẩn hóa MUST dài tối đa 32 ký tự; giá trị không phải chuỗi hoặc dài hơn 32 ký tự MUST bị từ chối là dữ liệu không hợp lệ (không tra mã). Khoảng trắng ở giữa hoặc ký tự lạ MUST NOT được tự sửa: mã đó bị coi là không tồn tại. Mã khách nhập khi được hiển thị lại trong thông báo MUST ở dạng văn bản thuần.
 - **FR-014**: Khi đặt hàng, hệ thống MUST kiểm tra lại mã và tính lại số tiền giảm cùng tổng tiền cuối cùng từ dữ liệu của mình, và MUST bỏ qua mọi số tiền giảm hoặc tổng tiền do trình duyệt gửi lên.
 - **FR-015**: Nếu lúc đặt hàng mã không tồn tại hoặc tạm tính không đạt giá trị tối thiểu của mã, hệ thống MUST từ chối đặt, MUST không tạo đơn, và MUST nêu rõ lý do theo FR-012.
-- **FR-015a**: Nếu lúc đặt hàng mã đã hết hạn, hệ thống MUST vẫn tạo đơn nhưng MUST NOT áp giảm giá (đơn không lưu mã, tổng tiền là giá gốc), và trang xác nhận đơn ngay sau khi đặt MUST báo rõ mã đã hết hạn nên không được áp dụng, kèm số tiền chênh lệch so với lúc áp mã.
+- **FR-015a**: Nếu lúc đặt hàng mã đã hết hạn, hệ thống MUST vẫn tạo đơn nhưng MUST NOT áp giảm giá (đơn không lưu mã, tổng tiền là giá gốc), và trang xác nhận đơn ngay sau khi đặt MUST báo rõ mã đã hết hạn nên không được áp dụng, kèm số tiền giảm mà mã lẽ ra mang lại cho đơn này. Thông báo MUST nằm trên cùng trang chi tiết đơn, phía trên hướng dẫn thanh toán, và số tiền chuyển khoản MUST là tổng tiền của đơn (giá gốc). Thông báo MUST chỉ hiện khi mã thật sự đã hết hạn; mọi giá trị khác (mã còn hạn, mã không tồn tại, giá trị không hợp lệ) MUST bị bỏ qua.
 - **FR-016**: Đơn hàng được tạo MUST lưu mã đã dùng và số tiền được giảm; trang chi tiết đơn MUST hiển thị cả hai cùng tổng tiền sau giảm.
 - **FR-017**: Đơn không dùng mã và các đơn đã tạo trước tính năng này MUST tiếp tục hiển thị bình thường, không có dòng mã hay giảm giá.
 - **FR-018**: Khi giỏ hàng thay đổi làm mã đã áp dụng không còn đủ điều kiện (tạm tính dưới mức tối thiểu, hoặc mã đã hết hạn), hệ thống MUST gỡ mã hẳn (không tự áp dụng lại khi giỏ đạt lại điều kiện) và MUST báo khách lý do, kèm số tiền cần mua thêm nếu lý do là chưa đạt tối thiểu.
-- **FR-020**: Mã đã áp dụng MUST được giữ cùng giỏ hàng khi khách rời trang thanh toán, sửa giỏ hàng hoặc tải lại trang, và MUST được kiểm tra lại mỗi khi khách quay lại trang thanh toán hoặc giỏ hàng thay đổi; mã MUST được xóa khi khách gỡ mã hoặc đặt hàng thành công.
 - **FR-019**: Ba mã ban đầu MUST có sẵn: `SHOPLITE10` (giảm 10%, tối đa 100.000 ₫, đơn từ 300.000 ₫), `GIAM50K` (giảm 50.000 ₫, đơn từ 500.000 ₫) và `TET2026` (giảm 15%, tối đa 200.000 ₫, hết hạn 28/02/2026).
+- **FR-020**: Mã đã áp dụng MUST được giữ cùng giỏ hàng khi khách rời trang thanh toán, sửa giỏ hàng hoặc tải lại trang, và MUST được kiểm tra lại mỗi khi khách quay lại trang thanh toán hoặc giỏ hàng thay đổi; mã MUST được xóa khi khách gỡ mã hoặc đặt hàng thành công. Mã lưu trên trình duyệt chỉ là gợi ý: số tiền giảm MUST luôn do hệ thống tính lại từ mã đó.
+- **FR-021**: Khi xem trước mã ở trang thanh toán, hệ thống MUST tự tính tạm tính từ giá sản phẩm của mình theo danh sách sản phẩm và số lượng khách gửi, và MUST NOT dùng bất kỳ số tiền nào do trình duyệt gửi lên.
+- **FR-022**: Danh sách mã MUST NOT được gửi xuống trình duyệt. Phản hồi xem trước MUST chỉ chứa quy tắc của đúng mã được hỏi, không chứa thông tin của mã khác.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -212,5 +215,6 @@ giá gốc và ô nhập mã dùng lại được.
 - Khách phải gỡ mã hiện tại trước khi nhập mã khác (không thay thế tự động).
 - Hủy đơn không làm mất thông tin mã trong đơn; không có hoàn lượt dùng vì chưa giới hạn lượt dùng.
 - Tính năng chỉ ở trang thanh toán; trang giỏ hàng chưa có ô nhập mã.
+- Rủi ro được chấp nhận: chưa giới hạn số lần thử mã, và thông báo vẫn phân biệt ba lý do (FR-012) để khách sửa được lỗi. Ba mã ban đầu là mã khuyến mãi công khai, không phải mã bí mật. Cần xem lại khi có mã dành riêng cho từng khách hoặc giới hạn lượt dùng (đang ngoài phạm vi).
 - Ngoài phạm vi: trang quản trị tạo/sửa mã, giới hạn số lượt dùng mỗi mã, mã dành riêng cho từng khách hàng.
 - Phụ thuộc: luồng thanh toán và lưu đơn hàng hiện có; quy tắc phí giao hàng hiện hành không đổi.

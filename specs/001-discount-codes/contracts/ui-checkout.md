@@ -40,7 +40,9 @@ Thêm dòng giữa "Tạm tính" và "Phí giao hàng", chỉ hiện khi có mã
 - Dòng `Giảm giá (GIAM50K)` / `−50.000 ₫` (testid `order-discount`) chỉ hiện khi `order.couponCode`
   có giá trị và `order.discount > 0`. Đơn cũ hoặc đơn không mã thì không có dòng này.
 - `?placed=1&couponExpired=CODE`: hiện khối `role="status"` màu vàng, ví dụ "Mã TET2026 đã hết hạn lúc
-  đặt hàng nên không được áp dụng. Đơn hàng được tính theo giá gốc (cao hơn 90.000 ₫ so với lúc áp mã)."
-  Số tiền do server tính bằng `getExpiredCouponNotice`. Nếu mã không tồn tại, hoặc đơn đã có
-  `couponCode`, thì bỏ qua khối này.
+  đặt hàng nên không được áp dụng. Đơn hàng được tính theo giá gốc (mã lẽ ra giảm 90.000 ₫)."
+  Khối nằm ngay dưới banner "Đặt hàng thành công", phía trên khối "Giao hàng & thanh toán"; số tiền chuyển
+  khoản là `order.total` (giá gốc). Tham số `couponExpired` là input không tin cậy: `getExpiredCouponNotice`
+  validate bằng `couponCodeSchema` và chỉ trả kết quả khi mã **thật sự đã hết hạn**. Nếu mã còn hạn, không
+  tồn tại, không hợp lệ, hoặc đơn đã có `couponCode`, thì bỏ qua khối này.
 - Nội dung chuyển khoản dùng `order.total` (đã trừ giảm giá), không cần đổi.
