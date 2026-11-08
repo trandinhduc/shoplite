@@ -20,7 +20,10 @@ kiểm tra lại mã qua API. Nếu mã không còn hợp lệ (FR-018), field t
 Bạn cần mua thêm 50.000 ₫". Ô nhập hiện lại và để trống; mã không tự áp dụng lại.
 
 Trong lúc kiểm tra lại, tóm tắt hiển thị giá chưa giảm và nút "Đặt hàng" bị disabled, để không gửi đơn
-với con số chưa được xác nhận.
+với con số chưa được xác nhận (spec FR-023).
+
+Khi đặt hàng bị từ chối vì mã (`COUPON_NOT_FOUND`, `COUPON_MIN_ORDER_NOT_MET`), khách ở lại trang với
+`role="alert"` chứa `error.message`, và mã bị gỡ khỏi giỏ để đặt lại (spec FR-024).
 
 Nút "Áp dụng" có `type="button"`, không submit form thanh toán. Nhấn Enter trong ô mã sẽ áp dụng mã,
 không đặt hàng.

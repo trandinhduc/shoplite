@@ -45,8 +45,9 @@ vài mã, không cần cache.
 - Hạn dùng tính theo giờ Việt Nam, không phụ thuộc múi giờ máy chủ.
 - Đơn cũ vẫn hiển thị đúng.
 
-**Scale/Scope**: 3 mã ban đầu. Khoảng 1 feature mới, 1 route mới, sửa khoảng 8 file hiện có, 3 trang/
-component UI bị ảnh hưởng (checkout form, checkout summary, chi tiết đơn).
+**Scale/Scope**: 3 mã ban đầu. Khoảng 1 feature mới (`coupons`), 1 route mới, 1 file dữ liệu mới, 3 component
+mới ở `orders`/`coupons`, sửa khoảng 20 file hiện có (code và test) và 3 màn hình bị ảnh hưởng (checkout form,
+checkout summary, chi tiết đơn).
 
 ## Constitution Check
 
@@ -79,8 +80,10 @@ specs/001-discount-codes/
 │   ├── coupons-validate.md   # POST /api/coupons/validate (mới)
 │   ├── orders-post.md        # POST /api/orders (mở rộng couponCode)
 │   └── ui-checkout.md        # Selector UI cho component test / e2e
-├── checklists/requirements.md
-└── tasks.md             # Phase 2 (/speckit-tasks), chưa tạo
+├── checklists/
+│   ├── requirements.md       # Chất lượng spec
+│   └── security.md           # Chống gian lận giảm giá, validate input
+└── tasks.md             # Phase 2 (/speckit-tasks)
 ```
 
 ### Source Code (repository root)
@@ -94,7 +97,7 @@ src/
 │   │   ├── types.ts                       # Coupon, DiscountRule, CouponEvaluation
 │   │   ├── coupon-rules.ts                # normalizeCouponCode, isCouponExpired, evaluateCoupon (thuần, client dùng được)
 │   │   ├── coupon-rules.test.ts
-│   │   ├── coupon-service.ts              # findCouponByCode, getExpiredCouponNotice (đọc src/data/coupons.ts, chỉ server)
+│   │   ├── coupon-service.ts              # findCouponByCode, toCouponError, getExpiredCouponNotice, getExpiredCouponNoticeForOrder (đọc src/data/coupons.ts, chỉ server)
 │   │   ├── coupon-service.test.ts         # gồm kiểm tra toàn vẹn dữ liệu tĩnh
 │   │   └── components/
 │   │       ├── coupon-field.tsx           # "use client": ô mã, Áp dụng, Gỡ mã, thông báo
@@ -113,18 +116,24 @@ src/
 │   │   └── components/
 │   │       ├── checkout-form.tsx          # SỬA: state mã, gửi couponCode, xử lý couponNotice / lỗi COUPON_*
 │   │       ├── checkout-form.test.tsx     # SỬA
-│   │       └── checkout-summary.tsx       # SỬA: nhận coupon, dòng "Giảm giá (CODE)"
+│   │       ├── checkout-summary.tsx       # SỬA: nhận coupon, dòng "Giảm giá (CODE)"
+│   │       └── checkout-summary.test.tsx  # MỚI
 │   └── orders/
 │       ├── types.ts                       # SỬA: couponCode?, discount?
 │       ├── order-errors.ts                # SỬA: COUPON_NOT_FOUND | COUPON_EXPIRED | COUPON_MIN_ORDER_NOT_MET (422)
 │       ├── order-service.ts               # SỬA: findCoupon DI; previewCoupon(input); placeOrder đánh giá mã
 │       ├── order-service.test.ts          # SỬA: các nhánh mã + chống gian lận + đơn không mã
-│       └── order-repository.test.ts       # SỬA: đọc đơn cũ không có discount
+│       ├── order-repository.test.ts       # SỬA: đọc đơn cũ không có discount
+│       └── components/
+│           ├── order-price-summary.tsx    # MỚI: Tạm tính / Giảm giá / Phí giao hàng / Tổng cộng (discount ?? 0)
+│           ├── order-price-summary.test.tsx
+│           ├── expired-coupon-notice.tsx  # MỚI: chỉ hiển thị thông báo mã hết hạn lúc đặt
+│           └── expired-coupon-notice.test.tsx
 ├── app/
 │   ├── api/
 │   │   ├── coupons/validate/route.ts      # MỚI (mỏng) + route.test.ts
 │   │   └── orders/route.test.ts           # SỬA: couponCode, 422 COUPON_*, couponNotice
-│   └── orders/[id]/page.tsx               # SỬA: dòng giảm giá + khối thông báo couponExpired
+│   └── orders/[id]/page.tsx               # SỬA (mỏng): dùng OrderPriceSummary, gọi getExpiredCouponNoticeForOrder rồi render ExpiredCouponNotice
 e2e/
 └── shopping-flow.spec.ts                  # SỬA/THÊM: áp SHOPLITE10 → đặt hàng → thấy giảm giá ở chi tiết đơn
 ```

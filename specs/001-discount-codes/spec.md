@@ -77,7 +77,10 @@ giảm; gửi thử yêu cầu đặt hàng có số tiền giảm hoặc tổng
 4. **Given** yêu cầu đặt hàng chứa mã không tồn tại,
    **When** hệ thống xử lý,
    **Then** đơn không được tạo và khách nhận thông báo "mã không tồn tại".
-5. **Given** đơn đặt không dùng mã,
+5. **Given** yêu cầu đặt hàng chứa `GIAM50K` nhưng tạm tính chỉ 499.999 ₫ (dưới mức tối thiểu 500.000 ₫),
+   **When** hệ thống xử lý,
+   **Then** đơn không được tạo, khách nhận thông báo cần mua thêm 1 ₫, và mã bị gỡ khỏi giỏ để khách đặt lại với giá không mã.
+6. **Given** đơn đặt không dùng mã,
    **When** xem chi tiết đơn,
    **Then** không có dòng mã hay giảm giá, và các đơn cũ đã lưu trước đây vẫn hiển thị bình thường.
 
@@ -114,9 +117,10 @@ ba thông báo khác nhau, đúng lý do, và tổng tiền không đổi.
 
 ---
 
-### User Story 4 - Gỡ mã đã áp dụng (Priority: P3)
+### User Story 4 - Gỡ mã và giữ mã khi khách đi qua lại (Priority: P3)
 
 Khách đã áp dụng một mã có thể bấm "Gỡ mã" để bỏ ưu đãi, đưa phần tóm tắt về giá gốc và có thể nhập mã khác.
+Nếu khách rời trang thanh toán rồi quay lại, mã vẫn được giữ và được kiểm tra lại; mã không còn hợp lệ thì bị gỡ kèm lý do.
 
 **Why this priority**: Giúp khách thử mã khác hoặc sửa nhầm lẫn mà không phải tải lại trang; ít quan trọng
 hơn vì khách vẫn đặt hàng được nếu thiếu thao tác này.
@@ -186,18 +190,20 @@ giá gốc và ô nhập mã dùng lại được.
 - **FR-020**: Mã đã áp dụng MUST được giữ cùng giỏ hàng khi khách rời trang thanh toán, sửa giỏ hàng hoặc tải lại trang, và MUST được kiểm tra lại mỗi khi khách quay lại trang thanh toán hoặc giỏ hàng thay đổi; mã MUST được xóa khi khách gỡ mã hoặc đặt hàng thành công. Mã lưu trên trình duyệt chỉ là gợi ý: số tiền giảm MUST luôn do hệ thống tính lại từ mã đó.
 - **FR-021**: Khi xem trước mã ở trang thanh toán, hệ thống MUST tự tính tạm tính từ giá sản phẩm của mình theo danh sách sản phẩm và số lượng khách gửi, và MUST NOT dùng bất kỳ số tiền nào do trình duyệt gửi lên.
 - **FR-022**: Danh sách mã MUST NOT được gửi xuống trình duyệt. Phản hồi xem trước MUST chỉ chứa quy tắc của đúng mã được hỏi, không chứa thông tin của mã khác.
+- **FR-023**: Trong lúc hệ thống kiểm tra lại mã (khi khách vào trang thanh toán hoặc giỏ hàng thay đổi), phần tóm tắt MUST hiển thị giá chưa giảm và nút đặt hàng MUST bị vô hiệu hóa cho tới khi có kết quả, để khách không đặt hàng dựa trên con số chưa được xác nhận.
+- **FR-024**: Khi đặt hàng bị từ chối vì mã (FR-015), khách MUST ở lại trang thanh toán với thông báo nêu lý do, và mã MUST bị gỡ khỏi giỏ hàng để khách đặt lại với giá không mã hoặc nhập mã khác.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Mã giảm giá**: Một chương trình ưu đãi do marketing định nghĩa. Gồm: mã (chuỗi khách nhập), loại (phần trăm hoặc số tiền cố định), giá trị giảm, mức giảm tối đa (chỉ với loại phần trăm), giá trị đơn tối thiểu (tùy chọn) và ngày hết hạn (tùy chọn).
 - **Kết quả áp mã**: Kết quả kiểm tra một mã với một giỏ hàng: hợp lệ hay không, số tiền giảm nếu hợp lệ, hoặc lý do bị từ chối (không tồn tại, hết hạn, chưa đạt tối thiểu kèm số tiền còn thiếu).
-- **Đơn hàng (mở rộng)**: Đơn hiện có, bổ sung mã đã dùng và số tiền được giảm; tổng tiền của đơn đã trừ số tiền giảm. Đơn không dùng mã thì không có hai thông tin này.
+- **Đơn hàng (mở rộng)**: Đơn hiện có, bổ sung mã đã dùng (chỉ có khi đơn thật sự được áp mã) và số tiền được giảm (bằng 0 khi không áp mã); tổng tiền của đơn đã trừ số tiền giảm. Đơn tạo trước tính năng này không có hai thông tin đó và được hiểu là không giảm giá.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: Khách áp dụng một mã hợp lệ và thấy số tiền giảm cùng tổng tiền mới trong vòng 1 giây sau khi bấm "Áp dụng".
+- **SC-001**: Khách áp dụng một mã hợp lệ và thấy số tiền giảm cùng tổng tiền mới trong vòng 1 giây sau khi bấm "Áp dụng"; việc kiểm tra lại mã khi khách vào trang thanh toán cũng hoàn tất trong vòng 1 giây.
 - **SC-002**: 100% mã bị từ chối hiển thị đúng một trong ba lý do (không tồn tại, hết hạn, chưa đạt tối thiểu); riêng lý do chưa đạt tối thiểu luôn nêu đúng số tiền cần mua thêm.
 - **SC-003**: 100% đơn đặt có mã lưu đúng số tiền giảm theo quy tắc của mã, kể cả khi yêu cầu đặt hàng bị sửa số liệu tiền; số tiền khách phải trả không bao giờ thấp hơn mức quy tắc cho phép.
 - **SC-004**: 100% đơn đã dùng mã hiển thị đúng mã và số tiền giảm ở trang chi tiết đơn; đơn không mã và đơn cũ hiển thị không thay đổi.
