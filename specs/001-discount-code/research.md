@@ -2,10 +2,11 @@
 
 Không còn `NEEDS CLARIFICATION`. Các quyết định thiết kế:
 
-## 1. Client xem trước mã bằng API, không import dữ liệu mã vào bundle
-- **Decision**: thêm `POST /api/coupons/validate` nhận `{ couponCode, items }`, trả mức giảm; route chỉ gọi `orderService.previewCoupon`.
-- **Rationale**: danh sách mã và quy tắc ở một nơi (server); mã khuyến mãi tương lai không lộ trong JS client; subtotal do server tính từ catalog nên cũng không tin giá client; xem trước và đặt hàng dùng chung một đường tính nên không lệch kết quả.
-- **Alternatives**: gọi `evaluateCoupon` trực tiếp ở client (nhanh, không cần mạng, nhưng lộ toàn bộ mã và tin subtotal từ giỏ localStorage); Server Action (khác quy ước hiện tại dùng route handler).
+## 1. Client xem trước mã bằng hàm thuần, không thêm endpoint
+- **Decision**: `coupon-input` gọi trực tiếp `evaluateCoupon(code, subtotal, now)` với dữ liệu mã tĩnh `src/data/coupons.ts` và tiền hàng từ giỏ (`useCart().subtotal`). Không có API xem trước. Server chỉ kiểm tra lại ở `POST /api/orders` bằng cùng hàm `evaluateCoupon`.
+- **Rationale**: tức thì (không có độ trễ mạng, SC-001); ít bề mặt nhất (không route, không service method, không test route thêm), đúng nguyên tắc "Đơn giản trước"; một nguồn quy tắc duy nhất vì client và server dùng chung hàm thuần và chung `describeCouponFailure` cho thông báo tiếng Việt, nên không thể lệch nhau. Bảo mật không bị ảnh hưởng: xem trước chỉ để hiển thị, giỏ hàng vốn chỉ hiển thị giá (AGENTS.md), còn mức giảm và tổng cuối cùng luôn do server tính lại từ giá catalog (Nguyên tắc III).
+- **Đánh đổi chấp nhận**: (1) danh sách mã nằm trong JS client; chấp nhận được vì đây là mã khuyến mãi công khai, còn mã riêng cho từng khách đã ngoài phạm vi; (2) đồng hồ trình duyệt có thể lệch nên xem trước có lúc khác server (ví dụ mã vừa hết hạn); lệch này được xử lý bằng luồng server từ chối rồi form tự gỡ mã (mục 9). Nếu sau này có mã bí mật hoặc giới hạn lượt dùng, phải chuyển sang xem trước qua server.
+- **Alternatives**: `POST /api/coupons/validate` (che danh sách mã và tính subtotal từ catalog, nhưng thêm một route, một service method và một vòng gọi mạng cho giá trị hiển thị mà server vốn sẽ tính lại); Server Action (khác quy ước dùng route handler); thêm cờ `dryRun` vào `POST /api/orders` (trộn việc xem trước vào luồng tạo đơn, dễ gây lỗi lưu nhầm).
 
 ## 2. Thứ tự tính và nơi đặt quy tắc
 - **Decision**: `evaluateCoupon(code, subtotal, now)` (thuần, trong `coupons`) trả `{ ok, code, discountAmount }` hoặc `{ ok: false, reason, shortfall? }`. `calculateOrderTotals(lines, method, discount = 0)` giữ `subtotal`, tính `shippingFee` trên subtotal **trước giảm** (theo clarification), `discount = min(discount, subtotal)`, `total = subtotal - discount + shippingFee`.

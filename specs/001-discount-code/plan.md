@@ -9,8 +9,9 @@
 Cho khách nhập một mã giảm giá ở trang thanh toán, xem ngay số tiền giảm và tổng mới, gỡ/đổi mã, và
 đặt hàng với mức giảm do server tự tính lại. Cách làm: thêm feature mới `src/features/coupons/` chứa
 dữ liệu mã tĩnh (`src/data/coupons.ts`) và logic thuần `evaluateCoupon`; mở rộng `calculateOrderTotals`
-trong `pricing.ts` nhận số tiền giảm; `orderService` có thêm `previewCoupon` (cho client xem trước) và
-`placeOrder` nhận `couponCode`, cả hai dùng chung một đường tính. Khi đặt hàng bị từ chối vì mã (hết hạn hoặc không còn đạt tối thiểu), form tự gỡ mã, hiện lý do và giữ nguyên thông tin đã nhập. `Order` lưu thêm trường tùy chọn
+trong `pricing.ts` nhận số tiền giảm; client xem trước mã bằng cách gọi trực tiếp `evaluateCoupon` (hàm thuần, an toàn cho client) trên dữ liệu
+mã tĩnh, không cần API mới; `placeOrder` nhận `couponCode` và tính lại bằng cùng hàm đó. Kết quả xem
+trước chỉ để hiển thị, không có hiệu lực: server mới là nguồn sự thật. Phí giao hàng và ngưỡng miễn phí 500.000đ vẫn xét trên tiền hàng trước giảm giá. Khi đặt hàng bị từ chối vì mã (hết hạn hoặc không còn đạt tối thiểu), form tự gỡ mã, hiện lý do và giữ nguyên thông tin đã nhập. `Order` lưu thêm trường tùy chọn
 `discount` nên đơn cũ trong `storage/orders.json` vẫn hợp lệ. Không thêm dependency hay database.
 
 ## Technical Context
@@ -27,11 +28,11 @@ trong `pricing.ts` nhận số tiền giảm; `orderService` có thêm `previewC
 
 **Project Type**: web-service (Next.js App Router, monolith)
 
-**Performance Goals**: xem trước mã trả về trong < 2 giây (SC-001); phép tính thuần O(số dòng hàng)
+**Performance Goals**: xem trước mã tức thì, tính tại client không cần gọi mạng (đạt SC-001 < 2 giây); phép tính thuần O(số dòng hàng)
 
 **Constraints**: server là nguồn sự thật về tiền; không thêm trường giá vào payload; tương thích ngược với đơn cũ không có `discount`
 
-**Scale/Scope**: 3 mã tĩnh; 1 API mới, 1 trường mới trên `POST /api/orders`; ~1 component mới + sửa 3 component
+**Scale/Scope**: 3 mã tĩnh; không thêm API mới, 1 trường mới trên `POST /api/orders`; ~1 component mới + sửa 3 component
 
 ## Constitution Check
 
@@ -40,8 +41,8 @@ trong `pricing.ts` nhận số tiền giảm; `orderService` có thêm `previewC
 | Nguyên tắc | Đánh giá | Ghi chú |
 |-----------|----------|---------|
 | I. Kiến trúc theo tính năng | ✅ | Logic ở `src/features/coupons/` và `pricing.ts`; route chỉ gọi `orderService`; component client không import `orders/server.ts` |
-| II. Test trước (NON-NEGOTIABLE) | ✅ | Test viết trước cho `evaluateCoupon`, `calculateOrderTotals` (có giảm giá), `previewCoupon`, `placeOrder`; có giá trị biên; dùng repository in-memory; e2e vì đổi luồng thanh toán |
-| III. Server là nguồn sự thật về tiền | ✅ | Payload chỉ thêm `couponCode` (không có giá); server tính lại bằng `calculateOrderTotals`; Zod validate; lỗi qua `OrderError` |
+| II. Test trước (NON-NEGOTIABLE) | ✅ | Test viết trước cho `evaluateCoupon`, `calculateOrderTotals` (có giảm giá), `placeOrder`; có giá trị biên; dùng repository in-memory; e2e vì đổi luồng thanh toán |
+| III. Server là nguồn sự thật về tiền | ✅ | Payload chỉ thêm `couponCode` (không có giá); server tính lại bằng `calculateOrderTotals`; Zod validate; lỗi qua `OrderError`; xem trước ở client chỉ để hiển thị, server luôn tính lại khi đặt hàng |
 | IV. Đơn giản trước | ✅ | Không dependency/database mới; dữ liệu tĩnh như `products.ts` |
 | V. Tiếng Việt và dễ tiếp cận | ✅ | Thông báo tiếng Việt, `formatCurrency`, ô nhập có `label`, lỗi hiển thị cạnh ô nhập kèm `aria-describedby` |
 
@@ -72,10 +73,10 @@ src/
 ├── features/
 │   ├── coupons/                          # MỚI
 │   │   ├── types.ts                      # Coupon, CouponEvaluation, AppliedDiscount
-│   │   ├── coupon-service.ts             # normalizeCouponCode, findCoupon, evaluateCoupon (thuần)
+│   │   ├── coupon-service.ts             # normalizeCouponCode, findCoupon, evaluateCoupon, describeCouponFailure (thuần, không import server)
 │   │   ├── coupon-service.test.ts
 │   │   └── components/
-│   │       ├── coupon-input.tsx          # "use client": ô nhập, Áp dụng, Gỡ
+│   │       ├── coupon-input.tsx          # "use client": ô nhập, Áp dụng, Gỡ; gọi evaluateCoupon trực tiếp
 │   │       └── coupon-input.test.tsx
 │   ├── checkout/
 │   │   ├── pricing.ts                    # SỬA: calculateOrderTotals(lines, method, discount = 0)
@@ -88,15 +89,13 @@ src/
 │   └── orders/
 │       ├── types.ts                      # SỬA: Order.discount? (tùy chọn, đơn cũ không có)
 │       ├── order-errors.ts               # SỬA: 3 mã lỗi COUPON_*
-│       ├── order-service.ts              # SỬA: previewCoupon, placeOrder dùng chung đường tính
+│       ├── order-service.ts              # SỬA: placeOrder nhận couponCode, tính lại bằng evaluateCoupon, throw OrderError COUPON_*
 │       ├── order-service.test.ts         # SỬA
 │       └── components/
 │           ├── order-totals.tsx          # MỚI: tách khối tổng tiền khỏi trang chi tiết
 │           └── order-totals.test.tsx
 └── app/
     ├── api/
-    │   ├── coupons/validate/route.ts     # MỚI: POST xem trước mã
-    │   ├── coupons/validate/route.test.ts
     │   └── orders/route.test.ts          # SỬA: ca couponCode
     └── orders/[id]/page.tsx              # SỬA: dùng OrderTotals
 

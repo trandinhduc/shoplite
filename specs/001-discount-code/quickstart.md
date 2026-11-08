@@ -34,7 +34,8 @@ npm run dev   # http://localhost:3000
 | 6 | Áp dụng `GIAM50K` (đơn 500.000đ) → Gỡ mã | Tổng về giá gốc |
 | 7 | Áp dụng mã rồi Đặt hàng | Trang `/orders/<id>` có dòng mã và số tiền giảm, tổng khớp |
 | 8 | Áp dụng `SHOPLITE10`, rồi ở tab khác xóa bớt giỏ để tiền hàng < 300.000đ, quay lại bấm Đặt hàng | Đơn bị từ chối, mã tự gỡ, hiện "cần mua thêm…", thông tin đã điền còn nguyên, không tự đặt lại |
-| 9 | Mở đơn cũ trong `storage/orders.json` (không có `discount`) | Hiển thị bình thường, không có dòng giảm giá |
+| 9 | Đơn `standard` 520.000đ + `GIAM50K` | Phí ship vẫn miễn phí, tổng 470.000đ (ngưỡng xét trước giảm) |
+| 10 | Mở đơn cũ trong `storage/orders.json` (không có `discount`) | Hiển thị bình thường, không có dòng giảm giá |
 
 ## 3. Kiểm tra chống gian lận
 
