@@ -65,15 +65,6 @@
             "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/scan-prompt.mjs"]
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/notify.mjs"]
-          }
-        ]
       }
     ]
   }

@@ -1,0 +1,33 @@
+[
+  {
+    "id": "SL-20261108-8570C7",
+    "status": "pending",
+    "createdAt": "2026-11-08T06:50:43.453Z",
+    "updatedAt": "2026-11-08T06:50:43.453Z",
+    "customer": {
+      "fullName": "claude",
+      "phone": "0389999999",
+      "address": "123 nguyen hue"
+    },
+    "shippingMethod": "express",
+    "paymentMethod": "bank_transfer",
+    "items": [
+      {
+        "productId": "p003",
+        "slug": "tai-nghe-chup-tai-studioone",
+        "name": "Tai nghe chụp tai StudioOne",
+        "image": {
+          "emoji": "🎶",
+          "from": "#ede9fe",
+          "to": "#fbcfe8"
+        },
+        "unitPrice": 2450000,
+        "quantity": 8,
+        "lineTotal": 19600000
+      }
+    ],
+    "subtotal": 19600000,
+    "shippingFee": 60000,
+    "total": 19660000
+  }
+]
