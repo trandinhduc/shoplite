@@ -38,7 +38,7 @@ Thêm `discount?: AppliedDiscount`. Quan hệ tiền: `total = subtotal - (disco
 
 ## PlaceOrderInput (sửa `checkout-schema.ts`)
 
-Thêm `couponCode?: string` (trim, ≤ 32 ký tự; rỗng = không dùng). Tuyệt đối không thêm trường giá, số tiền giảm hay tổng tiền; nếu client gửi các trường đó, Zod object bỏ qua chúng.
+Thêm `couponCode?: string` (trim, ≤ 32 ký tự, vượt quá → `VALIDATION_ERROR`; rỗng hoặc chỉ khoảng trắng = không dùng mã; không giới hạn tập ký tự, mã khớp chính xác sau khi chuẩn hóa). Tuyệt đối không thêm trường giá, số tiền giảm hay tổng tiền; nếu client gửi các trường đó, Zod object bỏ qua chúng.
 
 ## Chuyển trạng thái / ràng buộc
 

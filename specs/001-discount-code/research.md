@@ -9,7 +9,7 @@ Không còn `NEEDS CLARIFICATION`. Các quyết định thiết kế:
 - **Alternatives**: `POST /api/coupons/validate` (che danh sách mã và tính subtotal từ catalog, nhưng thêm một route, một service method và một vòng gọi mạng cho giá trị hiển thị mà server vốn sẽ tính lại); Server Action (khác quy ước dùng route handler); thêm cờ `dryRun` vào `POST /api/orders` (trộn việc xem trước vào luồng tạo đơn, dễ gây lỗi lưu nhầm).
 
 ## 2. Thứ tự tính và nơi đặt quy tắc
-- **Decision**: `evaluateCoupon(code, subtotal, now)` (thuần, trong `coupons`) trả `{ ok, code, discountAmount }` hoặc `{ ok: false, reason, shortfall? }`. `calculateOrderTotals(lines, method, discount = 0)` giữ `subtotal`, tính `shippingFee` trên subtotal **trước giảm** (theo clarification), `discount = min(discount, subtotal)`, `total = subtotal - discount + shippingFee`.
+- **Decision**: `evaluateCoupon(code, subtotal, now)` (thuần, trong `coupons`) trả `{ ok, code, discountAmount }` hoặc `{ ok: false, reason, shortfall? }`. `calculateOrderTotals(lines, method, discountAmount = 0)` trả `{ subtotal, shippingFee, discountAmount, total }`, tính `shippingFee` trên subtotal **trước giảm** (theo clarification), `discountAmount = clamp(discountAmount, 0, subtotal)`, `total = subtotal - discountAmount + shippingFee`. Trường tên `discountAmount` (không phải `discount`) để không đụng `Order.discount` kiểu `AppliedDiscount`; `placeOrder` gán các trường của `Order` tường minh, không spread.
 - **Rationale**: giữ `pricing.ts` là nơi duy nhất cộng tiền (AGENTS.md); không có phụ thuộc vòng.
 - **Alternatives**: để `pricing.ts` gọi `evaluateCoupon` (kéo dữ liệu mã vào pricing, khó test).
 

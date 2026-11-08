@@ -119,6 +119,7 @@ và bộ phận marketing đối chiếu.
 - Mức giảm phần trăm được làm tròn thành số tiền nguyên đồng; kết quả cuối cùng không có phần lẻ.
 - Mã hết hạn đúng ngày ghi trên mã: mã còn dùng được đến hết ngày đó (giờ Việt Nam) và hết hiệu lực từ ngày kế tiếp.
 - Giỏ hàng thay đổi (tăng giảm số lượng, xóa sản phẩm) sau khi đã áp dụng mã: mã được kiểm tra lại với tiền hàng mới.
+- Giá sản phẩm thay đổi giữa lúc khách áp dụng mã và lúc đặt hàng: hệ thống tính mức giảm trên giá hiện hành tại thời điểm đặt (có thể khác số khách đã thấy); nếu tiền hàng mới không còn đạt mức tối thiểu thì đơn bị từ chối như mục "mã không còn hợp lệ lúc đặt hàng"; khách xem số tiền cuối cùng ở trang chi tiết đơn.
 - Giỏ hàng rỗng: không thể áp dụng mã.
 - Khách tải lại trang thanh toán: mã đã áp dụng có thể phải nhập lại (xem Assumptions).
 - Hai tab hoặc yêu cầu đặt hàng được gửi lặp lại: mỗi đơn vẫn chỉ mang tối đa một mã.
@@ -133,7 +134,7 @@ và bộ phận marketing đối chiếu.
 - **FR-004**: Hệ thống MUST hỗ trợ hai loại mã: giảm theo phần trăm (có mức giảm tối đa) và giảm số tiền cố định.
 - **FR-005**: Mỗi mã MAY có giá trị đơn hàng tối thiểu và ngày hết hạn; mã không khai báo thì không bị ràng buộc điều kiện đó.
 - **FR-006**: Mỗi đơn hàng MUST chỉ áp dụng tối đa một mã; áp dụng mã mới thành công thì thay mã cũ.
-- **FR-007**: Mã MUST không phân biệt chữ hoa/thường và bỏ qua khoảng trắng đầu/cuối khi nhập.
+- **FR-007**: Mã MUST không phân biệt chữ hoa/thường và bỏ qua khoảng trắng đầu/cuối khi nhập. Mã nhập MUST dài tối đa 32 ký tự sau khi bỏ khoảng trắng đầu/cuối; vượt quá thì bị coi là dữ liệu không hợp lệ (thông báo "Mã giảm giá tối đa 32 ký tự" ở giao diện, lỗi `400 VALIDATION_ERROR` ở API), không phải "mã không tồn tại". Không giới hạn tập ký tự: mã chỉ hợp lệ khi khớp chính xác một mã có sẵn sau khi chuẩn hóa (khoảng trắng ở giữa không bị bỏ). Ô nhập trống hoặc chỉ có khoảng trắng: ở giao diện báo "Vui lòng nhập mã giảm giá"; trong yêu cầu đặt hàng được coi như không dùng mã. Thông báo lỗi MUST NOT lặp lại nguyên văn chuỗi người dùng nhập.
 - **FR-008**: Khi mã không hợp lệ, hệ thống MUST hiển thị thông báo tiếng Việt nêu đúng một trong các lý do: mã không tồn tại; mã đã hết hạn; đơn chưa đạt giá trị tối thiểu kèm số tiền cần mua thêm; chưa nhập mã.
 - **FR-009**: Mức giảm MUST không vượt quá tiền hàng và tổng tiền cuối cùng MUST không âm.
 - **FR-010**: Khi đặt hàng, hệ thống MUST tự kiểm tra lại mã và tính lại số tiền giảm cùng tổng tiền, MUST bỏ qua mọi số tiền giảm hoặc tổng tiền do trình duyệt gửi.
@@ -168,6 +169,7 @@ và bộ phận marketing đối chiếu.
 - Ngày hết hạn tính hết ngày đó theo giờ Việt Nam (UTC+7).
 - Danh sách mã khởi tạo cố định trong hệ thống; không có trang quản trị để tạo hoặc sửa mã.
 - Mã đã áp dụng không cần giữ lại khi khách tải lại trang thanh toán; khách nhập lại nếu cần.
+- Giá hiển thị ở giỏ hàng và trang thanh toán chỉ để tham khảo (đúng quy tắc hiện có của ShopLite); hệ thống không thêm bước xác nhận lại tổng tiền riêng cho mã giảm giá khi giá catalog đổi, vì số tiền cuối cùng luôn do server tính và hiển thị ở chi tiết đơn.
 - Hiện tại `TET2026` đã hết hạn (28/02/2026 đã qua) nên luôn bị từ chối; mã này dùng để kiểm thử trường hợp hết hạn.
 - Đơn hàng cũ tạo trước tính năng này không có thông tin giảm giá và vẫn hiển thị bình thường.
 - Ngoài phạm vi: trang quản trị mã, giới hạn số lượt dùng mỗi mã, mã dành riêng cho từng khách hàng.

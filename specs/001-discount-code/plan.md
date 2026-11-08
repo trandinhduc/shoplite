@@ -79,7 +79,7 @@ src/
 │   │       ├── coupon-input.tsx          # "use client": ô nhập, Áp dụng, Gỡ; gọi evaluateCoupon trực tiếp
 │   │       └── coupon-input.test.tsx
 │   ├── checkout/
-│   │   ├── pricing.ts                    # SỬA: calculateOrderTotals(lines, method, discount = 0)
+│   │   ├── pricing.ts                    # SỬA: calculateOrderTotals(lines, method, discountAmount = 0); OrderTotals thêm discountAmount
 │   │   ├── pricing.test.ts               # SỬA: thêm ca có giảm giá
 │   │   ├── checkout-schema.ts            # SỬA: couponCodeSchema + couponCode trong placeOrderSchema
 │   │   └── components/
