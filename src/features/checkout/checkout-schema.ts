@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { MAX_QUANTITY_PER_ITEM } from "@/features/cart/cart-reducer";
-import { couponCodeSchema } from "@/features/coupons/coupon-schema";
 import { SHIPPING_METHODS } from "./pricing";
 
 export const PAYMENT_METHODS = ["cod", "bank_transfer"] as const;
@@ -48,35 +47,22 @@ export const checkoutFormSchema = customerSchema.extend({
 
 export type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 
-/** Danh sách sản phẩm gửi lên server: chỉ id và số lượng, không bao giờ gửi giá. */
-export const orderItemsSchema = z
-  .array(
-    z.object({
-      productId: z.string().min(1),
-      quantity: z.number().int().min(1).max(MAX_QUANTITY_PER_ITEM),
-    }),
-  )
-  .min(1, "Giỏ hàng đang trống");
-
 /** Payload gửi lên POST /api/orders. */
 export const placeOrderSchema = z.object({
   customer: customerSchema,
   shippingMethod: z.enum(SHIPPING_METHODS),
   paymentMethod: z.enum(PAYMENT_METHODS),
-  items: orderItemsSchema,
-  /** Mã giảm giá (tùy chọn). Chỉ gửi mã — không bao giờ gửi số tiền giảm hay tổng (FR-019). */
-  couponCode: couponCodeSchema.optional(),
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1),
+        quantity: z.number().int().min(1).max(MAX_QUANTITY_PER_ITEM),
+      }),
+    )
+    .min(1, "Giỏ hàng đang trống"),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;
-
-/** Payload gửi lên POST /api/coupons/validate. */
-export const validateCouponSchema = z.object({
-  code: couponCodeSchema,
-  items: orderItemsSchema,
-});
-
-export type ValidateCouponInput = z.infer<typeof validateCouponSchema>;
 
 /** { "customer.phone": "Số điện thoại không hợp lệ" } - lấy lỗi đầu tiên của mỗi field. */
 export function toFieldErrors(error: z.ZodError): Record<string, string> {

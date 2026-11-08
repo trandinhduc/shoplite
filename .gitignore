@@ -22,8 +22,5 @@ test-results/
 # logs
 *.log
 
-# dữ liệu đơn hàng cục bộ (không commit)
-storage/
-
 # OS
 .DS_Store
