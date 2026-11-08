@@ -59,9 +59,9 @@ Không có migration: đơn cũ trong `storage/orders.json` đọc được nguy
 
 ## PlaceOrderInput (mở rộng `placeOrderSchema`)
 
-| Trường       | Kiểu      | Ràng buộc                                               |
-| ------------ | --------- | ------------------------------------------------------- |
-| `couponCode` | `string?` | trim, 1–32 ký tự; thiếu hoặc chuỗi rỗng = không dùng mã |
+| Trường       | Kiểu      | Ràng buộc                                                                    |
+| ------------ | --------- | ---------------------------------------------------------------------------- |
+| `couponCode` | `string?` | trim; thiếu hoặc chuỗi rỗng = không dùng mã; > 32 ký tự → `COUPON_NOT_FOUND` |
 
 Không thêm trường giá, `discount` hay `total` (nguyên tắc III). Trường lạ client gửi bị Zod bỏ qua.
 

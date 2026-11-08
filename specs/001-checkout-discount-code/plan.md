@@ -77,9 +77,12 @@ src/
 ├── features/
 │   ├── coupons/                           # MỚI
 │   │   ├── types.ts                       # Coupon, AppliedCoupon, CouponEvaluation
-│   │   ├── coupon-rules.ts                # normalizeCouponCode, findCoupon, isCouponExpired,
-│   │   │                                  # calculateCouponDiscount, evaluateCoupon, couponErrorMessage
-│   │   ├── coupon-rules.test.ts           # biên: ngưỡng, trần, hết hạn, thứ tự lỗi, dữ liệu
+│   │   ├── coupon-rules.ts                # hàm thuần (client + server): normalizeCouponCode,
+│   │   │                                  # isCouponExpired, calculateCouponDiscount, evaluateCoupon;
+│   │   │                                  # KHÔNG import src/data/
+│   │   ├── coupon-rules.test.ts           # biên: ngưỡng, trần, hết hạn, thứ tự lỗi
+│   │   ├── coupon-catalog.ts              # chỉ server: findCoupon (import src/data/coupons.ts)
+│   │   ├── coupon-catalog.test.ts         # tra mã, mã quá dài, bất biến dữ liệu
 │   │   ├── coupon-errors.ts               # toCouponError(evaluation) -> OrderError COUPON_*
 │   │   ├── coupon-schema.ts               # validateCouponSchema (code + items)
 │   │   ├── coupon-service.ts              # createCouponService({ findProduct, now, findCoupon })
@@ -104,15 +107,18 @@ src/
 │       ├── types.ts                       # SỬA: couponCode?, discount?
 │       ├── order-errors.ts                # SỬA: 3 mã COUPON_* (422)
 │       ├── order-service.ts               # SỬA: đánh giá mã sau tồn kho, trước tính tổng
-│       └── order-service.test.ts          # SỬA: mã hợp lệ/không hợp lệ/gian lận/không lưu khi lỗi
+│       ├── order-service.test.ts          # SỬA: mã hợp lệ/không hợp lệ/gian lận/không lưu khi lỗi
+│       └── components/
+│           ├── order-totals.tsx           # MỚI: Server Component tổng tiền + dòng order-discount
+│           └── order-totals.test.tsx      # MỚI: đơn có mã, đơn cũ không có discount
 ├── app/
 │   ├── api/coupons/validate/
 │   │   ├── route.ts                       # MỚI: POST
 │   │   └── route.test.ts                  # MỚI: // @vitest-environment node, mock server.ts
 │   ├── api/orders/route.test.ts           # SỬA: couponCode
-│   └── orders/[id]/page.tsx               # SỬA: dòng order-discount khi discount > 0
+│   └── orders/[id]/page.tsx               # SỬA: dùng <OrderTotals />
 e2e/
-└── coupon-flow.spec.ts                    # MỚI: áp mã, mã hết hạn, đặt hàng, chi tiết đơn
+└── shopping-flow.spec.ts                  # SỬA: thêm kịch bản SHOPLITE10 (đặt hàng + chi tiết đơn)
 AGENTS.md                                  # SỬA: codemap + quy tắc nghiệp vụ mã giảm giá (mục 3, 5)
 ```
 

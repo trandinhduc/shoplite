@@ -19,6 +19,8 @@ quantity }] }`. Server tính tiền hàng từ giá catalog, đánh giá mã, tr
 - **Rationale**: Không đưa toàn bộ danh sách mã vào bundle client (tránh lộ mã chưa công bố); lý
   do lỗi ở bước "Áp dụng" do server quyết định theo giá thật (nguyên tắc III); hiển thị tức thì
   khi đổi giỏ vì dùng chung hàm thuần.
+- **Ràng buộc**: hàm thuần dùng ở client (`coupon-rules.ts`) MUST NOT import dữ liệu mã; tra
+  cứu nằm ở `coupon-catalog.ts`, chỉ server (`coupon-service.ts`, `order-service.ts`) import.
 - **Alternatives**:
   - Import `src/data/coupons.ts` vào client và kiểm tra hoàn toàn ở client — đơn giản nhất nhưng
     lộ mọi mã trong JS bundle. Bị loại.
@@ -77,9 +79,12 @@ quantity }] }`. Server tính tiền hàng từ giá catalog, đánh giá mã, tr
 
 ## R8. Thứ tự kiểm tra và chuẩn hóa mã
 
-- **Decision**: `normalizeCouponCode = trim().toUpperCase()`; schema giới hạn 1–32 ký tự sau
-  trim. Thứ tự: không tồn tại → hết hạn → chưa đạt tối thiểu (FR-009). Mã > 32 ký tự hoặc chỉ
-  gồm khoảng trắng ở endpoint validate → `VALIDATION_ERROR` với field `code`; ở đơn hàng → lỗi
-  field `couponCode`.
+- **Decision**: `normalizeCouponCode = trim().toUpperCase()`. Thứ tự: không tồn tại → hết hạn →
+  chưa đạt tối thiểu (FR-009). Theo spec (Edge Cases), mã > 32 ký tự hoặc có ký tự lạ được coi là
+  **không tồn tại** (`findCoupon` trả `undefined` → `COUPON_NOT_FOUND`), không phải
+  `VALIDATION_ERROR` — một thông báo duy nhất cho khách và không lộ giới hạn độ dài cho người dò
+  mã. Schema không đặt `.max()`. Chỉ mã rỗng/chỉ khoảng trắng ở endpoint validate →
+  `VALIDATION_ERROR` field `code`; ở đơn hàng chuỗi rỗng = không dùng mã; sai kiểu → lỗi field
+  `couponCode`.
 - **Discount**: phần trăm `Math.floor(subtotal * percent / 100)` rồi `min(maxDiscount)`; cố định
   `min(amount, subtotal)`.

@@ -13,7 +13,9 @@ File: `src/app/api/coupons/validate/route.ts` → `couponService.validateCoupon(
 { "code": " shoplite10 ", "items": [{ "productId": "p006", "quantity": 2 }] }
 ```
 
-- `code`: string, trim, 1–32 ký tự (so khớp không phân biệt hoa/thường).
+- `code`: string, trim, tối thiểu 1 ký tự (so khớp không phân biệt hoa/thường). Mã dài hơn 32
+  ký tự hoặc có ký tự lạ → 422 `COUPON_NOT_FOUND` (không phải `VALIDATION_ERROR`).
+  `VALIDATION_ERROR` chỉ khi mã rỗng/chỉ khoảng trắng hoặc sai kiểu.
 - `items`: cùng ràng buộc với `placeOrderSchema.items` (≥ 1 dòng, `quantity` 1–10).
 - Giá không được gửi; tiền hàng do server tính từ catalog.
 
