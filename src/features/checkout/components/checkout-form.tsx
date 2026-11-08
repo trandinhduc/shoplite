@@ -25,7 +25,12 @@ import type { ApiErrorBody } from "@/lib/http";
 import type { Order } from "@/features/orders/types";
 import { cn } from "@/lib/cn";
 import { formatCurrency } from "@/lib/format";
+import { CouponField } from "@/features/coupons/components/coupon-field";
+import { deriveCouponStatus, type AppliedCoupon } from "@/features/coupons/coupon-rules";
+import type { CouponRule } from "@/features/coupons/types";
 import { CheckoutSummary } from "./checkout-summary";
+
+const COUPON_NETWORK_ERROR = "Không kiểm tra được mã, vui lòng thử lại.";
 
 const INITIAL_VALUES: CheckoutFormValues = {
   fullName: "",
@@ -57,6 +62,9 @@ export function CheckoutForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponPending, setCouponPending] = useState(false);
+  const [couponMessage, setCouponMessage] = useState<string | null>(null);
 
   if (!hydrated) {
     return <div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />;
@@ -94,6 +102,43 @@ export function CheckoutForm() {
     });
   }
 
+  // Trạng thái mã suy ra mỗi lần render từ giỏ hiện tại — chỉ để hiển thị, server kiểm tra lại.
+  const couponStatus = deriveCouponStatus(appliedCoupon, subtotal, new Date());
+
+  /** Trả về true khi áp dụng thành công. Mã mới thay hẳn mã cũ (kể cả lỗi đang khóa). */
+  async function handleApplyCoupon(code: string): Promise<boolean> {
+    setCouponPending(true);
+    setCouponMessage(null);
+    try {
+      const response = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+        }),
+      });
+      if (response.ok) {
+        const body = (await response.json()) as { coupon: CouponRule };
+        setAppliedCoupon({ rule: body.coupon });
+        return true;
+      }
+      // Áp mã mới thất bại: giữ nguyên mã cũ (FR-016), chỉ hiển thị lý do.
+      const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
+      setCouponMessage(body?.error.details?.code ?? body?.error.message ?? COUPON_NETWORK_ERROR);
+    } catch {
+      setCouponMessage(COUPON_NETWORK_ERROR);
+    } finally {
+      setCouponPending(false);
+    }
+    return false;
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponMessage(null);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitError(null);
@@ -116,13 +161,27 @@ export function CheckoutForm() {
           shippingMethod,
           paymentMethod,
           items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          // Chỉ gửi mã; số tiền giảm và tổng do server tính lại (FR-019, FR-020).
+          ...(appliedCoupon && { couponCode: appliedCoupon.rule.code }),
         }),
       });
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
-        setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
         setStatus("idle");
+        const code = body?.error.code;
+        const message = body?.error.message;
+        if (message && (code === "COUPON_EXPIRED" || code === "COUPON_NOT_FOUND")) {
+          // Lỗi "dính": giữ mã ở trạng thái lỗi cho đến khi khách gỡ/thay mã (Clarification Q1).
+          setAppliedCoupon((current) => current && { ...current, lockedError: message });
+          return;
+        }
+        if (message && code === "COUPON_MIN_SUBTOTAL_NOT_MET") {
+          // Hiển thị cạnh ô mã; trạng thái tự hồi phục khi giỏ đạt lại mức tối thiểu (Q2).
+          setCouponMessage(message);
+          return;
+        }
+        setSubmitError(message ?? "Không thể đặt hàng, vui lòng thử lại.");
         return;
       }
 
@@ -257,7 +316,19 @@ export function CheckoutForm() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} />
+        <CouponField
+          status={couponStatus}
+          pending={couponPending}
+          message={couponMessage ?? (couponStatus.status === "error" ? couponStatus.message : null)}
+          onApply={handleApplyCoupon}
+          onRemove={handleRemoveCoupon}
+        />
+        <CheckoutSummary
+          items={items}
+          shippingMethod={values.shippingMethod}
+          discount={couponStatus.status === "active" ? couponStatus.discount : 0}
+          couponCode={couponStatus.status === "active" ? couponStatus.code : undefined}
+        />
         {submitError && (
           <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {submitError}

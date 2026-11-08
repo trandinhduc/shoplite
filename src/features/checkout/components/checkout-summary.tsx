@@ -6,12 +6,21 @@ import { formatCurrency } from "@/lib/format";
 interface CheckoutSummaryProps {
   items: CartItem[];
   shippingMethod: ShippingMethod;
+  /** Số tiền giảm của mã đang có hiệu lực (chỉ để hiển thị; server tính lại khi đặt hàng). */
+  discount?: number;
+  couponCode?: string;
 }
 
-export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps) {
+export function CheckoutSummary({
+  items,
+  shippingMethod,
+  discount = 0,
+  couponCode,
+}: CheckoutSummaryProps) {
   const totals = calculateOrderTotals(
     items.map((item) => ({ unitPrice: item.price, quantity: item.quantity })),
     shippingMethod,
+    discount,
   );
 
   return (
@@ -36,6 +45,12 @@ export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps)
           <dt className="text-slate-600">Tạm tính</dt>
           <dd className="font-medium">{formatCurrency(totals.subtotal)}</dd>
         </div>
+        {totals.discount > 0 && (
+          <div className="flex justify-between text-emerald-700" data-testid="checkout-discount">
+            <dt>Giảm giá ({couponCode})</dt>
+            <dd className="font-medium">−{formatCurrency(totals.discount)}</dd>
+          </div>
+        )}
         <div className="flex justify-between">
           <dt className="text-slate-600">Phí giao hàng</dt>
           <dd className="font-medium" data-testid="shipping-fee">

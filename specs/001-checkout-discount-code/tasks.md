@@ -24,7 +24,7 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 **Purpose**: Tạo feature `coupons` và các kiểu dữ liệu dùng chung. Không có logic, nên không có test.
 
-- [ ] T001 Tạo `src/features/coupons/types.ts` theo data-model.md §1–2. Gồm:
+- [X] T001 Tạo `src/features/coupons/types.ts` theo data-model.md §1–2. Gồm:
   - `COUPON_TYPES = ["percentage", "fixed"] as const` và `CouponType`.
   - `Coupon` là union phân biệt theo `type`:
     - `percentage`: có `value` (1–100) và `maxDiscount` bắt buộc;
@@ -34,7 +34,7 @@ description: "Task list: Mã giảm giá khi thanh toán"
   - `CouponEvaluation`:
     `{ ok: true; code; discount } | { ok: false; reason: "NOT_FOUND" } | { ok: false; reason: "EXPIRED"; code } | { ok: false; reason: "MIN_SUBTOTAL_NOT_MET"; code; minSubtotal; shortfall }`.
   - JSDoc tiếng Việt.
-- [ ] T002 Chạy `npm run check`, đảm bảo pass trước khi sang Phase 2.
+- [X] T002 Chạy `npm run check`, đảm bảo pass trước khi sang Phase 2.
 
 ---
 
@@ -46,7 +46,7 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 ### Tests (viết trước, phải FAIL)
 
-- [ ] T003 [P] Viết `src/features/coupons/coupon-rules.test.ts` cho các hàm thuần sau.
+- [X] T003 [P] Viết `src/features/coupons/coupon-rules.test.ts` cho các hàm thuần sau.
   - **`normalizeCouponCode`**: `" shoplite10 "` → `"SHOPLITE10"`.
   - **`getCouponExpiryCutoff("2026-02-28")`** trả về thời điểm `2026-03-01T00:00:00+07:00`.
   - **`calculateCouponDiscount`**:
@@ -64,14 +64,14 @@ description: "Task list: Mã giảm giá khi thanh toán"
     - dưới tối thiểu → `error` kèm số tiền cần mua thêm;
     - subtotal đạt lại tối thiểu → `active`;
     - có `lockedError` → `error` bất kể subtotal.
-- [ ] T004 [P] Viết test schema (spec FR-004, Edge Cases "Mã sai định dạng"):
+- [X] T004 [P] Viết test schema (spec FR-004, Edge Cases "Mã sai định dạng"):
   - `src/features/coupons/coupon-schema.test.ts` cho `couponCodeSchema`, tức `z.string().trim().min(1).max(COUPON_CODE_MAX_LENGTH)` với `COUPON_CODE_MAX_LENGTH = 32`. Ca kiểm: trim; chuỗi rỗng hoặc chỉ khoảng trắng → lỗi; 32 ký tự → ok; 33 ký tự → lỗi; số hoặc mảng → lỗi.
   - Thêm vào `src/features/checkout/checkout-schema.test.ts` test cho `validateCouponSchema`: dạng `{ code, items }`, `items` giống `placeOrderSchema.items` (≥ 1 dòng, `quantity ∈ [1, MAX_QUANTITY_PER_ITEM]`).
-- [ ] T005 [P] Viết `src/features/coupons/coupon-data.test.ts`, kiểm dữ liệu `src/data/coupons.ts`:
+- [X] T005 [P] Viết `src/features/coupons/coupon-data.test.ts`, kiểm dữ liệu `src/data/coupons.ts`:
   - mã duy nhất, và `code === normalizeCouponCode(code)`;
   - `percentage` có `maxDiscount > 0` và `0 < value <= 100`; `fixed` có `value > 0`;
   - đúng 3 mã ở FR-003: SHOPLITE10, GIAM50K, TET2026 (`expiresOn: "2026-02-28"`).
-- [ ] T006 [P] Sửa `src/features/checkout/pricing.test.ts` cho `calculateOrderTotals(lines, method, discount = 0)`:
+- [X] T006 [P] Sửa `src/features/checkout/pricing.test.ts` cho `calculateOrderTotals(lines, method, discount = 0)`:
   - Không truyền `discount` → kết quả có `discount: 0`; sửa `toEqual` hiện có thành `{ subtotal: 350_000, discount: 0, shippingFee: 30_000, total: 380_000 }`.
   - `discount` bị kẹp vào `[0, subtotal]`; `total = subtotal − discount + shippingFee`.
   - Phí ship tính trên subtotal **trước** giảm: subtotal = `FREE_SHIPPING_THRESHOLD` + discount 50_000 + `standard` → vẫn miễn phí.
@@ -79,28 +79,28 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 ### Implementation
 
-- [ ] T007 [P] Cài đặt `src/features/coupons/coupon-rules.ts` cho pass T003:
+- [X] T007 [P] Cài đặt `src/features/coupons/coupon-rules.ts` cho pass T003:
   - các hàm `normalizeCouponCode`, `getCouponExpiryCutoff`, `isCouponExpired`, `calculateCouponDiscount`, `evaluateCoupon`, `getCouponErrorMessage`, `deriveCouponStatus`;
   - kiểu `AppliedCoupon = { rule: CouponRule; lockedError?: string }`.
 
   File này KHÔNG được import `src/data/coupons.ts` (phải an toàn cho client, xem research R1).
 
-- [ ] T008 [P] Cài đặt schema cho pass T004:
+- [X] T008 [P] Cài đặt schema cho pass T004:
   - `src/features/coupons/coupon-schema.ts` chỉ chứa `COUPON_CODE_MAX_LENGTH = 32` và `couponCodeSchema`, thông báo lỗi tiếng Việt ("Vui lòng nhập mã giảm giá", "Mã giảm giá tối đa 32 ký tự"). File này KHÔNG import từ `@/features/checkout`, để tránh vòng import.
   - Trong `src/features/checkout/checkout-schema.ts`: tách `orderItemsSchema` ra và dùng lại trong `placeOrderSchema`; thêm `validateCouponSchema = z.object({ code: couponCodeSchema, items: orderItemsSchema })`. Chiều import chỉ một hướng: `checkout-schema` → `coupon-schema`.
-- [ ] T009 [P] Tạo `src/data/coupons.ts` (`export const coupons: Coupon[]`) cho pass T005:
+- [X] T009 [P] Tạo `src/data/coupons.ts` (`export const coupons: Coupon[]`) cho pass T005:
   - SHOPLITE10: `percentage`, 10, `maxDiscount` 100_000, `minSubtotal` 300_000;
   - GIAM50K: `fixed`, 50_000, `minSubtotal` 500_000;
   - TET2026: `percentage`, 15, `maxDiscount` 200_000, `expiresOn` "2026-02-28".
 
   Thêm comment tiếng Việt: chỉ import phía server.
 
-- [ ] T010 [P] Sửa `src/features/checkout/pricing.ts` cho pass T006:
+- [X] T010 [P] Sửa `src/features/checkout/pricing.ts` cho pass T006:
   - thêm `discount` vào `OrderTotals`;
   - `calculateOrderTotals(lines, method, discount = 0)` kẹp discount vào `[0, subtotal]`, tính `shippingFee` từ subtotal trước giảm;
   - cập nhật JSDoc.
-- [ ] T011 Sửa `src/features/orders/types.ts`: thêm vào `Order` hai trường `couponCode?: string` và `discount?: number`. JSDoc ghi rõ: đơn cũ không có các trường này, coi như 0 (FR-025).
-- [ ] T012 Chạy `npm run check`, đảm bảo pass.
+- [X] T011 Sửa `src/features/orders/types.ts`: thêm vào `Order` hai trường `couponCode?: string` và `discount?: number`. JSDoc ghi rõ: đơn cũ không có các trường này, coi như 0 (FR-025).
+- [X] T012 Chạy `npm run check`, đảm bảo pass.
 
 **Checkpoint**: Quy tắc mã và công thức tổng tiền đã sẵn sàng, có test. Bắt đầu được các user story.
 
@@ -114,40 +114,40 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 ### Tests for User Story 1 (viết trước, phải FAIL)
 
-- [ ] T013 [P] [US1] Viết `src/features/coupons/coupon-service.test.ts` (`// @vitest-environment node`), phần thành công. Inject `findProduct` và `now` vào `createCouponService`.
+- [X] T013 [P] [US1] Viết `src/features/coupons/coupon-service.test.ts` (`// @vitest-environment node`), phần thành công. Inject `findProduct` và `now` vào `createCouponService`.
   - `findCouponByCode(" shoplite10 ")` → coupon SHOPLITE10.
   - `validateCoupon({ code, items })` lấy giá từ catalog và trả `{ coupon: CouponRule, subtotal, discount }`. Ca kiểm:
     - p006 × 1 → subtotal 450_000, discount 45_000;
     - 2_000_000 → discount 100_000;
     - GIAM50K với 600_000 → 50_000.
-- [ ] T014 [P] [US1] Viết `src/app/api/coupons/validate/route.test.ts` (`// @vitest-environment node`), mock `@/features/coupons/coupon-service` để `couponService` dùng `now` cố định. Kiểm:
+- [X] T014 [P] [US1] Viết `src/app/api/coupons/validate/route.test.ts` (`// @vitest-environment node`), mock `@/features/coupons/coupon-service` để `couponService` dùng `now` cố định. Kiểm:
   - `POST` với `{ code: " shoplite10 ", items: [{ productId: "p006", quantity: 1 }] }` → 200, body khớp contracts/coupons-validate.md;
   - body 200 chỉ có đúng 3 khóa `coupon`, `subtotal`, `discount`, và `coupon.code === "SHOPLITE10"`, tức không trả danh sách mã (FR-022a).
-- [ ] T015 [P] [US1] Sửa `src/features/checkout/checkout-schema.test.ts` cho `placeOrderSchema`:
+- [X] T015 [P] [US1] Sửa `src/features/checkout/checkout-schema.test.ts` cho `placeOrderSchema`:
   - không có `couponCode` → hợp lệ;
   - `" shoplite10 "` → `parsed.data.couponCode === "shoplite10"` (schema chỉ trim, service mới chuẩn hóa hoa/thường);
   - `couponCode` là `""`, `"   "`, chuỗi 33 ký tự, số `10`, hoặc mảng `["A","B"]` → lỗi, có `toFieldErrors(...)["couponCode"]`.
-- [ ] T016 [P] [US1] Sửa `src/features/orders/order-service.test.ts`, test `placeOrder` có `couponCode: "SHOPLITE10"`:
+- [X] T016 [P] [US1] Sửa `src/features/orders/order-service.test.ts`, test `placeOrder` có `couponCode: "SHOPLITE10"`:
   - đơn lưu `couponCode: "SHOPLITE10"`, `discount` đúng, `total = subtotal − discount + shippingFee`;
   - `shippingFee` tính trên subtotal trước giảm;
   - không có mã → `discount: 0` và không có `couponCode`;
   - `couponCode` được chuẩn hóa (`"shoplite10"` → `"SHOPLITE10"`);
   - p001 với số lượng vượt tồn kho kèm `couponCode: "KHONGCO"` → ném lỗi có `code === "INSUFFICIENT_STOCK"`, tức tồn kho được kiểm trước mã (FR-022). Đây là test giữ hành vi: pass ngay, vì code hiện tại bỏ qua `couponCode`. Viết trước T023 để T023 không đảo thứ tự kiểm tra;
   - `cancelOrder` một đơn có mã → đơn đã hủy vẫn giữ nguyên `couponCode` và `discount` (FR-023, test giữ hành vi).
-- [ ] T017 [P] [US1] Sửa `src/app/api/orders/route.test.ts`: `POST` kèm `couponCode: "SHOPLITE10"` với p006 × 1, kiểu `express` → 201 với `discount: 45000`, `couponCode: "SHOPLITE10"`, `total: 465000`.
-- [ ] T018 [P] [US1] Viết `src/features/coupons/components/coupon-field.test.tsx` theo contracts/checkout-ui.md. Kiểm:
+- [X] T017 [P] [US1] Sửa `src/app/api/orders/route.test.ts`: `POST` kèm `couponCode: "SHOPLITE10"` với p006 × 1, kiểu `express` → 201 với `discount: 45000`, `couponCode: "SHOPLITE10"`, `total: 465000`.
+- [X] T018 [P] [US1] Viết `src/features/coupons/components/coupon-field.test.tsx` theo contracts/checkout-ui.md. Kiểm:
   - ô có nhãn "Mã giảm giá" (`id="couponCode"`);
   - nút "Áp dụng" là `type="button"`;
   - bấm "Áp dụng" hoặc Enter trong ô thì gọi `onApply(code)` và KHÔNG submit form cha;
   - khi đang chờ thì nút bị vô hiệu với nhãn "Đang kiểm tra…";
   - khi đã có mã, hiện `data-testid="applied-coupon"` chứa mã.
-- [ ] T019 [US1] Sửa `src/features/checkout/components/checkout-form.test.tsx`, mock `fetch`:
+- [X] T019 [US1] Sửa `src/features/checkout/components/checkout-form.test.tsx`, mock `fetch`:
   - `/api/coupons/validate` trả 200 → tóm tắt có `data-testid="checkout-discount"` "Giảm giá (SHOPLITE10)" "−45.000 ₫", `checkout-total` giảm tương ứng;
   - submit → body `POST /api/orders` có `couponCode: "SHOPLITE10"` và KHÔNG có trường tiền nào.
 
 ### Implementation for User Story 1
 
-- [ ] T020 [US1] Cài đặt `src/features/coupons/coupon-service.ts`, file duy nhất được import `src/data/coupons.ts`:
+- [X] T020 [US1] Cài đặt `src/features/coupons/coupon-service.ts`, file duy nhất được import `src/data/coupons.ts`:
   - `findCouponByCode(code, list = coupons)`;
   - `createCouponService({ findCoupon = findCouponByCode, findProduct = getProductById, now })` với `validateCoupon(input)`: `validateCouponSchema.safeParse` (import từ `@/features/checkout/checkout-schema`) → tính subtotal từ catalog → `evaluateCoupon` → trả `{ coupon, subtotal, discount }`;
   - `export const couponService = createCouponService({})`;
@@ -155,15 +155,15 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
   Mục tiêu: pass T013.
 
-- [ ] T021 [US1] Tạo route mỏng `src/app/api/coupons/validate/route.ts`:
+- [X] T021 [US1] Tạo route mỏng `src/app/api/coupons/validate/route.ts`:
   - `POST` → `readJsonBody`; nếu `undefined` thì `jsonError(400, "VALIDATION_ERROR", "Body phải là JSON hợp lệ")`;
   - gọi `couponService.validateCoupon(body)` → `NextResponse.json(result)`;
   - bọc `try/catch` → `handleRouteError`.
 
   Mục tiêu: pass T014.
 
-- [ ] T022 [US1] Sửa `src/features/checkout/checkout-schema.ts`: thêm `couponCode: couponCodeSchema.optional()` vào `placeOrderSchema`. Mục tiêu: pass T015.
-- [ ] T023 [US1] Sửa `src/features/orders/order-service.ts`:
+- [X] T022 [US1] Sửa `src/features/checkout/checkout-schema.ts`: thêm `couponCode: couponCodeSchema.optional()` vào `placeOrderSchema`. Mục tiêu: pass T015.
+- [X] T023 [US1] Sửa `src/features/orders/order-service.ts`:
   - thêm dep `findCoupon?` (mặc định `findCouponByCode`);
   - trong `placeOrder`, sau khi dựng `orderItems` thì tính subtotal → nếu có `couponCode` thì `evaluateCoupon(findCoupon(code), subtotal, createdAt)` (dùng chung mốc `now()` với `createdAt`) → `calculateOrderTotals(orderItems, shippingMethod, discount)`;
   - lưu `couponCode` (đã chuẩn hóa) khi có mã;
@@ -171,17 +171,17 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
   Mục tiêu: pass T016, T017.
 
-- [ ] T024 [P] [US1] Sửa `src/features/checkout/components/checkout-summary.tsx`:
+- [X] T024 [P] [US1] Sửa `src/features/checkout/components/checkout-summary.tsx`:
   - nhận thêm prop `discount?: number` và `couponCode?: string`, truyền `discount` vào `calculateOrderTotals`;
   - khi `discount > 0`, hiện dòng `data-testid="checkout-discount"` "Giảm giá ({couponCode})" "−{formatCurrency(discount)}" giữa "Tạm tính" và "Phí giao hàng".
-- [ ] T025 [P] [US1] Tạo `src/features/coupons/components/coupon-field.tsx` (`"use client"`):
+- [X] T025 [P] [US1] Tạo `src/features/coupons/components/coupon-field.tsx` (`"use client"`):
   - props `{ applied, status, pending, message, onApply, onRemove }`;
   - Enter gọi `preventDefault()` rồi `onApply`;
   - nhãn và `aria-*` theo contracts/checkout-ui.md.
 
   Mục tiêu: pass T018.
 
-- [ ] T026 [US1] Sửa `src/features/checkout/components/checkout-form.tsx`:
+- [X] T026 [US1] Sửa `src/features/checkout/components/checkout-form.tsx`:
   - thêm state `appliedCoupon: AppliedCoupon | null`;
   - `handleApplyCoupon` gọi `POST /api/coupons/validate` với `{ code, items }`, khi 200 thì lưu `{ rule: body.coupon }`;
   - mỗi lần render, tính `deriveCouponStatus(appliedCoupon, subtotal, new Date())` và chỉ truyền `discount` vào `CheckoutSummary` khi trạng thái là `active`;
@@ -191,7 +191,7 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
   Mục tiêu: pass T019.
 
-- [ ] T027 [US1] Chạy `npm run check`, đảm bảo pass.
+- [X] T027 [US1] Chạy `npm run check`, đảm bảo pass.
 
 **Checkpoint**: MVP: áp mã hợp lệ và đặt hàng có giảm giá chạy được end-to-end.
 
@@ -205,21 +205,21 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 ### Tests for User Story 2 (viết trước, phải FAIL)
 
-- [ ] T028 [P] [US2] Bổ sung `src/features/coupons/coupon-service.test.ts`. `validateCoupon` ném `OrderError`:
+- [X] T028 [P] [US2] Bổ sung `src/features/coupons/coupon-service.test.ts`. `validateCoupon` ném `OrderError`:
   - `COUPON_NOT_FOUND` với `KHONGCO`, và với mã đúng độ dài nhưng có ký tự lạ: `"SHOP LITE10"` (khoảng trắng ở giữa), `"GIẢM50K"` (có dấu) (spec Edge Cases "Mã sai định dạng");
   - `COUPON_EXPIRED` với `TET2026` khi now = `2026-03-01T00:00:00+07:00`, còn now = `2026-02-28T23:59:59.999+07:00` thì hợp lệ;
   - `COUPON_MIN_SUBTOTAL_NOT_MET` với GIAM50K + p006, `details: { minSubtotal: "500000", shortfall: "50000" }`, message đúng data-model.md §2;
   - `PRODUCT_NOT_FOUND` khi `productId` lạ;
   - `VALIDATION_ERROR` + `details["code"]` khi mã rỗng hoặc dài 33 ký tự.
-- [ ] T029 [P] [US2] Bổ sung `src/app/api/coupons/validate/route.test.ts`:
+- [X] T029 [P] [US2] Bổ sung `src/app/api/coupons/validate/route.test.ts`:
   - 422 cho 3 mã lỗi `COUPON_*`;
   - 400 khi body không phải JSON hoặc sai schema;
   - body lỗi luôn là `ApiErrorBody`.
-- [ ] T030 [P] [US2] Bổ sung `src/features/coupons/components/coupon-field.test.tsx`:
+- [X] T030 [P] [US2] Bổ sung `src/features/coupons/components/coupon-field.test.tsx`:
   - ô trống hoặc chỉ khoảng trắng mà bấm "Áp dụng" → "Vui lòng nhập mã giảm giá" và không gọi `onApply`;
   - nhập 33 ký tự rồi bấm "Áp dụng" → "Mã giảm giá tối đa 32 ký tự" và không gọi `onApply` (spec Edge Cases "Mã sai định dạng");
   - khi có `message` lỗi → `role="alert"` với `id="coupon-message"`, ô mã có `aria-invalid="true"` và `aria-describedby="coupon-message"`.
-- [ ] T031 [US2] Bổ sung `src/features/checkout/components/checkout-form.test.tsx`:
+- [X] T031 [US2] Bổ sung `src/features/checkout/components/checkout-form.test.tsx`:
   - validate trả 422 → hiện `error.message`, tổng không đổi;
   - validate trả 400 với `details: { code: "Mã giảm giá tối đa 32 ký tự" }` → hiện đúng câu đó;
   - đã áp SHOPLITE10 mà áp GIAM50K thất bại → vẫn giữ SHOPLITE10 (FR-016);
@@ -228,26 +228,26 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 ### Implementation for User Story 2
 
-- [ ] T032 [US2] Sửa `src/features/orders/order-errors.ts`: thêm `COUPON_NOT_FOUND`, `COUPON_EXPIRED`, `COUPON_MIN_SUBTOTAL_NOT_MET` vào `OrderErrorCode`, cả ba map sang **422** trong `HTTP_STATUS_BY_CODE`.
-- [ ] T033 [US2] Sửa `src/features/coupons/coupon-service.ts`:
+- [X] T032 [US2] Sửa `src/features/orders/order-errors.ts`: thêm `COUPON_NOT_FOUND`, `COUPON_EXPIRED`, `COUPON_MIN_SUBTOTAL_NOT_MET` vào `OrderErrorCode`, cả ba map sang **422** trong `HTTP_STATUS_BY_CODE`.
+- [X] T033 [US2] Sửa `src/features/coupons/coupon-service.ts`:
   - thêm `toCouponError(evaluation)` chuyển `CouponEvaluation` lỗi thành `OrderError` với message từ `getCouponErrorMessage`; lỗi tối thiểu kèm `details` `{ minSubtotal, shortfall }` dạng chuỗi số;
   - `validateCoupon` ném lỗi đó, ném `VALIDATION_ERROR` + `toFieldErrors` khi sai schema, và ném `PRODUCT_NOT_FOUND` khi sản phẩm lạ.
 
   Mục tiêu: pass T028, T029.
 
-- [ ] T034 [P] [US2] Sửa `src/features/coupons/components/coupon-field.tsx`:
+- [X] T034 [P] [US2] Sửa `src/features/coupons/components/coupon-field.tsx`:
   - trước khi gọi `onApply`, chạy `couponCodeSchema.safeParse` (từ `@/features/coupons/coupon-schema`, file an toàn cho client) và hiện đúng message của schema khi lỗi; không đặt `maxLength` trên ô để thông báo luôn hiện ra;
   - thêm vùng thông báo lỗi/thành công, `aria-invalid`, `aria-describedby`.
 
   Mục tiêu: pass T030.
 
-- [ ] T035 [US2] Sửa `src/features/checkout/components/checkout-form.tsx`:
+- [X] T035 [US2] Sửa `src/features/checkout/components/checkout-form.tsx`:
   - xử lý validate 422/lỗi mạng (giữ mã cũ khi áp mã mới thất bại); khi nhận 400 `VALIDATION_ERROR`, ưu tiên hiện `error.details?.code`, nếu không có thì hiện `error.message`;
   - truyền message từ `deriveCouponStatus` (trạng thái `error` dưới tối thiểu) vào `CouponField`.
 
   Mục tiêu: pass T031.
 
-- [ ] T036 [US2] Chạy `npm run check`, đảm bảo pass.
+- [X] T036 [US2] Chạy `npm run check`, đảm bảo pass.
 
 **Checkpoint**: US1 và US2 đều hoạt động. Mọi lý do lỗi được hiển thị rõ.
 
@@ -261,30 +261,30 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 ### Tests for User Story 5 (viết trước, phải FAIL)
 
-- [ ] T037 [P] [US5] Bổ sung `src/features/orders/order-service.test.ts`:
+- [X] T037 [P] [US5] Bổ sung `src/features/orders/order-service.test.ts`:
   - payload có `discount: 450000, total: 0, subtotal: 1` cùng SHOPLITE10 → các trường này bị bỏ qua;
   - `placeOrder` ném `COUPON_EXPIRED` (now = `2026-03-01T00:00:00+07:00`, TET2026), `COUPON_NOT_FOUND`, `COUPON_MIN_SUBTOTAL_NOT_MET`, và repository vẫn rỗng sau mỗi lần ném;
   - TET2026 với now = `2026-02-28T23:59:59.999+07:00` → tạo đơn;
   - (Các ca kiểu dữ liệu của `couponCode` đã kiểm ở T015, ca tồn kho trước mã đã kiểm ở T016; ở đây không lặp lại.)
-- [ ] T038 [P] [US5] Bổ sung `src/app/api/orders/route.test.ts`:
+- [X] T038 [P] [US5] Bổ sung `src/app/api/orders/route.test.ts`:
   - 422 `COUPON_EXPIRED` / `COUPON_NOT_FOUND` / `COUPON_MIN_SUBTOTAL_NOT_MET`, và `GET /api/orders` không có đơn mới;
   - body gian lận vẫn trả 201 với số do server tính;
   - mock `orderService` với `now` cố định.
-- [ ] T039 [US5] Bổ sung `src/features/checkout/components/checkout-form.test.tsx`:
+- [X] T039 [US5] Bổ sung `src/features/checkout/components/checkout-form.test.tsx`:
   - `POST /api/orders` trả 422 `COUPON_EXPIRED` → thông báo "Mã giảm giá đã hết hạn" ở `coupon-message`, mã vẫn trong `applied-coupon` ở trạng thái lỗi, không có dòng `checkout-discount`, giỏ không bị xóa, không chuyển trang;
   - bấm "Đặt hàng" lần nữa → request vẫn gửi `couponCode` (Story 5 #5).
 
 ### Implementation for User Story 5
 
-- [ ] T040 [US5] Sửa `src/features/orders/order-service.ts`:
+- [X] T040 [US5] Sửa `src/features/orders/order-service.ts`:
   - khi `evaluateCoupon` trả lỗi thì `throw toCouponError(...)` trước `repository.save`;
   - giữ thứ tự: schema → sản phẩm/tồn kho → mã → tổng → lưu;
   - cập nhật JSDoc `placeOrder`.
 
   Mục tiêu: pass T037, T038.
 
-- [ ] T041 [US5] Sửa `src/features/checkout/components/checkout-form.tsx`: khi đặt hàng nhận lỗi `COUPON_EXPIRED` hoặc `COUPON_NOT_FOUND` thì gán `appliedCoupon.lockedError = error.message`; lỗi `COUPON_MIN_SUBTOTAL_NOT_MET` thì để `deriveCouponStatus` tự suy ra. Mục tiêu: pass T039.
-- [ ] T042 [US5] Chạy `npm run check`, đảm bảo pass.
+- [X] T041 [US5] Sửa `src/features/checkout/components/checkout-form.tsx`: khi đặt hàng nhận lỗi `COUPON_EXPIRED` hoặc `COUPON_NOT_FOUND` thì gán `appliedCoupon.lockedError = error.message`; lỗi `COUPON_MIN_SUBTOTAL_NOT_MET` thì để `deriveCouponStatus` tự suy ra. Mục tiêu: pass T039.
+- [X] T042 [US5] Chạy `npm run check`, đảm bảo pass.
 
 **Checkpoint**: Mọi quy tắc tiền được server xác nhận. Cả 3 story P1 hoàn tất.
 
@@ -298,17 +298,17 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 ### Tests for User Story 3 (viết trước, phải FAIL)
 
-- [ ] T043 [P] [US3] Bổ sung `src/features/coupons/components/coupon-field.test.tsx`: nút "Gỡ mã" chỉ hiện khi có mã đang áp dụng; bấm thì gọi `onRemove` và ô mã sẵn sàng nhập mới.
-- [ ] T044 [US3] Bổ sung `src/features/checkout/components/checkout-form.test.tsx`:
+- [X] T043 [P] [US3] Bổ sung `src/features/coupons/components/coupon-field.test.tsx`: nút "Gỡ mã" chỉ hiện khi có mã đang áp dụng; bấm thì gọi `onRemove` và ô mã sẵn sàng nhập mới.
+- [X] T044 [US3] Bổ sung `src/features/checkout/components/checkout-form.test.tsx`:
   - "Gỡ mã" → không còn `checkout-discount` và `applied-coupon`, `checkout-total` về giá trị chưa giảm, lần submit sau không gửi `couponCode`;
   - áp GIAM50K thành công khi đang có SHOPLITE10 → chỉ còn GIAM50K;
   - đang có `lockedError` (sau 422 hết hạn) → "Gỡ mã" rồi đặt hàng thì gửi body không có `couponCode` (Story 5 #4).
 
 ### Implementation for User Story 3
 
-- [ ] T045 [P] [US3] Sửa `src/features/coupons/components/coupon-field.tsx`: thêm nút "Gỡ mã" (`type="button"`, có tên truy cập được), reset ô nhập sau khi áp dụng thành công. Mục tiêu: pass T043.
-- [ ] T046 [US3] Sửa `src/features/checkout/components/checkout-form.tsx`: `handleRemoveCoupon` gán `appliedCoupon = null`; áp mã mới thành công thì thay hẳn `appliedCoupon`, bỏ `lockedError`. Mục tiêu: pass T044.
-- [ ] T047 [US3] Chạy `npm run check`, đảm bảo pass.
+- [X] T045 [P] [US3] Sửa `src/features/coupons/components/coupon-field.tsx`: thêm nút "Gỡ mã" (`type="button"`, có tên truy cập được), reset ô nhập sau khi áp dụng thành công. Mục tiêu: pass T043.
+- [X] T046 [US3] Sửa `src/features/checkout/components/checkout-form.tsx`: `handleRemoveCoupon` gán `appliedCoupon = null`; áp mã mới thành công thì thay hẳn `appliedCoupon`, bỏ `lockedError`. Mục tiêu: pass T044.
+- [X] T047 [US3] Chạy `npm run check`, đảm bảo pass.
 
 **Checkpoint**: Khách tự kiểm soát được mã đang dùng.
 
@@ -322,16 +322,16 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 ### Tests for User Story 4 (viết trước, phải FAIL)
 
-- [ ] T048 [P] [US4] Viết `src/features/orders/components/order-totals.test.tsx`:
+- [X] T048 [P] [US4] Viết `src/features/orders/components/order-totals.test.tsx`:
   - thứ tự các dòng: Tạm tính → Giảm giá ({couponCode}) `data-testid="order-discount"` → Phí giao hàng ("Miễn phí" khi 0) → Tổng cộng (`order.total` đã lưu, không tính lại);
   - đơn cũ (fixture không có `discount`/`couponCode`) → không có `order-discount`;
   - `discount: 0` → không có `order-discount`.
 
 ### Implementation for User Story 4
 
-- [ ] T049 [US4] Tạo `src/features/orders/components/order-totals.tsx` (Server Component, không `"use client"`): nhận `order: Order`, dùng `order.discount ?? 0`, chỉ hiện dòng giảm giá khi có `couponCode` và `discount > 0`, tiền qua `formatCurrency`. Mục tiêu: pass T048.
-- [ ] T050 [US4] Sửa `src/app/orders/[id]/page.tsx`: thay khối `<dl>` tổng tiền bằng `<OrderTotals order={order} />`; hướng dẫn chuyển khoản vẫn dùng `order.total`.
-- [ ] T051 [US4] Chạy `npm run check`, đảm bảo pass.
+- [X] T049 [US4] Tạo `src/features/orders/components/order-totals.tsx` (Server Component, không `"use client"`): nhận `order: Order`, dùng `order.discount ?? 0`, chỉ hiện dòng giảm giá khi có `couponCode` và `discount > 0`, tiền qua `formatCurrency`. Mục tiêu: pass T048.
+- [X] T050 [US4] Sửa `src/app/orders/[id]/page.tsx`: thay khối `<dl>` tổng tiền bằng `<OrderTotals order={order} />`; hướng dẫn chuyển khoản vẫn dùng `order.total`.
+- [X] T051 [US4] Chạy `npm run check`, đảm bảo pass.
 
 **Checkpoint**: Cả 5 user story đã hoàn tất.
 
@@ -341,22 +341,22 @@ description: "Task list: Mã giảm giá khi thanh toán"
 
 **Purpose**: E2E cho luồng mua hàng, tài liệu, format, và kiểm chứng cuối.
 
-- [ ] T052 Sửa `e2e/shopping-flow.spec.ts`: thêm một `test(...)` mới "khách hàng dùng mã SHOPLITE10 khi thanh toán", giữ nguyên test hiện có. Kịch bản:
+- [X] T052 Sửa `e2e/shopping-flow.spec.ts`: thêm một `test(...)` mới "khách hàng dùng mã SHOPLITE10 khi thanh toán", giữ nguyên test hiện có. Kịch bản:
   1. Thêm 1 "Chuột không dây SwiftClick" (450.000 ₫) vào giỏ, rồi vào `/checkout`.
   2. Nhập `TET2026` → "Áp dụng" → thấy "Mã giảm giá đã hết hạn".
   3. Nhập `shoplite10` → "Áp dụng" → `checkout-discount` chứa "45.000", `checkout-total` chứa "435.000".
   4. Điền thông tin nhận hàng, bấm "Đặt hàng" → URL `/orders/SL-…?placed=1`; `order-discount` chứa "SHOPLITE10" và "45.000"; tổng "435.000".
   5. Bấm "Tất cả đơn hàng" → dòng `order-row` của đơn vừa đặt chứa "435.000" (tổng sau giảm, Story 4 #3).
-- [ ] T053 [P] Cập nhật `AGENTS.md`:
+- [X] T053 [P] Cập nhật `AGENTS.md`:
   - mục 3 (Codemap): thêm hàng Coupons (`src/features/coupons/`: `coupon-rules.ts`, `coupon-service.ts`, `coupon-schema.ts`; `src/data/coupons.ts`; `api/coupons/validate/route.ts`) và bước tra mã trong "Luồng đặt hàng";
   - mục 4: thêm 3 mã lỗi `COUPON_*` 422;
   - mục 5: quy tắc mã giảm giá (phí ship theo subtotal trước giảm, một mã mỗi đơn);
   - mục 7: "Không import `@/data/coupons` hay `@/features/coupons/coupon-service` vào Client Component".
-- [ ] T054 Rà soát thủ công (FR-022a): grep cho thấy chỉ `coupon-service.ts` import `@/data/coupons`, và không file `"use client"` nào import `coupon-service`, `@/data/coupons` hay `@/features/orders/server`. Không hard-code `300_000`, `500_000`, `100_000` ngoài `src/data/coupons.ts` và test fixtures.
-- [ ] T055 Chạy `npm run format`.
-- [ ] T056 Chạy `npm run test:e2e` (đụng luồng mua hàng, bắt buộc theo Constitution II), đảm bảo pass.
-- [ ] T057 Thực hiện các bước API và UI trong [quickstart.md](./quickstart.md) với `ORDERS_FILE` trỏ tới file tạm, đối chiếu kết quả.
-- [ ] T058 Chạy `npm run check`, đảm bảo pass.
+- [X] T054 Rà soát thủ công (FR-022a): grep cho thấy chỉ `coupon-service.ts` import `@/data/coupons`, và không file `"use client"` nào import `coupon-service`, `@/data/coupons` hay `@/features/orders/server`. Không hard-code `300_000`, `500_000`, `100_000` ngoài `src/data/coupons.ts` và test fixtures.
+- [X] T055 Chạy `npm run format`.
+- [X] T056 Chạy `npm run test:e2e` (đụng luồng mua hàng, bắt buộc theo Constitution II), đảm bảo pass.
+- [X] T057 Thực hiện các bước API và UI trong [quickstart.md](./quickstart.md) với `ORDERS_FILE` trỏ tới file tạm, đối chiếu kết quả.
+- [X] T058 Chạy `npm run check`, đảm bảo pass.
 
 ---
 

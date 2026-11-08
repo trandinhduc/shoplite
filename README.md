@@ -79,14 +79,15 @@ storage/                    # (tự tạo khi chạy) orders.json - đã đượ
 
 ## API
 
-| Method  | Endpoint              | Mô tả                                                                             |
-| ------- | --------------------- | --------------------------------------------------------------------------------- |
-| `GET`   | `/api/products`       | Danh sách sản phẩm. Query: `q, category, minPrice, maxPrice, inStock, sort, page` |
-| `GET`   | `/api/products/:slug` | Chi tiết sản phẩm                                                                 |
-| `GET`   | `/api/orders`         | Danh sách đơn hàng                                                                |
-| `POST`  | `/api/orders`         | Tạo đơn hàng                                                                      |
-| `GET`   | `/api/orders/:id`     | Chi tiết đơn hàng                                                                 |
-| `PATCH` | `/api/orders/:id`     | Hủy đơn: `{ "status": "cancelled" }`                                              |
+| Method  | Endpoint                | Mô tả                                                                              |
+| ------- | ----------------------- | ---------------------------------------------------------------------------------- |
+| `GET`   | `/api/products`         | Danh sách sản phẩm. Query: `q, category, minPrice, maxPrice, inStock, sort, page`  |
+| `GET`   | `/api/products/:slug`   | Chi tiết sản phẩm                                                                  |
+| `GET`   | `/api/orders`           | Danh sách đơn hàng                                                                 |
+| `POST`  | `/api/orders`           | Tạo đơn hàng. Tùy chọn `couponCode`; server tự kiểm tra mã và tính lại tiền        |
+| `GET`   | `/api/orders/:id`       | Chi tiết đơn hàng                                                                  |
+| `PATCH` | `/api/orders/:id`       | Hủy đơn: `{ "status": "cancelled" }`                                               |
+| `POST`  | `/api/coupons/validate` | Kiểm tra mã giảm giá cho giỏ: `{ code, items }` → `{ coupon, subtotal, discount }` |
 
 Lỗi trả về dạng `{ "error": { "code": "...", "message": "...", "details": { ... } } }`.
 
