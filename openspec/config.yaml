@@ -1,0 +1,38 @@
+schema: spec-driven
+
+context: |
+  Ngôn ngữ: viết mọi artifact (proposal, design, specs, tasks) bằng tiếng Việt. Giữ nguyên tiếng Anh cho
+  tiêu đề cấu trúc OpenSpec (## Why, ## What Changes, ## ADDED Requirements, ### Requirement:,
+  #### Scenario:, WHEN/THEN...) và từ khóa SHALL/MUST.
+
+  Stack:
+  - Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + Zod 4, Node >= 22.12; alias @/* -> src/*.
+  - Dữ liệu tĩnh src/data/*; giỏ hàng localStorage "shoplite:cart"; đơn hàng JSON storage/orders.json (env ORDERS_FILE); test Vitest + Playwright.
+
+  Codemap (capability -> thư mục -> file chính):
+  - catalog  -> src/features/catalog/  -> catalog-service.ts (parseCatalogQuery, queryProducts, getProductById)
+  - cart     -> src/features/cart/     -> cart-reducer.ts, cart-store.ts, use-cart.ts
+  - checkout -> src/features/checkout/ -> pricing.ts, checkout-schema.ts, components/checkout-form.tsx
+  - orders   -> src/features/orders/   -> order-service.ts, order-repository.ts, order-errors.ts, server.ts
+  - layout   -> src/components/layout/ -> header.tsx, footer.tsx, nav-links.tsx (+ src/app/layout.tsx)
+  - API route mỏng ở src/app/api/*, dùng src/lib/http.ts (handleRouteError, jsonError, readJsonBody).
+
+  Ràng buộc quan trọng nhất:
+  1. Giá, phí ship, tổng tiền, giảm giá MUST do server tính (calculateOrderTotals); không tin payload client.
+  2. Mỗi dòng giỏ hàng tối đa MAX_QUANTITY_PER_ITEM và không vượt stock (getMaxQuantity); placeOrder MUST kiểm tra tồn kho.
+  3. Không hard-code số (10, 30_000, 500_000...) — dùng hằng số đã export (FREE_SHIPPING_THRESHOLD, SHIPPING_OPTIONS...).
+  4. Lỗi nghiệp vụ ném OrderError (code có trong HTTP_STATUS_BY_CODE); body lỗi luôn là ApiErrorBody qua handleRouteError.
+  5. Không import features/orders/server, node:fs, data/coupons, coupon-service vào Client Component; text UI tiếng Việt.
+
+  Chi tiết (luồng, quy ước, Definition of Done): xem AGENTS.md ở gốc repo.
+
+rules:
+  proposal:
+    - Luôn có mục "Ngoài phạm vi" liệt kê rõ những gì change này không làm.
+  specs:
+    - Mỗi requirement MUST có ít nhất một scenario cho trường hợp lỗi hoặc giá trị biên, ngoài scenario thành công.
+  design:
+    - Liệt kê file tạo mới và file sửa, nhóm theo capability trong codemap (đường dẫn đầy đủ dưới src/).
+  tasks:
+    - Mỗi nhóm task kết thúc bằng một task viết/cập nhật test (co-located *.test.ts(x)) cho nhóm đó.
+    - Task cuối cùng của tasks.md là chạy "npm run check" và đảm bảo pass.
