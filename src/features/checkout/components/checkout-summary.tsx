@@ -1,17 +1,21 @@
 import { ProductImage } from "@/features/catalog/components/product-image";
 import type { CartItem } from "@/features/cart/types";
 import { calculateOrderTotals, type ShippingMethod } from "@/features/checkout/pricing";
+import { CouponField } from "@/features/coupons/components/coupon-field";
+import type { AppliedCouponState } from "@/features/coupons/use-applied-coupon";
 import { formatCurrency } from "@/lib/format";
 
 interface CheckoutSummaryProps {
   items: CartItem[];
   shippingMethod: ShippingMethod;
+  coupon: AppliedCouponState;
 }
 
-export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps) {
+export function CheckoutSummary({ items, shippingMethod, coupon }: CheckoutSummaryProps) {
   const totals = calculateOrderTotals(
     items.map((item) => ({ unitPrice: item.price, quantity: item.quantity })),
     shippingMethod,
+    coupon.discount,
   );
 
   return (
@@ -31,11 +35,29 @@ export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps)
           </li>
         ))}
       </ul>
+      <div className="border-t border-slate-200 pt-4">
+        <CouponField
+          applied={coupon.applied}
+          status={coupon.status}
+          error={coupon.error}
+          notice={coupon.notice}
+          onApply={coupon.apply}
+          onRemove={coupon.remove}
+        />
+      </div>
       <dl className="flex flex-col gap-2 border-t border-slate-200 pt-4 text-sm">
         <div className="flex justify-between">
           <dt className="text-slate-600">Tạm tính</dt>
           <dd className="font-medium">{formatCurrency(totals.subtotal)}</dd>
         </div>
+        {totals.discount > 0 && (
+          <div className="flex justify-between">
+            <dt className="text-slate-600">Giảm giá ({coupon.applied?.code})</dt>
+            <dd className="font-medium text-emerald-700" data-testid="discount">
+              -{formatCurrency(totals.discount)}
+            </dd>
+          </div>
+        )}
         <div className="flex justify-between">
           <dt className="text-slate-600">Phí giao hàng</dt>
           <dd className="font-medium" data-testid="shipping-fee">

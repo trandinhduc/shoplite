@@ -18,5 +18,8 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // Đơn tạo trong E2E không ghi vào storage/orders.json. Server dev đang chạy sẵn sẽ được
+    // dùng lại và không có biến này - tắt nó trước khi chạy E2E.
+    env: { ORDERS_FILE: "test-results/e2e-orders.json" },
   },
 });

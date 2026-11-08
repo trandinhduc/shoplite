@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAX_QUANTITY_PER_ITEM } from "@/features/cart/cart-reducer";
+import { normalizeCouponCode } from "@/features/coupons/coupon-rules";
 import { SHIPPING_METHODS } from "./pricing";
 
 export const PAYMENT_METHODS = ["cod", "bank_transfer"] as const;
@@ -47,22 +48,45 @@ export const checkoutFormSchema = customerSchema.extend({
 
 export type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 
-/** Payload gửi lên POST /api/orders. */
+const MAX_ORDER_LINES = 50;
+
+const orderItemsSchema = z
+  .array(
+    z.object({
+      productId: z.string().min(1),
+      quantity: z.number().int().min(1).max(MAX_QUANTITY_PER_ITEM),
+    }),
+  )
+  .min(1, "Giỏ hàng đang trống")
+  .max(MAX_ORDER_LINES, `Tối đa ${MAX_ORDER_LINES} dòng sản phẩm`);
+
+/** Mã sau khi chuẩn hóa: rỗng (không dùng mã) hoặc chỉ chữ in hoa và số, tối đa 32 ký tự. */
+const normalizedCouponCodeSchema = z
+  .string("Vui lòng nhập mã giảm giá")
+  .transform(normalizeCouponCode)
+  .pipe(
+    z
+      .string()
+      .max(32, "Mã giảm giá quá dài")
+      .regex(/^[A-Z0-9]*$/, "Mã giảm giá chỉ gồm chữ và số"),
+  );
+
+/** Payload gửi lên POST /api/orders. Không có trường tiền: server tự tính. */
 export const placeOrderSchema = z.object({
   customer: customerSchema,
   shippingMethod: z.enum(SHIPPING_METHODS),
   paymentMethod: z.enum(PAYMENT_METHODS),
-  items: z
-    .array(
-      z.object({
-        productId: z.string().min(1),
-        quantity: z.number().int().min(1).max(MAX_QUANTITY_PER_ITEM),
-      }),
-    )
-    .min(1, "Giỏ hàng đang trống"),
+  items: orderItemsSchema,
+  couponCode: normalizedCouponCodeSchema.optional(),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;
+
+/** Payload gửi lên POST /api/coupons/validate. */
+export const couponValidationSchema = z.object({
+  code: normalizedCouponCodeSchema.refine((code) => code !== "", "Vui lòng nhập mã giảm giá"),
+  items: orderItemsSchema,
+});
 
 /** { "customer.phone": "Số điện thoại không hợp lệ" } - lấy lỗi đầu tiên của mỗi field. */
 export function toFieldErrors(error: z.ZodError): Record<string, string> {

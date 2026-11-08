@@ -7,6 +7,8 @@ import { Banknote, CreditCard, Truck, Zap } from "lucide-react";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useCart } from "@/features/cart/use-cart";
+import { couponStore } from "@/features/coupons/coupon-store";
+import { useAppliedCoupon } from "@/features/coupons/use-applied-coupon";
 import {
   checkoutFormSchema,
   PAYMENT_METHODS,
@@ -57,6 +59,7 @@ export function CheckoutForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
+  const coupon = useAppliedCoupon(items, subtotal);
 
   if (!hydrated) {
     return <div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />;
@@ -116,11 +119,13 @@ export function CheckoutForm() {
           shippingMethod,
           paymentMethod,
           items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          couponCode: coupon.applied?.code,
         }),
       });
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
+        if (body?.error.code.startsWith("COUPON_")) coupon.remove();
         setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
         setStatus("idle");
         return;
@@ -129,6 +134,7 @@ export function CheckoutForm() {
       const order = (await response.json()) as Order;
       setStatus("redirecting");
       clear();
+      couponStore.clear();
       router.push(`/orders/${order.id}?placed=1`);
     } catch {
       setSubmitError("Không kết nối được máy chủ, vui lòng thử lại.");
@@ -257,7 +263,7 @@ export function CheckoutForm() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} />
+        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} coupon={coupon} />
         {submitError && (
           <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {submitError}

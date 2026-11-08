@@ -26,13 +26,14 @@ npm run format                   # Prettier; kiểm tra không sửa: npm run fo
 
 ## 3. Codemap
 
-| Capability | Thư mục             | File quan trọng                                                                                                  |
-| ---------- | ------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Catalog    | `features/catalog`  | `catalog-service.ts` (`parseCatalogQuery`, `queryProducts`, `PAGE_SIZE`), `types.ts`                             |
-| Cart       | `features/cart`     | `cart-reducer.ts` (`cartReducer`, `MAX_QUANTITY_PER_ITEM`), `cart-store.ts`, `use-cart.ts`                       |
-| Checkout   | `features/checkout` | `pricing.ts` (`calculateOrderTotals`), `checkout-schema.ts` (`placeOrderSchema`), `components/checkout-form.tsx` |
-| Orders     | `features/orders`   | `order-service.ts`, `order-repository.ts`, `order-errors.ts`, `server.ts`                                        |
-| API        | `app/api`           | `products/route.ts`, `orders/route.ts`, `orders/[id]/route.ts`, `lib/http.ts`                                    |
+| Capability | Thư mục             | File quan trọng                                                                                                                             |
+| ---------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Catalog    | `features/catalog`  | `catalog-service.ts` (`parseCatalogQuery`, `queryProducts`, `PAGE_SIZE`), `types.ts`                                                        |
+| Cart       | `features/cart`     | `cart-reducer.ts` (`cartReducer`, `MAX_QUANTITY_PER_ITEM`), `cart-store.ts`, `use-cart.ts`                                                  |
+| Checkout   | `features/checkout` | `pricing.ts` (`calculateOrderTotals`), `checkout-schema.ts` (`placeOrderSchema`), `components/checkout-form.tsx`                            |
+| Orders     | `features/orders`   | `order-service.ts`, `order-repository.ts`, `order-errors.ts`, `server.ts`                                                                   |
+| Coupons    | `features/coupons`  | `coupon-rules.ts` (dùng chung), `coupon-service.ts` (chỉ server), `coupon-store.ts`, `use-applied-coupon.ts`; dữ liệu `src/data/coupons.ts` |
+| API        | `app/api`           | `products/route.ts`, `orders/route.ts`, `orders/[id]/route.ts`, `coupons/validate/route.ts`, `lib/http.ts`                                  |
 
 Bộ lọc/sắp xếp/phân trang của trang `/products` nằm trên URL search params, parse bằng `parseCatalogQuery`.
 
@@ -48,6 +49,11 @@ sự kiện `storage` đồng bộ giữa các tab.
 → `mergeItems` → lấy giá/tồn kho qua `getProductById` → `calculateOrderTotals` → `repository.save`
 → `createJsonFileOrderRepository` ghi file tạm rồi `rename` vào `storage/orders.json`
 → client `clear()` giỏ và chuyển tới `/orders/{id}?placed=1`.
+
+**Luồng mã giảm giá**: `CouponField` → `useAppliedCoupon().apply` → `POST /api/coupons/validate`
+(`validateCoupon` + giá catalog) → `couponStore` (localStorage `shoplite:coupon`, chỉ để hiển thị)
+→ `calculateOrderTotals(lines, method, discount)`. Khi đặt hàng chỉ gửi `couponCode`; `placeOrder` gọi
+lại `validateCoupon` theo giờ server và lưu `couponCode`, `discount` vào đơn.
 
 ## 4. Quy ước code
 
@@ -76,6 +82,9 @@ sự kiện `storage` đồng bộ giữa các tab.
   bỏ qua mọi giá client gửi; kiểm tra tồn kho (`INSUFFICIENT_STOCK`).
 - Hủy đơn: `cancelOrder` chỉ cho phép khi `status === "pending"` (ngược lại `INVALID_STATUS_TRANSITION`, 409);
   `PATCH /api/orders/:id` chỉ nhận `{ "status": "cancelled" }`.
+- Mã giảm giá: giá trị tối thiểu so với tạm tính **trước** giảm; ngưỡng miễn phí ship (`FREE_SHIPPING_THRESHOLD`)
+  so với tạm tính **sau** giảm; giảm giá không trừ vào phí ship, tối đa bằng tạm tính. Đơn cũ không có
+  `discount`/`couponCode` - đọc bằng `order.discount ?? 0`.
 - Mã đơn `SL-YYYYMMDD-XXXXXX` (`generateOrderId`) - E2E kiểm tra đúng định dạng này.
 
 ## 6. Testing
@@ -88,11 +97,12 @@ sự kiện `storage` đồng bộ giữa các tab.
 - Inject `now` / `generateId` vào `createOrderService` để kết quả cố định.
 - `vitest.setup.ts` xóa localStorage sau mỗi test; gọi `cartStore.reset()` để store đọc lại localStorage.
 - E2E dựa vào label tiếng Việt và `data-testid` (`product-card`, `purchase-panel`, `cart-count`,
-  `cart-total`, `order-row`) - không đổi khi sửa UI trừ khi cập nhật luôn E2E.
+  `cart-total`, `order-row`, `shipping-fee`, `checkout-total`, `discount`) - không đổi khi sửa UI trừ khi cập nhật luôn E2E.
 
 ## 7. Không được làm
 
 - Không import `@/features/orders/server` (hoặc `order-repository.ts`) từ Client Component - nó dùng `node:fs`.
+- Không import `src/data/coupons.ts` hoặc `coupon-service.ts` từ Client Component - lộ danh sách mã ra trình duyệt.
 - Không tin giá/tổng tiền từ client; không thêm field giá vào payload `POST /api/orders`.
 - Không hard-code phí ship, ngưỡng miễn phí, giới hạn số lượng ngoài `pricing.ts` / `cart-reducer.ts`.
 - Không để test ghi vào `storage/orders.json`; không commit `storage/` hay file `.env*`.

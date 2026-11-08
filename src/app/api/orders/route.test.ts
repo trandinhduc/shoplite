@@ -33,6 +33,18 @@ describe("POST /api/orders", () => {
     expect(order).toMatchObject({ status: "pending", subtotal: 450_000, shippingFee: 60_000 });
   });
 
+  it("201 - đơn có mã giảm giá trả về discount và couponCode", async () => {
+    const response = await postOrder({ ...validBody, couponCode: "SHOPLITE10" });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      subtotal: 450_000,
+      discount: 45_000,
+      couponCode: "SHOPLITE10",
+      shippingFee: 60_000,
+      total: 465_000,
+    });
+  });
+
   it("400 - body không phải JSON", async () => {
     const response = await postOrder("{oops");
     expect(response.status).toBe(400);

@@ -1,7 +1,8 @@
 import { getProductById } from "@/features/catalog/catalog-service";
 import type { Product } from "@/features/catalog/types";
 import { placeOrderSchema, toFieldErrors } from "@/features/checkout/checkout-schema";
-import { calculateOrderTotals } from "@/features/checkout/pricing";
+import { calculateOrderTotals, calculateSubtotal } from "@/features/checkout/pricing";
+import { validateCoupon } from "@/features/coupons/coupon-service";
 import { OrderError } from "./order-errors";
 import type { OrderRepository } from "./order-repository";
 import type { Order, OrderItem } from "./types";
@@ -48,7 +49,7 @@ export function createOrderService({
      * Tạo đơn hàng mới từ payload của client.
      * - Validate dữ liệu bằng placeOrderSchema
      * - Lấy giá từ catalog (bỏ qua mọi giá client gửi lên)
-     * - Kiểm tra tồn kho
+     * - Kiểm tra tồn kho, rồi kiểm tra lại mã giảm giá (nếu có) theo giờ server
      */
     async placeOrder(input: unknown): Promise<Order> {
       const parsed = placeOrderSchema.safeParse(input);
@@ -60,7 +61,7 @@ export function createOrderService({
         );
       }
 
-      const { customer, items, shippingMethod, paymentMethod } = parsed.data;
+      const { customer, items, shippingMethod, paymentMethod, couponCode } = parsed.data;
 
       const orderItems: OrderItem[] = mergeItems(items).map(({ productId, quantity }) => {
         const product = findProduct(productId);
@@ -87,6 +88,9 @@ export function createOrderService({
       });
 
       const createdAt = now();
+      const coupon = couponCode
+        ? validateCoupon(couponCode, calculateSubtotal(orderItems), createdAt)
+        : undefined;
       const order: Order = {
         id: generateId(createdAt),
         status: "pending",
@@ -102,7 +106,8 @@ export function createOrderService({
         shippingMethod,
         paymentMethod,
         items: orderItems,
-        ...calculateOrderTotals(orderItems, shippingMethod),
+        ...calculateOrderTotals(orderItems, shippingMethod, coupon?.discount),
+        ...(coupon && { couponCode: coupon.coupon.code }),
       };
 
       await repository.save(order);

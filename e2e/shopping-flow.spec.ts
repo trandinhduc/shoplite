@@ -54,3 +54,28 @@ test("lọc theo danh mục và sắp xếp theo giá", async ({ page }) => {
     "Loa Bluetooth BeatBox Mini",
   );
 });
+
+test("áp dụng mã SHOPLITE10 khi thanh toán", async ({ page }) => {
+  await page.goto("/products/chuot-khong-day-swiftclick");
+  await page.getByTestId("purchase-panel").getByRole("button", { name: "Thêm vào giỏ" }).click();
+  await expect(page.getByTestId("cart-count")).toHaveText("1");
+
+  await page.getByRole("link", { name: /Giỏ hàng/ }).click();
+  await page.getByRole("link", { name: "Tiến hành thanh toán" }).click();
+
+  // 450.000đ - 10% = 405.000đ < 500.000đ nên vẫn tính phí giao hàng tiêu chuẩn
+  await page.getByLabel("Mã giảm giá").fill("shoplite10");
+  await page.getByRole("button", { name: "Áp dụng" }).click();
+  await expect(page.getByTestId("discount")).toContainText("-45.000");
+  await expect(page.getByTestId("shipping-fee")).toContainText("30.000");
+  await expect(page.getByTestId("checkout-total")).toContainText("435.000");
+
+  await page.getByLabel(/Họ và tên/).fill("Nguyễn Văn Test");
+  await page.getByLabel(/Số điện thoại/).fill("0912345678");
+  await page.getByLabel(/Địa chỉ giao hàng/).fill("12 Nguyễn Huệ, Quận 1, TP.HCM");
+  await page.getByRole("button", { name: "Đặt hàng" }).click();
+
+  await expect(page).toHaveURL(/\/orders\/SL-\d{8}-[0-9A-F]{6}\?placed=1/);
+  await expect(page.getByText("Giảm giá (SHOPLITE10)")).toBeVisible();
+  await expect(page.getByText("-45.000", { exact: false })).toBeVisible();
+});

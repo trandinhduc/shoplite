@@ -61,6 +61,61 @@ describe("orderService", () => {
       expect(await repository.findById(order.id)).toEqual(order);
     });
 
+    it("áp dụng mã giảm giá: server tự tính giảm giá, phí giao hàng và tổng tiền", async () => {
+      const order = await service.placeOrder(validInput({ couponCode: " shoplite10 " }));
+      expect(order).toMatchObject({
+        subtotal: 300_000,
+        discount: 30_000,
+        couponCode: "SHOPLITE10",
+        shippingFee: SHIPPING_OPTIONS.standard.fee,
+        total: 300_000,
+      });
+      expect(await repository.findById(order.id)).toEqual(order);
+    });
+
+    it("đơn không dùng mã có discount bằng 0 và không có couponCode", async () => {
+      const order = await service.placeOrder(validInput());
+      expect(order.discount).toBe(0);
+      expect(order).not.toHaveProperty("couponCode");
+    });
+
+    it("bỏ qua số tiền giảm và tổng tiền do client gửi lên", async () => {
+      const order = await service.placeOrder(
+        validInput({ couponCode: "SHOPLITE10", discount: 999_999, total: 0 }),
+      );
+      expect(order.discount).toBe(30_000);
+      expect(order.total).toBe(300_000);
+    });
+
+    it.each([
+      ["KHONGCO", "COUPON_NOT_FOUND"],
+      ["TET2026", "COUPON_EXPIRED"],
+      ["GIAM50K", "COUPON_MIN_ORDER_NOT_MET"],
+    ] as const)("không tạo đơn khi mã %s không hợp lệ (%s)", async (couponCode, code) => {
+      await expectOrderError(service.placeOrder(validInput({ couponCode })), code);
+      expect(await repository.findAll()).toEqual([]);
+    });
+
+    it("kiểm tra hạn mã theo giờ server lúc đặt hàng (giờ Việt Nam)", async () => {
+      const at = (iso: string) =>
+        createOrderService({ repository, now: () => new Date(iso) }).placeOrder(
+          validInput({ couponCode: "TET2026" }),
+        );
+      await expect(at("2026-02-28T16:59:59.999Z")).resolves.toMatchObject({ discount: 45_000 });
+      await expectOrderError(at("2026-02-28T17:00:00.000Z"), "COUPON_EXPIRED");
+    });
+
+    it("hủy đơn có mã vẫn giữ nguyên mã và số tiền giảm đã ghi nhận", async () => {
+      const order = await service.placeOrder(validInput({ couponCode: "SHOPLITE10" }));
+      const cancelled = await service.cancelOrder(order.id);
+      expect(cancelled).toMatchObject({
+        status: "cancelled",
+        couponCode: "SHOPLITE10",
+        discount: 30_000,
+        total: 300_000,
+      });
+    });
+
     it("bỏ qua giá do client gửi lên", async () => {
       const order = await service.placeOrder(
         validInput({ items: [{ productId: "p010", quantity: 1, price: 1 }] }),

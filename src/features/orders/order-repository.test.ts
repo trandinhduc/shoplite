@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -56,5 +56,15 @@ describe("createJsonFileOrderRepository", () => {
     const orders = await repository.findAll();
     expect(orders).toHaveLength(1);
     expect(orders[0].status).toBe("cancelled");
+  });
+
+  it("đọc được đơn hàng cũ không có trường giảm giá", async () => {
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, JSON.stringify([sampleOrder("SL-OLD")]), "utf8");
+
+    const order = await createJsonFileOrderRepository(file).findById("SL-OLD");
+    expect(order).toMatchObject({ id: "SL-OLD", subtotal: 0, total: 0 });
+    expect(order?.discount).toBeUndefined();
+    expect(order?.couponCode).toBeUndefined();
   });
 });
