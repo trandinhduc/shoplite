@@ -7,6 +7,8 @@ import { Banknote, CreditCard, Truck, Zap } from "lucide-react";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useCart } from "@/features/cart/use-cart";
+import type { Coupon } from "@/features/coupons/types";
+import { validateCoupon } from "@/features/coupons/coupon-service";
 import {
   checkoutFormSchema,
   PAYMENT_METHODS,
@@ -54,6 +56,10 @@ export function CheckoutForm() {
   const router = useRouter();
   const { items, subtotal, hydrated, clear } = useCart();
   const [values, setValues] = useState<CheckoutFormValues>(INITIAL_VALUES);
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
@@ -84,6 +90,34 @@ export function CheckoutForm() {
   }
 
   function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const { name, value } = event.target;
+    setValues((current) => ({ ...current, [name]: value }));
+    setErrors((current) => {
+      if (!current[name]) return current;
+      const next = { ...current };
+      delete next[name];
+      return next;
+    });
+  }
+
+  async function handleApplyCoupon() {
+    setCouponError(null);
+    try {
+      const subtotal = items.reduce((sum, i) => sum + i.lineTotal, 0);
+      const result = await validateCoupon(couponInput, subtotal);
+      setAppliedCoupon(result.coupon);
+      setDiscountAmount(result.discountAmount);
+    } catch (e) {
+      if (e instanceof Error) setCouponError(e.message);
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setDiscountAmount(0);
+    setCouponError(null);
+  }
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => {
@@ -257,7 +291,7 @@ export function CheckoutForm() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} />
+        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} coupon={appliedCoupon} discountAmount={discountAmount} />
         {submitError && (
           <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {submitError}
