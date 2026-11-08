@@ -7,8 +7,9 @@ Không còn mục NEEDS CLARIFICATION nào trong Technical Context.
 
 - **Decision**: Thêm `POST /api/coupons/validate` nhận `{ code }`. Server tra mã, kiểm tra hết hạn,
   trả về **quy tắc công khai của đúng mã đó** (`CouponRule`: loại, giá trị, mức giảm tối đa, giá trị
-  tối thiểu, thời điểm hết hạn). Client dùng hàm thuần dùng chung `evaluateCoupon(rule, subtotal,
-  now)` để tính số tiền giảm / trạng thái "chưa đủ điều kiện" và tính lại ngay khi giỏ thay đổi.
+  tối thiểu, thời điểm hết hạn). Client dùng hàm thuần dùng chung `evaluateCoupon(rule, subtotal)`
+  để tính số tiền giảm / trạng thái "chưa đủ điều kiện" và tính lại ngay khi giỏ thay đổi. Client
+  không xét hết hạn: hết hạn chỉ do server xét bằng đồng hồ máy chủ (FR-021, xem R10).
 - **Rationale**:
   - Không import `src/data/coupons.ts` vào client → toàn bộ danh sách mã không lọt vào JS bundle.
   - FR-017 yêu cầu tính lại tức thì khi giỏ thay đổi; có `rule` trong tay thì không cần gọi lại API
@@ -96,8 +97,21 @@ Không còn mục NEEDS CLARIFICATION nào trong Technical Context.
 ## R10. Trạng thái mã trên trang thanh toán
 
 - **Decision**: `CheckoutForm` giữ `appliedCoupon: CouponRule | null` trong state. Mỗi lần render
-  gọi `evaluateCoupon(rule, subtotal, new Date())` →
-  `{ status: "applied", discount } | { status: "below_minimum", minSubtotal, shortfall } |
-  { status: "expired" }`. `below_minimum` → không giảm, hiển thị "cần mua thêm"; bấm "Đặt hàng" bị
-  chặn với lỗi tại `couponCode` (FR-017a). Server trả lỗi `COUPON_*` → gỡ mã, hiển thị lý do, giữ
-  form (FR-013). Mã không lưu vào giỏ/localStorage (Assumption của spec).
+  gọi `evaluateCoupon(rule, subtotal)` →
+  `{ status: "applied", discount } | { status: "below_minimum", minSubtotal, shortfall }`.
+  Client **không** xét hết hạn (FR-021): đồng hồ máy khách có thể sai, nên hết hạn chỉ do server
+  báo (validate hoặc đặt hàng). `below_minimum` → không giảm, hiển thị "cần mua thêm"; bấm
+  "Đặt hàng" bị chặn với lỗi tại `couponCode` (FR-017a). Server trả lỗi `COUPON_*` → gỡ mã, hiển
+  thị lý do, giữ form (FR-013). Mã không lưu vào giỏ/localStorage (Assumption của spec).
+- **Alternatives**: Client tự xét hết hạn bằng `new Date()` → có thể gỡ nhầm mã khi máy khách sai
+  giờ → loại.
+
+## R11. Chặn import dữ liệu mã vào client bằng công cụ
+
+- **Decision**: Thêm rule `no-restricted-imports` (có sẵn trong ESLint) vào `eslint.config.mjs`
+  cho `src/**/*.tsx`: cấm `@/data/coupons` và `@/features/coupons/coupon-service`, kèm message
+  tiếng Việt. Dùng `patterns` với `regex` (`(^|/)data/coupons$`, `(^|/)coupons/coupon-service$`)
+  thay vì `paths`, vì `paths` chỉ khớp đúng chuỗi alias và để lọt import tương đối. Route handler (`.ts`) và service phía server không bị ảnh hưởng.
+- **Rationale**: FR-020 thành quy tắc được `npm run check` (lint) kiểm tra, không chỉ dựa vào review.
+  Không thêm dependency (Nguyên tắc IV).
+- **Alternatives**: Package `server-only` → thêm dependency → loại. Chỉ ghi quy ước → dễ quên → loại.

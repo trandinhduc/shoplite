@@ -27,16 +27,16 @@ Dữ liệu ban đầu (FR-018):
 Quy tắc kiểm tra dữ liệu (unit test trên `coupons` data): mã duy nhất, đúng định dạng chuẩn hóa,
 trường bắt buộc theo `type` có mặt và dương.
 
-## CouponEvaluation (mới — kết quả của `evaluateCoupon(rule, subtotal, now)`)
+## CouponEvaluation (mới — kết quả của `evaluateCoupon(rule, subtotal)`)
 
 | status          | Trường kèm theo                    | Ý nghĩa                                         |
 | --------------- | ---------------------------------- | ----------------------------------------------- |
 | `applied`       | `discount: number`                 | Đang giảm (`0 < discount ≤ subtotal`)           |
 | `below_minimum` | `minSubtotal`, `shortfall: number` | "Chưa đủ điều kiện"; `shortfall = min − subtotal` |
-| `expired`       | —                                  | Đã hết hạn                                      |
 
-Thứ tự kiểm tra: `expired` → `below_minimum` → `applied`. "Không tồn tại" không thuộc evaluation
-(chỉ xảy ra khi tra mã ở server).
+`evaluateCoupon` **không** xét hết hạn (FR-021). Hết hạn chỉ được xét ở server bằng
+`isCouponExpired(rule, now)` với `now` là đồng hồ máy chủ — trong `validateCouponCode` và
+`placeOrder`, TRƯỚC khi gọi `evaluateCoupon`. "Không tồn tại" cũng chỉ xảy ra khi tra mã ở server.
 
 Công thức `discount` (`calculateCouponDiscount(rule, subtotal)`):
 
@@ -47,11 +47,13 @@ Công thức `discount` (`calculateCouponDiscount(rule, subtotal)`):
 ### Trạng thái mã trên trang thanh toán (client, không lưu trữ)
 
 ```text
-(không có mã) --Áp dụng, server OK--> [đã áp dụng] --evaluate--> applied | below_minimum
-applied <--giỏ thay đổi, subtotal ≥ min--> below_minimum      (FR-017, tự chuyển qua lại)
-[đã áp dụng] --Gỡ mã--> (không có mã)                          (FR-011)
-[đã áp dụng] --server trả COUPON_*, hoặc evaluate = expired--> (không có mã) + thông báo (FR-013)
-below_minimum --bấm Đặt hàng--> chặn, lỗi tại couponCode     (FR-017a)
+(không có mã) --Áp dụng, server OK, evaluate = applied--> [đã áp dụng: applied]
+(không có mã) --Áp dụng, server OK, evaluate = below_minimum--> (không có mã) + lỗi "cần mua thêm" (FR-017)
+(không có mã) --Áp dụng, server trả COUPON_*--> (không có mã) + lỗi theo lý do       (FR-009)
+applied <--giỏ thay đổi, subtotal ≥ min / < min--> below_minimum   (FR-017, tự chuyển qua lại)
+[đã áp dụng] --Gỡ mã--> (không có mã)                              (FR-011)
+[đã áp dụng] --đặt hàng, server trả COUPON_*--> (không có mã) + thông báo, giữ form (FR-013)
+below_minimum --bấm Đặt hàng--> chặn, lỗi tại couponCode           (FR-017a)
 ```
 
 ## OrderTotals (sửa — `src/features/checkout/pricing.ts`)

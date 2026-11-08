@@ -1,6 +1,6 @@
 # Implementation Plan: Mã giảm giá khi thanh toán
 
-**Branch**: `feat/landv` (spec dir `001-checkout-discount-code`) | **Date**: 2026-11-08 | **Spec**: [spec.md](./spec.md)
+**Branch**: `feat/landv` (spec dir `001-checkout-discount-code`; script Spec Kit đọc thư mục spec từ `.specify/feature.json`, không từ tên nhánh) | **Date**: 2026-11-08 | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/001-checkout-discount-code/spec.md`
 
@@ -8,7 +8,7 @@
 
 Khách nhập mã ở `/checkout`, client gọi `POST /api/coupons/validate` để nhận quy tắc của đúng mã
 đó, rồi dùng hàm thuần dùng chung `evaluateCoupon` để hiển thị ngay số tiền giảm hoặc trạng thái
-"chưa đủ điều kiện" (tự tính lại khi giỏ đổi). Khi đặt hàng, client chỉ gửi thêm `couponCode`;
+"chưa đủ điều kiện" (tự tính lại khi giỏ đổi). Hết hạn chỉ được xét bằng đồng hồ server (FR-021). Khi đặt hàng, client chỉ gửi thêm `couponCode`;
 `placeOrder` tự tra mã, kiểm tra hết hạn/tối thiểu, tính `discount` và `total` qua
 `calculateOrderTotals(lines, method, discount)` (phí ship vẫn xét trên tạm tính trước giảm), từ
 chối bằng `OrderError` `COUPON_*` (422) nếu mã không còn hợp lệ. Đơn lưu thêm `couponCode` và
@@ -45,7 +45,7 @@ nguyên VND, làm tròn xuống; hết hạn theo giờ Việt Nam
 
 | Nguyên tắc | Đánh giá | Bằng chứng trong thiết kế |
 | ---------- | -------- | ------------------------- |
-| I. Kiến trúc theo tính năng | ✅ Pass | Logic ở `src/features/coupons/`; route `api/coupons/validate` chỉ đọc body → `validateCouponCode` → JSON; trang đơn hàng chỉ hiển thị. Client chỉ import `coupon-rules.ts` (thuần), không import `coupon-service.ts`/`src/data/coupons.ts` hay `orders/server.ts` |
+| I. Kiến trúc theo tính năng | ✅ Pass | Logic ở `src/features/coupons/`; route `api/coupons/validate` chỉ đọc body → `validateCouponCode` → JSON; trang đơn hàng chỉ hiển thị. Client chỉ import `coupon-rules.ts` (thuần), không import `coupon-service.ts`/`src/data/coupons.ts` hay `orders/server.ts` — được ESLint chặn (R11, FR-020) |
 | II. Test trước (NON-NEGOTIABLE) | ✅ Pass | Test viết trước cho `coupon-rules` (biên 299.999/300.000, 999.999/1.000.000/1.000.001, làm tròn, `expiresAt` ±1ms, discount ≤ subtotal), `pricing` (discount + ship trước giảm), `placeOrder`, 2 route test in-memory, component test, E2E |
 | III. Server là nguồn sự thật về tiền | ✅ Pass | Client chỉ gửi `couponCode`; `placeOrder` tự tra mã + tính lại; Zod strip `discount`/`total`; lỗi `OrderError` `COUPON_*` + `HTTP_STATUS_BY_CODE`; hằng số `FREE_SHIPPING_THRESHOLD` import từ `pricing.ts` |
 | IV. Đơn giản trước | ✅ Pass | Không dependency/DB mới; dữ liệu tĩnh như `products.ts`; một endpoint mới (lý do ở research R1) |
@@ -85,7 +85,8 @@ src/
 │   │   ├── coupon-rules.ts                # thuần, client-safe: normalize/calculate/evaluate/isExpired
 │   │   ├── coupon-rules.test.ts
 │   │   ├── coupon-service.ts              # chỉ server: findCouponByCode, validateCouponCode, toCouponError
-│   │   ├── coupon-service.test.ts         # gồm test tính hợp lệ của dữ liệu coupons.ts
+│   │   ├── coupon-service.test.ts
+│   │   ├── coupon-data.test.ts            # kiểm tra tính hợp lệ của dữ liệu coupons.ts
 │   │   └── components/
 │   │       ├── coupon-field.tsx           # "use client": ô nhập, Áp dụng, Gỡ mã, trạng thái
 │   │       └── coupon-field.test.tsx
@@ -99,6 +100,7 @@ src/
 │   │       ├── checkout-form.test.tsx     # SỬA
 │   │       └── checkout-summary.tsx       # SỬA: dòng giảm giá / "chưa đủ điều kiện"
 │   └── orders/
+│       ├── components/order-totals.tsx    # MỚI: khối tạm tính/giảm giá/ship/tổng (+ .test.tsx)
 │       ├── types.ts                       # SỬA: couponCode?, discount?
 │       ├── order-errors.ts                # SỬA: 3 mã COUPON_* → 422
 │       ├── order-service.ts               # SỬA: findCoupon dep, áp mã trong placeOrder
@@ -111,6 +113,7 @@ src/
 │   └── orders/[id]/page.tsx               # SỬA: dòng "Giảm giá (MÃ)" khi discount > 0
 e2e/
 └── shopping-flow.spec.ts                  # SỬA: thêm kịch bản áp mã + đặt hàng + xem chi tiết
+eslint.config.mjs                          # SỬA: no-restricted-imports chặn dữ liệu mã trong *.tsx (R11)
 ```
 
 **Structure Decision**: Giữ cấu trúc Next.js một project hiện tại. Thêm feature `coupons` theo quy

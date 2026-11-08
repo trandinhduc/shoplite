@@ -22,9 +22,10 @@ Route `src/app/api/orders/route.ts` **không đổi**; thay đổi nằm ở `pl
 
 1. `placeOrderSchema.safeParse` → `VALIDATION_ERROR` (400) nếu sai.
 2. Gộp dòng, lấy giá từ catalog, kiểm tra tồn kho (như hiện tại).
-3. Nếu có `couponCode`: `normalizeCouponCode` → `findCoupon` → `evaluateCoupon(rule, subtotal, now())`.
+3. Nếu có `couponCode`: `normalizeCouponCode` → `findCoupon` → `isCouponExpired(rule, now())` →
+   `evaluateCoupon(rule, subtotal)`.
    - Không tìm thấy → `COUPON_NOT_FOUND` (422)
-   - `expired` → `COUPON_EXPIRED` (422)
+   - Hết hạn theo đồng hồ server → `COUPON_EXPIRED` (422)
    - `below_minimum` → `COUPON_MIN_SUBTOTAL_NOT_MET` (422)
    - Không tạo đơn trong mọi trường hợp lỗi (FR-013).
 4. `calculateOrderTotals(items, shippingMethod, discount)`; phí ship tính trên subtotal trước giảm.
@@ -68,3 +69,5 @@ Không đổi hành vi. Đơn cũ (thiếu `couponCode`/`discount`) trả về n
 - 201 khi gửi kèm `discount: 999999, total: 1` → server bỏ qua, số tiền tự tính.
 - 422 cho từng mã lỗi `COUPON_*`; không có đơn nào được lưu.
 - 201 không có `couponCode` → response không có trường `discount`.
+- 400 `VALIDATION_ERROR` khi `couponCode` sai kiểu: mảng (`["SHOPLITE10","GIAM50K"]`), số, `null`,
+  object; chuỗi > 32 ký tự. Không có đơn nào được lưu.

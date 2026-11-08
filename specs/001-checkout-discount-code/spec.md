@@ -50,10 +50,7 @@ số tiền giảm và tổng tiền hiển thị, đặt hàng và kiểm tra t
    là 50.000đ.
 4. **Given** khách đã áp dụng mã hợp lệ, **When** khách đặt hàng thành công, **Then** đơn hàng được
    tạo với số tiền giảm và tổng tiền do hệ thống tự tính lại, khớp với con số khách đã thấy.
-5. **Given** khách đã áp dụng một mã nhưng mã hết hạn trước khi bấm "Đặt hàng", **When** khách bấm
-   "Đặt hàng", **Then** không có đơn nào được tạo, khách thấy thông báo mã đã hết hạn, mã bị gỡ
-   khỏi tóm tắt và thông tin đã nhập vẫn còn nguyên.
-6. **Given** khách nhập mã có chữ thường hoặc khoảng trắng thừa (` shoplite10 `), **When** bấm
+5. **Given** khách nhập mã có chữ thường hoặc khoảng trắng thừa (` shoplite10 `), **When** bấm
    "Áp dụng", **Then** mã được nhận như `SHOPLITE10`.
 
 ---
@@ -75,10 +72,13 @@ tiếp phục vụ mục tiêu tăng giá trị đơn trung bình.
    "Mã giảm giá không tồn tại" và tổng tiền không thay đổi.
 2. **Given** hôm nay sau ngày 28/02/2026, **When** khách áp dụng `TET2026`, **Then** hiển thị thông
    báo mã đã hết hạn và tổng tiền không thay đổi.
-3. **Given** giỏ hàng có tạm tính 420.000đ, **When** khách áp dụng `GIAM50K`, **Then** hiển thị
-   thông báo đơn chưa đạt tối thiểu 500.000đ và cần mua thêm 80.000đ.
+3. **Given** giỏ hàng có tạm tính 420.000đ, **When** khách áp dụng `GIAM50K`, **Then** mã không
+   được áp dụng, hiển thị thông báo đơn chưa đạt tối thiểu 500.000đ và cần mua thêm 80.000đ.
 4. **Given** ô mã đang trống, **When** khách bấm "Áp dụng", **Then** hiển thị yêu cầu nhập mã ngay
    tại ô nhập, không gửi kiểm tra.
+5. **Given** khách đã áp dụng một mã nhưng mã hết hạn trước khi bấm "Đặt hàng", **When** khách bấm
+   "Đặt hàng", **Then** không có đơn nào được tạo, khách thấy thông báo mã đã hết hạn, mã bị gỡ
+   khỏi tóm tắt và thông tin đã nhập vẫn còn nguyên (FR-013).
 
 ---
 
@@ -186,8 +186,9 @@ không mã và kiểm tra không có dòng giảm giá.
 - **FR-013**: Nếu mã không còn hợp lệ tại thời điểm đặt hàng (hết hạn, không tồn tại, hoặc chưa
   đạt giá trị tối thiểu theo giá hiện hành), hệ thống MUST từ chối đặt hàng và không tạo đơn; MUST
   báo đúng lý do theo FR-009; trang thanh toán MUST tự gỡ mã khỏi tóm tắt, hiển thị tổng tiền không
-  giảm và giữ nguyên thông tin khách đã nhập. Hệ thống MUST NOT tự tạo đơn với tổng tiền khác con
-  số khách đã thấy.
+  giảm và giữ nguyên thông tin khách đã nhập. Hệ thống MUST NOT tạo đơn không giảm giá thay cho
+  đơn có mã (không "âm thầm bỏ mã"). Khi mã hợp lệ, số tiền giảm và tổng tiền lưu trong đơn MUST là
+  số hệ thống tự tính tại thời điểm đặt hàng (FR-012).
 - **FR-014**: Đơn hàng đã đặt MUST lưu mã đã dùng (nếu có) và số tiền được giảm; các giá trị này
   MUST không thay đổi về sau kể cả khi mã hết hạn.
 - **FR-015**: Trang chi tiết đơn hàng MUST hiển thị mã đã dùng và số tiền giảm khi đơn có dùng mã;
@@ -198,7 +199,9 @@ không mã và kiểm tra không có dòng giảm giá.
   Nếu tạm tính xuống dưới giá trị tối thiểu, mã MUST được giữ ở trạng thái "chưa đủ điều kiện":
   không giảm tiền, tổng tiền hiển thị không giảm, tóm tắt hiển thị giá trị tối thiểu và số tiền cần
   mua thêm. Khi tạm tính đạt lại giá trị tối thiểu, mã MUST tự có hiệu lực lại mà khách không phải
-  nhập lại.
+  nhập lại. Trạng thái "chưa đủ điều kiện" chỉ áp dụng cho mã đã áp dụng thành công trước đó; bấm
+  "Áp dụng" một mã khi tạm tính chưa đạt tối thiểu thì mã MUST bị từ chối (không được giữ lại) và
+  hiển thị lý do theo FR-009.
 - **FR-017a**: Khi mã đang ở trạng thái "chưa đủ điều kiện", bấm "Đặt hàng" MUST NOT tạo đơn; trang
   thanh toán MUST hiển thị thông báo tại phần mã giảm giá yêu cầu khách mua thêm hoặc gỡ mã. Nếu yêu
   cầu vẫn đến được hệ thống, áp dụng FR-013.
@@ -209,6 +212,12 @@ không mã và kiểm tra không có dòng giảm giá.
     28/02/2026.
 - **FR-019**: Mọi số tiền liên quan đến giảm giá MUST hiển thị theo định dạng tiền Việt Nam thống
   nhất với phần còn lại của cửa hàng.
+- **FR-020**: Danh sách mã giảm giá MUST NOT được gửi xuống trình duyệt. Trình duyệt chỉ được nhận
+  điều kiện của đúng mã khách vừa nhập và hệ thống xác nhận còn hiệu lực (loại, mức giảm, mức giảm
+  tối đa, giá trị tối thiểu, ngày hết hạn); các thông tin này coi là công khai.
+- **FR-021**: Đồng hồ của hệ thống (máy chủ) là chuẩn duy nhất để xác định mã hết hạn. Trang thanh
+  toán MUST NOT tự kết luận mã hết hạn theo giờ trên máy khách; việc hết hạn chỉ được báo khi hệ
+  thống kiểm tra mã (lúc bấm "Áp dụng" hoặc lúc đặt hàng).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -245,9 +254,15 @@ không mã và kiểm tra không có dòng giảm giá.
   liệu định nghĩa sẵn.
 - "Giá trị đơn hàng" để xét điều kiện tối thiểu và tính phần trăm là tạm tính tiền hàng, không gồm
   phí giao hàng.
-- Ngày hết hạn tính theo giờ Việt Nam (UTC+7) và bao gồm trọn ngày hết hạn.
+- Ngày hết hạn tính theo giờ Việt Nam (UTC+7) và bao gồm trọn ngày hết hạn, đo bằng đồng hồ máy
+  chủ (FR-021).
 - `SHOPLITE10` và `GIAM50K` không có ngày hết hạn; `TET2026` không có giá trị tối thiểu (mô tả gốc
   không nêu).
 - Mã giảm giá không lưu cùng giỏ hàng: rời trang thanh toán rồi quay lại có thể phải nhập lại mã.
 - Giảm giá không áp lên phí giao hàng.
 - Quy tắc hiện có (giới hạn số lượng, tồn kho, chỉ hủy đơn khi "Chờ xác nhận") giữ nguyên.
+- Giá sản phẩm là dữ liệu tĩnh, không đổi trong lúc khách thanh toán, nên số tiền giảm hệ thống tự
+  tính khi đặt hàng trùng với con số khách đã thấy. Không so khớp "tổng tiền mong đợi" từ trình
+  duyệt; nếu sau này giá có thể thay đổi trong ngày thì cần bổ sung yêu cầu này.
+- Ngoài phạm vi: giới hạn tần suất / chống dò mã khi kiểm tra mã giảm giá. Đây là rủi ro chấp nhận
+  được với dự án mẫu (không có mã riêng tư hay mã giá trị cao); MUST xem lại trước khi dùng thật.
