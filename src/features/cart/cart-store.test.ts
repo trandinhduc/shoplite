@@ -30,6 +30,31 @@ describe("cartStore", () => {
     expect(cartStore.getSnapshot().items).toEqual([]);
   });
 
+  it("lưu mã giảm giá cùng giỏ hàng", () => {
+    cartStore.dispatch({ type: "add", item: toCartItem(product), quantity: 1 });
+    cartStore.dispatch({ type: "apply-coupon", code: "SHOPLITE10" });
+    const saved = JSON.parse(window.localStorage.getItem(CART_STORAGE_KEY)!);
+    expect(saved.couponCode).toBe("SHOPLITE10");
+  });
+
+  it("đọc được giỏ hàng cũ chưa có mã giảm giá", () => {
+    window.localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify({ items: [{ ...toCartItem(product), quantity: 1 }] }),
+    );
+    expect(cartStore.getSnapshot()).toEqual({ items: [{ ...toCartItem(product), quantity: 1 }] });
+  });
+
+  it("bỏ qua mã giảm giá sai kiểu nhưng vẫn giữ sản phẩm", () => {
+    window.localStorage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify({ items: [{ ...toCartItem(product), quantity: 2 }], couponCode: 123 }),
+    );
+    const snapshot = cartStore.getSnapshot();
+    expect(snapshot.items[0].quantity).toBe(2);
+    expect(snapshot).not.toHaveProperty("couponCode");
+  });
+
   it("thông báo cho subscriber khi giỏ hàng thay đổi", () => {
     const listener = vi.fn();
     const unsubscribe = cartStore.subscribe(listener);

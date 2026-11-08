@@ -19,9 +19,7 @@ describe("calculateShippingFee", () => {
   });
 
   it("giao hàng nhanh luôn tính phí", () => {
-    expect(calculateShippingFee(5_000_000, "express")).toBe(
-      SHIPPING_OPTIONS.express.fee,
-    );
+    expect(calculateShippingFee(5_000_000, "express")).toBe(SHIPPING_OPTIONS.express.fee);
   });
 
   it("không tính phí cho giỏ hàng trống", () => {
@@ -47,11 +45,7 @@ describe("calculateOrderTotals", () => {
   });
 
   it("trừ số tiền giảm vào tổng tiền", () => {
-    const totals = calculateOrderTotals(
-      [{ unitPrice: 400_000, quantity: 1 }],
-      "standard",
-      40_000,
-    );
+    const totals = calculateOrderTotals([{ unitPrice: 400_000, quantity: 1 }], "standard", 40_000);
     expect(totals).toEqual({
       subtotal: 400_000,
       discount: 40_000,
@@ -69,11 +63,7 @@ describe("calculateOrderTotals", () => {
   });
 
   it("tính miễn phí giao hàng theo tạm tính trước khi giảm", () => {
-    const totals = calculateOrderTotals(
-      [{ unitPrice: 520_000, quantity: 1 }],
-      "standard",
-      52_000,
-    );
+    const totals = calculateOrderTotals([{ unitPrice: 520_000, quantity: 1 }], "standard", 52_000);
     expect(totals).toEqual({
       subtotal: 520_000,
       discount: 52_000,

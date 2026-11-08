@@ -8,8 +8,7 @@ import type { Coupon } from "./types";
  */
 
 export type CouponLookupResult =
-  | { ok: true; coupon: Coupon }
-  | { ok: false; code: "COUPON_NOT_FOUND"; message: string };
+  { ok: true; coupon: Coupon } | { ok: false; code: "COUPON_NOT_FOUND"; message: string };
 
 export function findCoupon(code: string): Coupon | undefined {
   const normalized = normalizeCouponCode(code);

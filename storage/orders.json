@@ -1,0 +1,99 @@
+[
+  {
+    "id": "SL-20261108-37A71A",
+    "status": "pending",
+    "createdAt": "2026-11-08T08:59:48.559Z",
+    "updatedAt": "2026-11-08T08:59:48.559Z",
+    "customer": {
+      "fullName": "Nguyễn Văn Test",
+      "phone": "0912345678",
+      "address": "12 Nguyễn Huệ, Quận 1, TP.HCM"
+    },
+    "shippingMethod": "standard",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p006",
+        "slug": "chuot-khong-day-swiftclick",
+        "name": "Chuột không dây SwiftClick",
+        "image": {
+          "emoji": "🖱️",
+          "from": "#fae8ff",
+          "to": "#ddd6fe"
+        },
+        "unitPrice": 450000,
+        "quantity": 2,
+        "lineTotal": 900000
+      }
+    ],
+    "subtotal": 900000,
+    "shippingFee": 0,
+    "total": 900000
+  },
+  {
+    "id": "SL-20261108-471AC2",
+    "status": "pending",
+    "createdAt": "2026-11-08T08:59:51.182Z",
+    "updatedAt": "2026-11-08T08:59:51.182Z",
+    "customer": {
+      "fullName": "Nguyễn Văn Test",
+      "phone": "0912345678",
+      "address": "12 Nguyễn Huệ, Quận 1, TP.HCM"
+    },
+    "shippingMethod": "standard",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p006",
+        "slug": "chuot-khong-day-swiftclick",
+        "name": "Chuột không dây SwiftClick",
+        "image": {
+          "emoji": "🖱️",
+          "from": "#fae8ff",
+          "to": "#ddd6fe"
+        },
+        "unitPrice": 450000,
+        "quantity": 2,
+        "lineTotal": 900000
+      }
+    ],
+    "subtotal": 900000,
+    "couponCode": "SHOPLITE10",
+    "discount": 90000,
+    "shippingFee": 0,
+    "total": 810000
+  },
+  {
+    "id": "SL-20261108-F0342E",
+    "status": "pending",
+    "createdAt": "2026-11-08T09:00:08.135Z",
+    "updatedAt": "2026-11-08T09:00:08.135Z",
+    "customer": {
+      "fullName": "Quickstart Test",
+      "phone": "0912345678",
+      "address": "12 Nguyễn Huệ, Quận 1, TP.HCM"
+    },
+    "shippingMethod": "standard",
+    "paymentMethod": "cod",
+    "items": [
+      {
+        "productId": "p006",
+        "slug": "chuot-khong-day-swiftclick",
+        "name": "Chuột không dây SwiftClick",
+        "image": {
+          "emoji": "🖱️",
+          "from": "#fae8ff",
+          "to": "#ddd6fe"
+        },
+        "unitPrice": 450000,
+        "quantity": 2,
+        "lineTotal": 900000
+      }
+    ],
+    "subtotal": 900000,
+    "couponCode": "SHOPLITE10",
+    "discount": 90000,
+    "shippingFee": 0,
+    "total": 810000
+  }
+]

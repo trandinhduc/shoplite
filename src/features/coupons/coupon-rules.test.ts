@@ -101,18 +101,12 @@ describe("evaluateCoupon", () => {
   });
 
   it("còn hiệu lực tới mili-giây cuối cùng của ngày hết hạn", () => {
-    const result = evaluateCoupon(
-      tet,
-      400_000,
-      new Date("2026-02-28T23:59:59.999+07:00"),
-    );
+    const result = evaluateCoupon(tet, 400_000, new Date("2026-02-28T23:59:59.999+07:00"));
     expect(result).toEqual({ ok: true, coupon: tet, discount: 60_000 });
   });
 
   it("hết hạn từ 00:00 ngày hôm sau", () => {
-    expect(
-      evaluateCoupon(tet, 400_000, new Date("2026-03-01T00:00:00+07:00")),
-    ).toEqual({
+    expect(evaluateCoupon(tet, 400_000, new Date("2026-03-01T00:00:00+07:00"))).toEqual({
       ok: false,
       reason: "expired",
       coupon: tet,
@@ -145,9 +139,9 @@ describe("getCouponErrorMessage", () => {
   });
 
   it("báo mã đã hết hạn", () => {
-    expect(
-      getCouponErrorMessage({ ok: false, reason: "expired", coupon: tet }),
-    ).toBe("Mã giảm giá đã hết hạn");
+    expect(getCouponErrorMessage({ ok: false, reason: "expired", coupon: tet })).toBe(
+      "Mã giảm giá đã hết hạn",
+    );
   });
 
   it("báo số tiền cần mua thêm kèm mã chuẩn hóa từ dữ liệu", () => {

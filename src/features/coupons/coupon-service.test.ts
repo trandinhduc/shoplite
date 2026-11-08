@@ -47,10 +47,8 @@ describe("dữ liệu mã giảm giá", () => {
         expect(coupon.value).toBeGreaterThan(0);
         expect(coupon).not.toHaveProperty("maxDiscount");
       }
-      if (coupon.minSubtotal !== undefined)
-        expect(coupon.minSubtotal).toBeGreaterThanOrEqual(0);
-      if (coupon.expiresOn !== undefined)
-        expect(coupon.expiresOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      if (coupon.minSubtotal !== undefined) expect(coupon.minSubtotal).toBeGreaterThanOrEqual(0);
+      if (coupon.expiresOn !== undefined) expect(coupon.expiresOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
   });
 

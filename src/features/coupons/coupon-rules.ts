@@ -17,16 +17,10 @@ export function getCouponDeadline(expiresOn: string): Date {
 }
 
 /** Số tiền giảm, làm tròn xuống tới đồng và không vượt quá tạm tính. */
-export function calculateCouponDiscount(
-  coupon: Coupon,
-  subtotal: number,
-): number {
+export function calculateCouponDiscount(coupon: Coupon, subtotal: number): number {
   const raw =
     coupon.type === "percent"
-      ? Math.min(
-          Math.floor((subtotal * coupon.value) / 100),
-          coupon.maxDiscount,
-        )
+      ? Math.min(Math.floor((subtotal * coupon.value) / 100), coupon.maxDiscount)
       : coupon.value;
   return Math.max(0, Math.min(raw, subtotal));
 }
@@ -39,10 +33,7 @@ export function evaluateCoupon(
 ): CouponEvaluation {
   if (!coupon) return { ok: false, reason: "not_found" };
 
-  if (
-    coupon.expiresOn &&
-    now.getTime() > getCouponDeadline(coupon.expiresOn).getTime()
-  ) {
+  if (coupon.expiresOn && now.getTime() > getCouponDeadline(coupon.expiresOn).getTime()) {
     return { ok: false, reason: "expired", coupon };
   }
 

@@ -50,10 +50,10 @@ Tra **một** mã để client tự tính số tiền giảm (research R1). Rout
 **400 Bad Request**: `:code` không qua `couponCodeSchema` (Zod:
 `z.string().trim().min(1).max(32)`). Message lấy từ issue đầu tiên:
 
-| Trường hợp                     | `message`                   |
-| ------------------------------ | --------------------------- |
-| Rỗng hoặc chỉ có khoảng trắng  | `Vui lòng nhập mã giảm giá` |
-| Dài hơn 32 ký tự sau khi trim  | `Mã giảm giá không hợp lệ`  |
+| Trường hợp                    | `message`                   |
+| ----------------------------- | --------------------------- |
+| Rỗng hoặc chỉ có khoảng trắng | `Vui lòng nhập mã giảm giá` |
+| Dài hơn 32 ký tự sau khi trim | `Mã giảm giá không hợp lệ`  |
 
 ```json
 {

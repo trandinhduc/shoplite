@@ -25,6 +25,10 @@ export function useCart() {
         cartStore.dispatch({ type: "update-quantity", productId, quantity }),
       removeItem: (productId: string) => cartStore.dispatch({ type: "remove", productId }),
       clear: () => cartStore.dispatch({ type: "clear" }),
+      /** Mã giảm giá đang lưu cùng giỏ hàng - chưa được kiểm tra, phải đánh giá lại trước khi dùng. */
+      couponCode: cart.couponCode,
+      applyCoupon: (code: string) => cartStore.dispatch({ type: "apply-coupon", code }),
+      removeCoupon: () => cartStore.dispatch({ type: "remove-coupon" }),
     }),
     [cart, hydrated],
   );

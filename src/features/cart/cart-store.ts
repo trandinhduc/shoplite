@@ -25,7 +25,11 @@ function readFromStorage(): CartState {
     const raw = window.localStorage.getItem(CART_STORAGE_KEY);
     if (!raw) return EMPTY_CART;
     const parsed: unknown = JSON.parse(raw);
-    return isCartState(parsed) ? parsed : EMPTY_CART;
+    if (!isCartState(parsed)) return EMPTY_CART;
+    // Mã giảm giá sai kiểu thì bỏ qua, vẫn giữ sản phẩm trong giỏ.
+    return typeof parsed.couponCode === "string"
+      ? { items: parsed.items, couponCode: parsed.couponCode }
+      : { items: parsed.items };
   } catch {
     return EMPTY_CART;
   }

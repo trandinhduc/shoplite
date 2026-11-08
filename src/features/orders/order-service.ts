@@ -1,10 +1,14 @@
 import { getProductById } from "@/features/catalog/catalog-service";
 import type { Product } from "@/features/catalog/types";
+import { placeOrderSchema, toFieldErrors } from "@/features/checkout/checkout-schema";
+import { calculateOrderTotals, calculateSubtotal } from "@/features/checkout/pricing";
 import {
-  placeOrderSchema,
-  toFieldErrors,
-} from "@/features/checkout/checkout-schema";
-import { calculateOrderTotals } from "@/features/checkout/pricing";
+  evaluateCoupon,
+  getCouponErrorMessage,
+  normalizeCouponCode,
+} from "@/features/coupons/coupon-rules";
+import { findCoupon as findCouponInCatalog } from "@/features/coupons/coupon-service";
+import type { Coupon } from "@/features/coupons/types";
 import { OrderError } from "./order-errors";
 import type { OrderRepository } from "./order-repository";
 import type { Order, OrderItem } from "./types";
@@ -12,6 +16,7 @@ import type { Order, OrderItem } from "./types";
 export interface OrderServiceDeps {
   repository: OrderRepository;
   findProduct?: (id: string) => Product | undefined;
+  findCoupon?: (code: string) => Coupon | undefined;
   now?: () => Date;
   generateId?: (date: Date) => string;
 }
@@ -19,11 +24,7 @@ export interface OrderServiceDeps {
 /** Mã đơn hàng dạng SL-20261021-4F9A2C */
 export function generateOrderId(date: Date): string {
   const ymd = date.toISOString().slice(0, 10).replace(/-/g, "");
-  const random = crypto
-    .randomUUID()
-    .replace(/-/g, "")
-    .slice(0, 6)
-    .toUpperCase();
+  const random = crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
   return `SL-${ymd}-${random}`;
 }
 
@@ -31,10 +32,7 @@ export function generateOrderId(date: Date): string {
 function mergeItems(items: { productId: string; quantity: number }[]) {
   const merged = new Map<string, number>();
   for (const item of items) {
-    merged.set(
-      item.productId,
-      (merged.get(item.productId) ?? 0) + item.quantity,
-    );
+    merged.set(item.productId, (merged.get(item.productId) ?? 0) + item.quantity);
   }
   return [...merged.entries()].map(([productId, quantity]) => ({
     productId,
@@ -45,16 +43,34 @@ function mergeItems(items: { productId: string; quantity: number }[]) {
 export function createOrderService({
   repository,
   findProduct = getProductById,
+  findCoupon = findCouponInCatalog,
   now = () => new Date(),
   generateId = generateOrderId,
 }: OrderServiceDeps) {
+  /** Mã không dùng được -> ném INVALID_COUPON; không có mã -> undefined. */
+  function applyCoupon(
+    rawCode: string | undefined,
+    subtotal: number,
+    at: Date,
+  ): { couponCode: string; discount: number } | undefined {
+    const code = rawCode ? normalizeCouponCode(rawCode) : "";
+    if (!code) return undefined;
+
+    const evaluation = evaluateCoupon(findCoupon(code), subtotal, at);
+    if (!evaluation.ok) {
+      const message = getCouponErrorMessage(evaluation);
+      throw new OrderError("INVALID_COUPON", message, {
+        couponCode: message,
+        reason: evaluation.reason,
+      });
+    }
+    return { couponCode: evaluation.coupon.code, discount: evaluation.discount };
+  }
+
   async function getOrder(id: string): Promise<Order> {
     const order = await repository.findById(id);
     if (!order) {
-      throw new OrderError(
-        "ORDER_NOT_FOUND",
-        `Không tìm thấy đơn hàng "${id}"`,
-      );
+      throw new OrderError("ORDER_NOT_FOUND", `Không tìm thấy đơn hàng "${id}"`);
     }
     return order;
   }
@@ -65,6 +81,7 @@ export function createOrderService({
      * - Validate dữ liệu bằng placeOrderSchema
      * - Lấy giá từ catalog (bỏ qua mọi giá client gửi lên)
      * - Kiểm tra tồn kho
+     * - Kiểm tra lại mã giảm giá theo thời điểm đặt hàng và tự tính số tiền giảm
      */
     async placeOrder(input: unknown): Promise<Order> {
       const parsed = placeOrderSchema.safeParse(input);
@@ -76,42 +93,39 @@ export function createOrderService({
         );
       }
 
-      const { customer, items, shippingMethod, paymentMethod } = parsed.data;
+      const { customer, items, shippingMethod, paymentMethod, couponCode } = parsed.data;
 
-      const orderItems: OrderItem[] = mergeItems(items).map(
-        ({ productId, quantity }) => {
-          const product = findProduct(productId);
-          if (!product) {
-            throw new OrderError(
-              "PRODUCT_NOT_FOUND",
-              `Không tìm thấy sản phẩm "${productId}"`,
-            );
-          }
-          if (quantity > product.stock) {
-            throw new OrderError(
-              "INSUFFICIENT_STOCK",
-              product.stock === 0
-                ? `Sản phẩm "${product.name}" đã hết hàng`
-                : `Sản phẩm "${product.name}" chỉ còn ${product.stock} sản phẩm`,
-            );
-          }
-          return {
-            productId: product.id,
-            slug: product.slug,
-            name: product.name,
-            image: product.image,
-            unitPrice: product.price,
-            quantity,
-            lineTotal: product.price * quantity,
-          };
-        },
-      );
+      const orderItems: OrderItem[] = mergeItems(items).map(({ productId, quantity }) => {
+        const product = findProduct(productId);
+        if (!product) {
+          throw new OrderError("PRODUCT_NOT_FOUND", `Không tìm thấy sản phẩm "${productId}"`);
+        }
+        if (quantity > product.stock) {
+          throw new OrderError(
+            "INSUFFICIENT_STOCK",
+            product.stock === 0
+              ? `Sản phẩm "${product.name}" đã hết hàng`
+              : `Sản phẩm "${product.name}" chỉ còn ${product.stock} sản phẩm`,
+          );
+        }
+        return {
+          productId: product.id,
+          slug: product.slug,
+          name: product.name,
+          image: product.image,
+          unitPrice: product.price,
+          quantity,
+          lineTotal: product.price * quantity,
+        };
+      });
 
+      const createdAt = now();
+      const appliedCoupon = applyCoupon(couponCode, calculateSubtotal(orderItems), createdAt);
       const { subtotal, shippingFee, total } = calculateOrderTotals(
         orderItems,
         shippingMethod,
+        appliedCoupon?.discount,
       );
-      const createdAt = now();
       const order: Order = {
         id: generateId(createdAt),
         status: "pending",
@@ -128,6 +142,7 @@ export function createOrderService({
         paymentMethod,
         items: orderItems,
         subtotal,
+        ...appliedCoupon,
         shippingFee,
         total,
       };

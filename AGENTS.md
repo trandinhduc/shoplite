@@ -27,13 +27,14 @@ npm run format                       # Prettier + prettier-plugin-tailwindcss
 
 ## 3. Codemap
 
-| Capability | Thư mục | File quan trọng |
-| --- | --- | --- |
-| Catalog | `src/features/catalog/` | `catalog-service.ts` (`parseCatalogQuery`, `queryProducts`, `getProductById`, `PAGE_SIZE`), `types.ts` |
-| Cart | `src/features/cart/` | `cart-reducer.ts` (`cartReducer`, `getMaxQuantity`, `MAX_QUANTITY_PER_ITEM`), `cart-store.ts` (`cartStore`), `use-cart.ts` (`useCart`) |
-| Checkout | `src/features/checkout/` | `pricing.ts` (`calculateOrderTotals`, `FREE_SHIPPING_THRESHOLD`, `SHIPPING_OPTIONS`), `checkout-schema.ts` (`checkoutFormSchema`, `placeOrderSchema`, `toFieldErrors`), `components/checkout-form.tsx` |
-| Orders | `src/features/orders/` | `order-service.ts` (`createOrderService`), `order-repository.ts` (`OrderRepository`), `order-errors.ts` (`OrderError`), `server.ts` (`orderService`) |
-| API | `src/app/api/`, `src/lib/http.ts` | `orders/route.ts`, `orders/[id]/route.ts`, `products/…`; `handleRouteError`, `jsonError`, `readJsonBody` |
+| Capability | Thư mục                                        | File quan trọng                                                                                                                                                                                                                                                     |
+| ---------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Catalog    | `src/features/catalog/`                        | `catalog-service.ts` (`parseCatalogQuery`, `queryProducts`, `getProductById`, `PAGE_SIZE`), `types.ts`                                                                                                                                                              |
+| Cart       | `src/features/cart/`                           | `cart-reducer.ts` (`cartReducer`, `getMaxQuantity`, `MAX_QUANTITY_PER_ITEM`), `cart-store.ts` (`cartStore`), `use-cart.ts` (`useCart`)                                                                                                                              |
+| Checkout   | `src/features/checkout/`                       | `pricing.ts` (`calculateOrderTotals`, `FREE_SHIPPING_THRESHOLD`, `SHIPPING_OPTIONS`), `checkout-schema.ts` (`checkoutFormSchema`, `placeOrderSchema`, `toFieldErrors`), `components/checkout-form.tsx`                                                              |
+| Orders     | `src/features/orders/`                         | `order-service.ts` (`createOrderService`), `order-repository.ts` (`OrderRepository`), `order-errors.ts` (`OrderError`), `server.ts` (`orderService`)                                                                                                                |
+| Coupons    | `src/features/coupons/`, `src/data/coupons.ts` | `coupon-rules.ts` (hàm thuần: `normalizeCouponCode`, `evaluateCoupon`, `calculateCouponDiscount`, `getCouponErrorMessage`), `coupon-schema.ts` (`couponCodeSchema`), `coupon-service.ts` (`findCoupon`, `lookupCoupon` – chỉ server), `components/coupon-field.tsx` |
+| API        | `src/app/api/`, `src/lib/http.ts`              | `orders/route.ts`, `orders/[id]/route.ts`, `coupons/[code]/route.ts`, `products/…`; `handleRouteError`, `jsonError`, `readJsonBody`                                                                                                                                 |
 
 **Luồng thêm vào giỏ hàng** (chỉ chạy ở client, không gọi API):
 
@@ -45,14 +46,15 @@ npm run format                       # Prettier + prettier-plugin-tailwindcss
 **Luồng đặt hàng:**
 
 1. `CheckoutForm` validate bằng `checkoutFormSchema`.
-2. Form gửi `fetch("POST /api/orders")` với body `{ customer, shippingMethod, paymentMethod, items: [{ productId, quantity }] }`.
+2. Form gửi `fetch("POST /api/orders")` với body `{ customer, shippingMethod, paymentMethod, items: [{ productId, quantity }], couponCode? }` (không gửi số tiền).
 3. `app/api/orders/route.ts` đọc body bằng `readJsonBody`, rồi gọi `orderService.placeOrder` (trong `features/orders/server.ts`).
 4. `placeOrder` lần lượt:
    - validate bằng `placeOrderSchema`;
    - gộp dòng trùng `productId`;
    - lấy giá qua `findProduct` (mặc định `getProductById`);
    - kiểm tra `stock`;
-   - tính tiền bằng `calculateOrderTotals`;
+   - nếu có `couponCode`: `evaluateCoupon(findCoupon(code), subtotal, now())`, không hợp lệ thì ném `INVALID_COUPON` (422);
+   - tính tiền bằng `calculateOrderTotals(lines, method, discount)`;
    - lưu qua `repository.save`, ghi vào `createJsonFileOrderRepository` (ghi file `.tmp` rồi `rename`).
 5. Thành công: API trả 201, client gọi `clear()` giỏ và chuyển sang `/orders/{id}?placed=1`.
 
@@ -84,6 +86,7 @@ npm run format                       # Prettier + prettier-plugin-tailwindcss
   - `standard` miễn phí khi `subtotal >= FREE_SHIPPING_THRESHOLD` (500.000).
   - `subtotal <= 0` thì phí ship bằng 0.
 - **Giá do server tính:** `placeOrder` lấy `unitPrice` từ catalog và tính lại `calculateOrderTotals`. Không bao giờ dùng giá hay tổng tiền client gửi lên.
+- **Mã giảm giá:** tối đa một mã/đơn; phí ship tính theo tạm tính **trước** giảm; `0 ≤ discount ≤ subtotal`; hết hạn sau 23:59:59.999 +07:00 của `expiresOn`. `coupon-rules.ts` không import `src/data/` (client không bao giờ nhận danh sách mã). Đơn không dùng mã và đơn cũ không có `couponCode`/`discount`.
 - **Hủy đơn:** `cancelOrder` chỉ cho phép khi `status === "pending"`, nếu không thì ném `INVALID_STATUS_TRANSITION` (409). PATCH chỉ nhận `{ "status": "cancelled" }`.
 
 ## 6. Testing

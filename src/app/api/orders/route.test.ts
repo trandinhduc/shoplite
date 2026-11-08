@@ -6,7 +6,11 @@ import { GET, POST } from "./route";
 vi.mock("@/features/orders/server", async () => {
   const { createOrderService } = await import("@/features/orders/order-service");
   const { createInMemoryOrderRepository } = await import("@/features/orders/order-repository");
-  return { orderService: createOrderService({ repository: createInMemoryOrderRepository() }) };
+  return {
+    orderService: createOrderService({
+      repository: createInMemoryOrderRepository(),
+    }),
+  };
 });
 
 const postOrder = (body: unknown) =>
@@ -19,7 +23,11 @@ const postOrder = (body: unknown) =>
   );
 
 const validBody = {
-  customer: { fullName: "Phạm Minh D", phone: "0356789012", address: "99 Hai Bà Trưng, Huế" },
+  customer: {
+    fullName: "Phạm Minh D",
+    phone: "0356789012",
+    address: "99 Hai Bà Trưng, Huế",
+  },
   shippingMethod: "express",
   paymentMethod: "bank_transfer",
   items: [{ productId: "p006", quantity: 1 }],
@@ -30,7 +38,11 @@ describe("POST /api/orders", () => {
     const response = await postOrder(validBody);
     expect(response.status).toBe(201);
     const order = await response.json();
-    expect(order).toMatchObject({ status: "pending", subtotal: 450_000, shippingFee: 60_000 });
+    expect(order).toMatchObject({
+      status: "pending",
+      subtotal: 450_000,
+      shippingFee: 60_000,
+    });
   });
 
   it("400 - body không phải JSON", async () => {
@@ -49,8 +61,36 @@ describe("POST /api/orders", () => {
     expect(body.error.details).toHaveProperty(["customer.phone"]);
   });
 
+  it("201 - áp dụng mã giảm giá do server tự tính", async () => {
+    const response = await postOrder({
+      ...validBody,
+      couponCode: "SHOPLITE10",
+      discount: 1,
+    });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      subtotal: 450_000,
+      couponCode: "SHOPLITE10",
+      discount: 45_000,
+      total: 450_000 - 45_000 + 60_000,
+    });
+  });
+
+  it("422 - mã giảm giá đã hết hạn", async () => {
+    const response = await postOrder({ ...validBody, couponCode: "TET2026" });
+    expect(response.status).toBe(422);
+    expect((await response.json()).error).toMatchObject({
+      code: "INVALID_COUPON",
+      message: "Mã giảm giá đã hết hạn",
+      details: { couponCode: "Mã giảm giá đã hết hạn", reason: "expired" },
+    });
+  });
+
   it("409 - vượt quá tồn kho", async () => {
-    const response = await postOrder({ ...validBody, items: [{ productId: "p004", quantity: 1 }] });
+    const response = await postOrder({
+      ...validBody,
+      items: [{ productId: "p004", quantity: 1 }],
+    });
     expect(response.status).toBe(409);
     expect((await response.json()).error.code).toBe("INSUFFICIENT_STOCK");
   });

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAX_QUANTITY_PER_ITEM } from "@/features/cart/cart-reducer";
+import { couponCodeSchema } from "@/features/coupons/coupon-schema";
 import { SHIPPING_METHODS } from "./pricing";
 
 export const PAYMENT_METHODS = ["cod", "bank_transfer"] as const;
@@ -60,6 +61,11 @@ export const placeOrderSchema = z.object({
       }),
     )
     .min(1, "Giỏ hàng đang trống"),
+  /** Chuỗi rỗng nghĩa là không dùng mã. */
+  couponCode: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    couponCodeSchema.optional(),
+  ),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;
