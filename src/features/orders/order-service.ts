@@ -1,10 +1,7 @@
 import { getProductById } from "@/features/catalog/catalog-service";
 import type { Product } from "@/features/catalog/types";
 import { placeOrderSchema, toFieldErrors } from "@/features/checkout/checkout-schema";
-import { calculateOrderTotals, calculateSubtotal } from "@/features/checkout/pricing";
-import { evaluateCoupon } from "@/features/coupons/coupon-rules";
-import { findCouponByCode, toCouponError } from "@/features/coupons/coupon-service";
-import type { Coupon } from "@/features/coupons/types";
+import { calculateOrderTotals } from "@/features/checkout/pricing";
 import { OrderError } from "./order-errors";
 import type { OrderRepository } from "./order-repository";
 import type { Order, OrderItem } from "./types";
@@ -12,7 +9,6 @@ import type { Order, OrderItem } from "./types";
 export interface OrderServiceDeps {
   repository: OrderRepository;
   findProduct?: (id: string) => Product | undefined;
-  findCoupon?: (code: string) => Coupon | undefined;
   now?: () => Date;
   generateId?: (date: Date) => string;
 }
@@ -36,7 +32,6 @@ function mergeItems(items: { productId: string; quantity: number }[]) {
 export function createOrderService({
   repository,
   findProduct = getProductById,
-  findCoupon = findCouponByCode,
   now = () => new Date(),
   generateId = generateOrderId,
 }: OrderServiceDeps) {
@@ -54,9 +49,6 @@ export function createOrderService({
      * - Validate dữ liệu bằng placeOrderSchema
      * - Lấy giá từ catalog (bỏ qua mọi giá client gửi lên)
      * - Kiểm tra tồn kho
-     * - Nếu có mã giảm giá: kiểm tra lại mã và tự tính số tiền giảm (không tin số liệu client);
-     *   mã không hợp lệ → OrderError COUPON_* (422), không lưu đơn
-     * Thứ tự: schema → sản phẩm/tồn kho → mã giảm giá → tổng tiền → lưu.
      */
     async placeOrder(input: unknown): Promise<Order> {
       const parsed = placeOrderSchema.safeParse(input);
@@ -68,7 +60,7 @@ export function createOrderService({
         );
       }
 
-      const { customer, items, shippingMethod, paymentMethod, couponCode } = parsed.data;
+      const { customer, items, shippingMethod, paymentMethod } = parsed.data;
 
       const orderItems: OrderItem[] = mergeItems(items).map(({ productId, quantity }) => {
         const product = findProduct(productId);
@@ -95,22 +87,6 @@ export function createOrderService({
       });
 
       const createdAt = now();
-
-      // Mã giảm giá: kiểm tra SAU tồn kho, dùng giá catalog và đồng hồ server (FR-020, FR-022b).
-      let coupon: { code: string; discount: number } | undefined;
-      if (couponCode !== undefined) {
-        const evaluation = evaluateCoupon(
-          findCoupon(couponCode),
-          calculateSubtotal(orderItems),
-          createdAt,
-        );
-        if (!evaluation.ok) {
-          // Không bao giờ tự bỏ mã rồi tạo đơn với giá khác mà khách chưa thấy (FR-021).
-          throw toCouponError(evaluation);
-        }
-        coupon = { code: evaluation.code, discount: evaluation.discount };
-      }
-
       const order: Order = {
         id: generateId(createdAt),
         status: "pending",
@@ -126,8 +102,7 @@ export function createOrderService({
         shippingMethod,
         paymentMethod,
         items: orderItems,
-        ...(coupon && { couponCode: coupon.code }),
-        ...calculateOrderTotals(orderItems, shippingMethod, coupon?.discount),
+        ...calculateOrderTotals(orderItems, shippingMethod),
       };
 
       await repository.save(order);
