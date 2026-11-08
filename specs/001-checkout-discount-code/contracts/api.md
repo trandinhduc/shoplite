@@ -5,10 +5,10 @@ Mọi lỗi theo format chuẩn của dự án: `{ "error": { "code", "message",
 
 ## GET `/api/coupons/:code` (mới)
 
-Tra **một** mã để client tự tính số tiền giảm (research R1). Route mỏng: chỉ gọi
-`normalizeCouponCode` và `findCoupon` rồi trả kết quả.
+Tra **một** mã để client tự tính số tiền giảm (research R1). Route mỏng: validate `:code` bằng
+`couponCodeSchema.safeParse` (Zod), gọi `lookupCoupon` rồi ánh xạ kết quả sang HTTP.
 
-- `:code`: mã khách nhập, đã URL-encode. Server chuẩn hóa bằng trim + chữ HOA.
+- `:code`: mã khách nhập, đã URL-encode. `lookupCoupon` chuẩn hóa bằng trim + chữ HOA.
 
 **200 OK**: mã tồn tại (kể cả khi đã hết hạn; client tự đánh giá hạn dùng bằng `evaluateCoupon`).
 
@@ -47,7 +47,13 @@ Tra **một** mã để client tự tính số tiền giảm (research R1). Rout
 }
 ```
 
-**400 Bad Request**: mã rỗng sau khi chuẩn hóa, hoặc dài hơn 32 ký tự.
+**400 Bad Request**: `:code` không qua `couponCodeSchema` (Zod:
+`z.string().trim().min(1).max(32)`). Message lấy từ issue đầu tiên:
+
+| Trường hợp                     | `message`                   |
+| ------------------------------ | --------------------------- |
+| Rỗng hoặc chỉ có khoảng trắng  | `Vui lòng nhập mã giảm giá` |
+| Dài hơn 32 ký tự sau khi trim  | `Mã giảm giá không hợp lệ`  |
 
 ```json
 {

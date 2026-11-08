@@ -46,7 +46,7 @@ node`), Playwright (chromium)
 **Project Type**: Ứng dụng web full-stack, một project Next.js
 
 **Performance Goals**: Hiện kết quả áp dụng mã trong < 1 giây (SC-001). Tính lại khi giỏ đổi
-diễn ra tức thì ở client, không gọi mạng.
+diễn ra tức thì ở client, không gọi mạng. Đo bằng assertion có `timeout: 1000` trong e2e (T048).
 
 **Constraints**:
 
@@ -109,7 +109,8 @@ src/
 │   │   ├── coupon-rules.ts                 # thuần: normalizeCouponCode, getCouponDeadline,
 │   │   │                                   #   calculateCouponDiscount, evaluateCoupon, getCouponErrorMessage
 │   │   ├── coupon-rules.test.ts
-│   │   ├── coupon-service.ts               # server: findCoupon (đọc src/data/coupons.ts)
+│   │   ├── coupon-schema.ts (+ .test.ts)   # couponCodeSchema (Zod), dùng cho route GET và placeOrderSchema
+│   │   ├── coupon-service.ts               # server: findCoupon, lookupCoupon (đọc src/data/coupons.ts)
 │   │   ├── coupon-service.test.ts
 │   │   └── components/
 │   │       ├── coupon-field.tsx            # "use client": nhập/áp dụng/gỡ mã, hiện lỗi

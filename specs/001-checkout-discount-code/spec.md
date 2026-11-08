@@ -211,6 +211,12 @@ và kiểm tra dòng giảm giá chỉ xuất hiện ở đơn có mã.
 - **FR-019**: Mã đã áp dụng MUST được giữ cùng giỏ hàng của khách: còn nguyên khi khách chuyển sang
   trang khác (ví dụ trang giỏ hàng) rồi quay lại, và khi tải lại trang. Mã MUST bị bỏ khi khách gỡ
   mã, khi đặt hàng thành công, hoặc khi giỏ hàng trở nên trống.
+- **FR-020**: Khách hàng MUST NOT xem được danh sách các mã giảm giá đang có. Hệ thống chỉ cho biết
+  thông tin của đúng mã khách đã nhập.
+- **FR-021**: Mã khách nhập MUST có độ dài từ 1 tới 32 ký tự sau khi bỏ khoảng trắng đầu và cuối.
+  Mã ngoài giới hạn này được coi là không hợp lệ, không cần tra.
+- **FR-022**: Mã đã lưu cùng giỏ hàng (FR-019) MUST được coi là dữ liệu không tin cậy. Mỗi khi khách
+  mở trang thanh toán và khi đặt hàng, hệ thống MUST kiểm tra lại mã từ đầu.
 
 ### Key Entities _(include if feature involves data)_
 
@@ -260,3 +266,9 @@ và kiểm tra dòng giảm giá chỉ xuất hiện ở đơn có mã.
 - Ngoài phạm vi: trang quản trị tạo/sửa mã, giới hạn số lượt dùng mỗi mã, mã dành riêng cho từng
   khách, kết hợp nhiều mã trong một đơn.
 - Đơn đã đặt có dùng mã vẫn tuân theo quy tắc hủy đơn hiện có: chỉ hủy được khi đang "Chờ xác nhận".
+- Không giới hạn số lần thử mã và không giới hạn số lần dùng một mã. Đây là rủi ro đã chấp nhận cho
+  phiên bản này.
+- Thông báo "Mã giảm giá đã hết hạn" cho biết mã từng tồn tại. Điều này được chấp nhận vì mã khuyến
+  mãi vốn được công bố công khai.
+- Giá sản phẩm là dữ liệu tĩnh, chỉ đổi khi cập nhật hệ thống. Vì vậy trường hợp giá đổi giữa lúc
+  áp dụng mã và lúc đặt hàng nằm ngoài phạm vi.
