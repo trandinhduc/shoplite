@@ -13,6 +13,7 @@
 ### Session 2026-11-08
 
 - Q: Ngưỡng miễn phí giao hàng 500.000đ cho đơn `standard` xét trên tiền hàng trước hay sau giảm giá? → A: Trước giảm giá
+- Q: Khi server từ chối đơn vì mã không còn hợp lệ lúc đặt hàng, trang thanh toán làm gì với mã đang áp dụng? → A: Tự gỡ mã, hiện thông báo lý do, giữ nguyên thông tin đã điền; khách tự đặt lại không mã hoặc nhập mã khác
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -89,7 +90,8 @@ và kiểm tra đơn không bao giờ được tạo với mức giảm sai.
 1. **Given** yêu cầu đặt hàng chứa mã hợp lệ, **When** hệ thống xử lý, **Then** đơn lưu mức giảm do hệ thống tự tính, bất kể con số nào trình duyệt hiển thị.
 2. **Given** yêu cầu đặt hàng kèm số tiền giảm hoặc tổng tiền do người dùng tự điền, **When** hệ thống xử lý, **Then** các giá trị đó bị bỏ qua.
 3. **Given** mã không tồn tại, đã hết hạn hoặc đơn chưa đạt giá trị tối thiểu tại thời điểm đặt, **When** hệ thống xử lý, **Then** đơn bị từ chối kèm thông báo lý do giống như khi áp dụng mã, và khách không bị trừ ưu đãi sai.
-4. **Given** khách xóa bớt sản phẩm sau khi áp dụng mã làm tiền hàng thấp hơn mức tối thiểu, **When** khách đặt hàng, **Then** đơn bị từ chối vì chưa đạt giá trị tối thiểu.
+   Trang thanh toán sau đó tự gỡ mã khỏi tóm tắt đơn, hiển thị thông báo lý do, giữ nguyên thông tin khách đã điền và không tự đặt lại đơn; khách tự đặt lại không mã hoặc nhập mã khác.
+4. **Given** khách xóa bớt sản phẩm sau khi áp dụng mã làm tiền hàng thấp hơn mức tối thiểu, **When** khách đặt hàng, **Then** đơn bị từ chối vì chưa đạt giá trị tối thiểu. Mã hết hạn giữa lúc áp dụng và lúc đặt hàng cũng xử lý như vậy (đơn bị từ chối vì mã đã hết hạn).
 
 ---
 
@@ -135,7 +137,7 @@ và bộ phận marketing đối chiếu.
 - **FR-008**: Khi mã không hợp lệ, hệ thống MUST hiển thị thông báo tiếng Việt nêu đúng một trong các lý do: mã không tồn tại; mã đã hết hạn; đơn chưa đạt giá trị tối thiểu kèm số tiền cần mua thêm; chưa nhập mã.
 - **FR-009**: Mức giảm MUST không vượt quá tiền hàng và tổng tiền cuối cùng MUST không âm.
 - **FR-010**: Khi đặt hàng, hệ thống MUST tự kiểm tra lại mã và tính lại số tiền giảm cùng tổng tiền, MUST bỏ qua mọi số tiền giảm hoặc tổng tiền do trình duyệt gửi.
-- **FR-011**: Nếu mã không hợp lệ tại thời điểm đặt hàng, hệ thống MUST từ chối đơn kèm thông báo lý do, không tạo đơn với mức giảm sai.
+- **FR-011**: Nếu mã không hợp lệ tại thời điểm đặt hàng, hệ thống MUST từ chối đơn kèm thông báo lý do, không tạo đơn với mức giảm sai. Khi đó giao diện MUST tự gỡ mã khỏi tóm tắt đơn, hiển thị thông báo lý do, giữ nguyên thông tin đã nhập và MUST NOT tự đặt lại đơn.
 - **FR-012**: Đơn hàng đã đặt MUST lưu mã đã dùng và số tiền được giảm, và các giá trị này MUST không thay đổi về sau dù thông tin mã thay đổi.
 - **FR-013**: Trang chi tiết đơn hàng MUST hiển thị mã đã dùng và số tiền giảm khi đơn có dùng mã; đơn không có mã vẫn hiển thị bình thường.
 - **FR-014**: Hệ thống MUST cung cấp ba mã khởi tạo: `SHOPLITE10` (10%, tối đa 100.000đ, đơn từ 300.000đ), `GIAM50K` (giảm 50.000đ, đơn từ 500.000đ), `TET2026` (15%, tối đa 200.000đ, hết hạn 28/02/2026).
