@@ -24,3 +24,6 @@ test-results/
 
 # OS
 .DS_Store
+
+# order data (runtime, do not commit)
+storage/

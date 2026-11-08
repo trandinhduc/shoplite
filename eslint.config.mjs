@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // Generated output of tests and local storage
     "coverage/**",
     "storage/**",
+    "**/__MACOSX/**",
     "playwright-report/**",
     "test-results/**",
   ]),
