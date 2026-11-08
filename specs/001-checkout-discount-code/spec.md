@@ -237,24 +237,36 @@ kiểm tra đơn được lưu với con số do hệ thống tính. Gửi yêu 
 **Đặt hàng và chống gian lận**
 
 - **FR-019**: Yêu cầu đặt hàng MUST chỉ gửi kèm mã (nếu có), không gửi số tiền giảm hay tổng tiền.
-- **FR-020**: Khi đặt hàng, hệ thống MUST kiểm tra lại mã và tự tính lại số tiền giảm và tổng tiền từ
-  giá sản phẩm của cửa hàng; MUST bỏ qua mọi con số tiền do phía khách gửi lên.
+- **FR-020**: Khi đặt hàng, hệ thống MUST kiểm tra lại mã và tự tính lại cả bốn đại lượng tiền: tạm
+  tính (từ giá sản phẩm của cửa hàng × số lượng), số tiền giảm (theo quy tắc của mã, FR-007/FR-008),
+  phí giao hàng (theo quy tắc phí hiện hành, FR-010) và tổng tiền (FR-009); MUST bỏ qua mọi con số
+  tiền do phía khách gửi lên.
 - **FR-021**: Nếu mã không hợp lệ tại thời điểm đặt hàng, hệ thống MUST từ chối tạo đơn và trả lý do
   tương ứng (cùng ba lý do ở FR-014); MUST NOT tự động bỏ mã rồi tạo đơn với giá khác mà khách chưa
   thấy. Trang thanh toán MUST giữ mã trong tóm tắt ở trạng thái lỗi (hiển thị lý do, không trừ vào
   tổng), giữ nguyên giỏ hàng và thông tin đã điền; khách MUST tự gỡ mã (hoặc thay bằng mã hợp lệ)
   trước khi đặt hàng lại.
 - **FR-022**: Các kiểm tra hiện có khi đặt hàng (sản phẩm tồn tại, tồn kho, giới hạn số lượng) MUST
-  vẫn được thực hiện như trước.
+  vẫn được thực hiện như trước, và MUST được thực hiện **trước** khi kiểm tra mã giảm giá: thứ tự là
+  dữ liệu yêu cầu → sản phẩm và tồn kho → mã giảm giá → tính tiền → lưu đơn. Đơn vừa hết hàng vừa có
+  mã lỗi thì khách nhận lỗi tồn kho.
 - **FR-022a**: Danh sách mã giảm giá MUST NOT được gửi xuống trình duyệt. Khách chỉ nhận được quy tắc
   của đúng mã mình đã nhập và áp dụng thành công.
 - **FR-022b**: Thời điểm xét hạn của mã khi đặt hàng MUST lấy từ đồng hồ của hệ thống, không lấy thời
   gian do trình duyệt cung cấp. Việc xét hạn ở trình duyệt (nếu có) chỉ để hiển thị.
+- **FR-022c**: Bước kiểm tra mã ở trang thanh toán (trước khi đặt hàng) MUST áp dụng cùng ràng buộc
+  dữ liệu giỏ hàng như khi đặt hàng (ít nhất một sản phẩm, sản phẩm tồn tại, số lượng mỗi sản phẩm
+  trong giới hạn cho phép) và cùng ràng buộc định dạng mã (FR-004); giá luôn lấy từ cửa hàng. Nếu dữ
+  liệu giỏ hàng gửi kèm không hợp lệ, hệ thống MUST trả lỗi dữ liệu theo định dạng lỗi chung của cửa
+  hàng; trang thanh toán hiển thị thông báo lỗi cạnh ô mã và không áp dụng mã (tổng tiền không đổi).
 
 **Lưu trữ và hiển thị đơn hàng**
 
 - **FR-023**: Đơn hàng có dùng mã MUST lưu mã đã dùng và số tiền được giảm tại thời điểm đặt; các
-  con số này MUST không đổi về sau dù định nghĩa mã thay đổi.
+  con số này MUST không đổi về sau dù định nghĩa mã thay đổi, kể cả khi đơn bị hủy. Mọi đơn mới MUST
+  thỏa các ràng buộc nhất quán: tổng tiền = tạm tính − số tiền giảm + phí giao hàng; 0 ≤ số tiền giảm
+  ≤ tạm tính; số tiền giảm > 0 thì đơn MUST có mã đã dùng. Khách không có cách nào sửa mã hay số tiền
+  giảm của đơn đã đặt (thao tác duy nhất trên đơn là hủy).
 - **FR-024**: Trang chi tiết đơn hàng MUST hiển thị mã đã dùng và số tiền được giảm (nếu có) cùng
   tạm tính, phí giao hàng, tổng tiền.
 - **FR-025**: Đơn hàng không dùng mã, kể cả đơn đã tồn tại trước khi có tính năng, MUST tiếp tục
@@ -285,7 +297,10 @@ kiểm tra đơn được lưu với con số do hệ thống tính. Gửi yêu 
 - **SC-002**: 100% trường hợp mã không hợp lệ hiển thị đúng một trong ba lý do đã định nghĩa; với lý
   do "chưa đạt tối thiểu", số tiền cần mua thêm hiển thị chính xác đến từng đồng.
 - **SC-003**: 100% đơn hàng có dùng mã được lưu với số tiền giảm và tổng tiền khớp chính xác quy tắc
-  tính, bất kể con số nào được gửi lên từ trình duyệt (xác minh bằng các ca thử cố ý gửi số tiền sai).
+  tính, bất kể con số nào được gửi lên từ trình duyệt. Tập ca thử tối thiểu: (1) gửi kèm số tiền
+  giảm/tạm tính/tổng tự khai; (2) mã đã hết hạn (cả mili giây cuối của ngày hết hạn và 00:00 ngày
+  hôm sau); (3) mã không tồn tại; (4) đơn thiếu 1 đồng so với mức tối thiểu; (5) gửi nhiều mã hoặc mã
+  sai kiểu dữ liệu; (6) mã sai định dạng (rỗng, dài hơn 32 ký tự).
 - **SC-004**: 0 đơn hàng được tạo với mã hết hạn, mã không tồn tại hoặc mã chưa đạt giá trị tối
   thiểu.
 - **SC-005**: Số tiền giảm và tổng tiền khách thấy ở trang thanh toán trùng 100% với số được lưu và
@@ -313,3 +328,12 @@ kiểm tra đơn được lưu với con số do hệ thống tính. Gửi yêu 
 - Khách không cần đăng nhập; tính năng dùng lại luồng giỏ hàng, thanh toán và đơn hàng hiện có.
 - Không giới hạn số lần thử mã; việc dò mã bằng cách thử nhiều lần là rủi ro được chấp nhận trong
   phạm vi này.
+- Giá sản phẩm là dữ liệu tĩnh, chỉ đổi khi phát hành phiên bản mới. Nếu giá đổi giữa lúc khách áp mã
+  và lúc đặt hàng, đơn được tính theo giá của cửa hàng tại thời điểm đặt hàng (FR-020) và khách thấy
+  con số đó ở trang chi tiết đơn; không cảnh báo riêng. Đây là rủi ro được chấp nhận vì xác suất rất
+  thấp và luôn có lợi cho tính đúng đắn của số tiền phía cửa hàng.
+- Thông báo phân biệt "mã không tồn tại" và "mã đã hết hạn" (FR-014) cho phép người dùng biết một mã
+  từng tồn tại. Đây là đánh đổi được chấp nhận để khách hiểu rõ lý do; mã hết hạn không còn giá trị
+  sử dụng nên rủi ro không đáng kể.
+- Không yêu cầu ghi log hay kiểm toán việc dùng mã và các lần đặt hàng bị từ chối vì mã (ngoài phạm vi
+  của phiên bản này); số liệu dùng mã có thể tra từ các đơn đã lưu (`couponCode`, `discount`).

@@ -12,57 +12,57 @@
 
 ## Mô hình mối đe dọa & phạm vi
 
-- [ ] CHK001 Spec có liệt kê rõ các hành vi gian lận cần chặn (sửa số tiền trên trình duyệt, gửi request trực tiếp, dùng mã hết hạn/không đủ điều kiện, cộng dồn nhiều mã) thành một danh sách tường minh, thay vì chỉ một câu chung "không được để khách gian lận" không? [Completeness, Spec §User Story 5, §FR-020]
-- [ ] CHK002 Các mối đe dọa được chấp nhận/ngoài phạm vi (dò mã bằng thử nhiều lần, chia sẻ mã công khai, dùng một mã không giới hạn số lần) có được ghi trong **spec** như rủi ro được chấp nhận, không chỉ nằm trong research của plan không? [Gap, Assumption, Plan research R11]
-- [ ] CHK003 Spec có nói rõ kết quả kiểm tra mã lúc "Áp dụng" chỉ là xem trước, không ràng buộc lúc đặt hàng, để không ai coi bước kiểm tra phía client là kiểm soát bảo mật không? [Clarity, Spec §FR-013, §FR-020]
+- [x] CHK001 Spec có liệt kê rõ các hành vi gian lận cần chặn (sửa số tiền trên trình duyệt, gửi request trực tiếp, dùng mã hết hạn/không đủ điều kiện, cộng dồn nhiều mã) thành một danh sách tường minh, thay vì chỉ một câu chung "không được để khách gian lận" không? [Completeness, Spec §User Story 5, §FR-020]
+- [x] CHK002 Các mối đe dọa được chấp nhận/ngoài phạm vi (dò mã bằng thử nhiều lần, chia sẻ mã công khai, dùng một mã không giới hạn số lần) có được ghi trong **spec** như rủi ro được chấp nhận, không chỉ nằm trong research của plan không? [Gap, Assumption, Plan research R11]
+- [x] CHK003 Spec có nói rõ kết quả kiểm tra mã lúc "Áp dụng" chỉ là xem trước, không ràng buộc lúc đặt hàng, để không ai coi bước kiểm tra phía client là kiểm soát bảo mật không? [Clarity, Spec §FR-013, §FR-020]
 
 ## Xác nhận số tiền phía server
 
-- [ ] CHK004 FR-020 có liệt kê đủ mọi đại lượng tiền phải được tính lại (tạm tính, số tiền giảm, phí giao hàng, tổng) và nguồn dữ liệu của từng đại lượng không? [Completeness, Spec §FR-020]
-- [ ] CHK005 Hành vi khi request đặt hàng chứa trường tiền tự khai có được định nghĩa nhất quán: "bỏ qua" (Story 5 #1, FR-020) hay "từ chối"? Các tài liệu có thống nhất một cách không? [Consistency, Spec §User Story 5, Contracts orders.md]
-- [ ] CHK006 Yêu cầu "số tiền giảm không vượt tạm tính" (FR-008) và "tổng không âm" có được nêu thành ràng buộc phía server khi đặt hàng, không chỉ là quy tắc hiển thị không? [Clarity, Spec §FR-008, Edge Cases]
-- [ ] CHK007 Spec có định nghĩa con số "giá trị đơn" dùng để so với mức tối thiểu phải lấy từ giá trong catalog lúc đặt hàng (không phải giá client thấy lúc áp mã) không? [Clarity, Spec §FR-006, §FR-020]
-- [ ] CHK008 Có yêu cầu nào nói rõ phải xử lý thế nào nếu giá sản phẩm đổi giữa lúc áp mã và lúc đặt hàng, làm số tiền giảm khác con số khách đã thấy không? Hiện SC-005 chỉ ràng buộc "cùng giỏ hàng và cùng thời điểm hợp lệ". [Gap, Spec §SC-005]
-- [ ] CHK009 Yêu cầu làm tròn (floor đến đồng) có được nêu là áp dụng giống hệt ở cả bước xem trước và bước đặt hàng, để không lệch 1 đồng giữa hai bên không? [Consistency, Spec §FR-007, §SC-005]
-- [ ] CHK010 Thứ tự kiểm tra lúc đặt hàng (dữ liệu → sản phẩm/tồn kho → mã) có được quy định để lỗi mã không che lỗi tồn kho, hoặc ngược lại không? [Gap, Spec §FR-022, Contracts orders.md]
+- [x] CHK004 FR-020 có liệt kê đủ mọi đại lượng tiền phải được tính lại (tạm tính, số tiền giảm, phí giao hàng, tổng) và nguồn dữ liệu của từng đại lượng không? [Completeness, Spec §FR-020]
+- [x] CHK005 Hành vi khi request đặt hàng chứa trường tiền tự khai có được định nghĩa nhất quán: "bỏ qua" (Story 5 #1, FR-020) hay "từ chối"? Các tài liệu có thống nhất một cách không? [Consistency, Spec §User Story 5, Contracts orders.md]
+- [x] CHK006 Yêu cầu "số tiền giảm không vượt tạm tính" (FR-008) và "tổng không âm" có được nêu thành ràng buộc phía server khi đặt hàng, không chỉ là quy tắc hiển thị không? [Clarity, Spec §FR-008, Edge Cases]
+- [x] CHK007 Spec có định nghĩa con số "giá trị đơn" dùng để so với mức tối thiểu phải lấy từ giá trong catalog lúc đặt hàng (không phải giá client thấy lúc áp mã) không? [Clarity, Spec §FR-006, §FR-020]
+- [x] CHK008 Có yêu cầu nào nói rõ phải xử lý thế nào nếu giá sản phẩm đổi giữa lúc áp mã và lúc đặt hàng, làm số tiền giảm khác con số khách đã thấy không? Hiện SC-005 chỉ ràng buộc "cùng giỏ hàng và cùng thời điểm hợp lệ". [Gap, Spec §SC-005]
+- [x] CHK009 Yêu cầu làm tròn (floor đến đồng) có được nêu là áp dụng giống hệt ở cả bước xem trước và bước đặt hàng, để không lệch 1 đồng giữa hai bên không? [Consistency, Spec §FR-007, §SC-005]
+- [x] CHK010 Thứ tự kiểm tra lúc đặt hàng (dữ liệu → sản phẩm/tồn kho → mã) có được quy định để lỗi mã không che lỗi tồn kho, hoặc ngược lại không? [Gap, Spec §FR-022, Contracts orders.md]
 
 ## Hạn dùng & nguồn thời gian
 
-- [ ] CHK011 Spec có nói rõ thời điểm xét hạn **phải** lấy từ đồng hồ của hệ thống (server), không bao giờ từ thời gian do client cung cấp không? Hiện Assumptions chỉ ghi "thời điểm hệ thống xử lý yêu cầu". [Clarity, Spec §Assumptions, §FR-011]
-- [ ] CHK012 Biên hết hạn (đến hết 23:59:59 ngày D, giờ UTC+7) có được định nghĩa đủ chính xác để đo được, kể cả ở mức mili giây và với request đến đúng nửa đêm không? [Measurability, Spec §FR-011, Edge Cases]
-- [ ] CHK013 Spec có định nghĩa rằng lần kiểm tra lúc đặt hàng là lần quyết định duy nhất, kể cả khi mã còn hạn lúc áp dụng không? Đã nhất quán với Clarification Q1 chưa? [Consistency, Spec §Clarifications, §FR-021]
+- [x] CHK011 Spec có nói rõ thời điểm xét hạn **phải** lấy từ đồng hồ của hệ thống (server), không bao giờ từ thời gian do client cung cấp không? Hiện Assumptions chỉ ghi "thời điểm hệ thống xử lý yêu cầu". [Clarity, Spec §Assumptions, §FR-011]
+- [x] CHK012 Biên hết hạn (đến hết 23:59:59 ngày D, giờ UTC+7) có được định nghĩa đủ chính xác để đo được, kể cả ở mức mili giây và với request đến đúng nửa đêm không? [Measurability, Spec §FR-011, Edge Cases]
+- [x] CHK013 Spec có định nghĩa rằng lần kiểm tra lúc đặt hàng là lần quyết định duy nhất, kể cả khi mã còn hạn lúc áp dụng không? Đã nhất quán với Clarification Q1 chưa? [Consistency, Spec §Clarifications, §FR-021]
 
 ## Validate input: mã giảm giá
 
-- [ ] CHK014 Spec có định nghĩa định dạng hợp lệ của mã (độ dài tối đa, tập ký tự cho phép) thay vì chỉ "mã quá dài / ký tự lạ" không? Hiện độ dài 32 chỉ có trong plan. [Gap, Spec §Edge Cases, Plan data-model §5]
-- [ ] CHK015 Edge case "mã quá dài / ký tự lạ" dùng cụm "xử lý như 'mã không tồn tại' **hoặc** lỗi dữ liệu". Hành vi đúng có được chốt thành một lựa chọn duy nhất có thể kiểm thử không? [Ambiguity, Spec §Edge Cases]
-- [ ] CHK016 Quy tắc chuẩn hóa mã (FR-004: trim, không phân biệt hoa/thường) có nêu cách xử lý khoảng trắng ở giữa mã, ký tự Unicode toàn khổ hoặc giống nhau về hình dạng, và chữ có dấu tiếng Việt không? [Clarity, Spec §FR-004]
-- [ ] CHK017 Trường hợp request đặt hàng gửi mã là chuỗi rỗng hoặc chỉ có khoảng trắng có được định nghĩa ("không dùng mã" hay "lỗi dữ liệu") không? [Gap, Spec §FR-019, Contracts orders.md]
-- [ ] CHK018 Yêu cầu "mỗi đơn chỉ một mã" có được định nghĩa ở mức dữ liệu vào (mảng mã, trường mã lặp lại, kiểu dữ liệu sai) với một kết quả cụ thể không? [Completeness, Spec §FR-016, Edge Cases "Nhiều mã"]
+- [x] CHK014 Spec có định nghĩa định dạng hợp lệ của mã (độ dài tối đa, tập ký tự cho phép) thay vì chỉ "mã quá dài / ký tự lạ" không? Hiện độ dài 32 chỉ có trong plan. [Gap, Spec §Edge Cases, Plan data-model §5]
+- [x] CHK015 Edge case "mã quá dài / ký tự lạ" dùng cụm "xử lý như 'mã không tồn tại' **hoặc** lỗi dữ liệu". Hành vi đúng có được chốt thành một lựa chọn duy nhất có thể kiểm thử không? [Ambiguity, Spec §Edge Cases]
+- [x] CHK016 Quy tắc chuẩn hóa mã (FR-004: trim, không phân biệt hoa/thường) có nêu cách xử lý khoảng trắng ở giữa mã, ký tự Unicode toàn khổ hoặc giống nhau về hình dạng, và chữ có dấu tiếng Việt không? [Clarity, Spec §FR-004]
+- [x] CHK017 Trường hợp request đặt hàng gửi mã là chuỗi rỗng hoặc chỉ có khoảng trắng có được định nghĩa ("không dùng mã" hay "lỗi dữ liệu") không? [Gap, Spec §FR-019, Contracts orders.md]
+- [x] CHK018 Yêu cầu "mỗi đơn chỉ một mã" có được định nghĩa ở mức dữ liệu vào (mảng mã, trường mã lặp lại, kiểu dữ liệu sai) với một kết quả cụ thể không? [Completeness, Spec §FR-016, Edge Cases "Nhiều mã"]
 
 ## Validate input: bước kiểm tra mã trước khi đặt hàng
 
-- [ ] CHK019 Spec có yêu cầu bước kiểm tra mã trước khi đặt hàng áp dụng cùng ràng buộc dữ liệu (số dòng, số lượng, sản phẩm tồn tại) như lúc đặt hàng không? Hiện các ràng buộc này chỉ có trong contract của plan. [Gap, Contracts coupons-validate.md]
-- [ ] CHK020 Định dạng và thông điệp lỗi khi dữ liệu kiểm tra mã không hợp lệ (không phải lỗi nghiệp vụ của mã) có được định nghĩa ở mức yêu cầu không? [Completeness, Spec §FR-014, Edge Cases "Lỗi kết nối"]
+- [x] CHK019 Spec có yêu cầu bước kiểm tra mã trước khi đặt hàng áp dụng cùng ràng buộc dữ liệu (số dòng, số lượng, sản phẩm tồn tại) như lúc đặt hàng không? Hiện các ràng buộc này chỉ có trong contract của plan. [Gap, Contracts coupons-validate.md]
+- [x] CHK020 Định dạng và thông điệp lỗi khi dữ liệu kiểm tra mã không hợp lệ (không phải lỗi nghiệp vụ của mã) có được định nghĩa ở mức yêu cầu không? [Completeness, Spec §FR-014, Edge Cases "Lỗi kết nối"]
 
 ## Lộ thông tin
 
-- [ ] CHK021 Spec có yêu cầu danh sách mã khuyến mãi (đặc biệt mã chưa công bố) không được lộ ra phía trình duyệt không? Hiện ràng buộc này chỉ xuất hiện trong plan (R1, Constraints). [Gap, Plan research R1]
-- [ ] CHK022 Việc phân biệt "không tồn tại" và "đã hết hạn" (FR-014) cho phép xác nhận một mã từng tồn tại. Spec có ghi đây là đánh đổi được chấp nhận vì trải nghiệm người dùng không? [Assumption, Spec §FR-014]
-- [ ] CHK023 Phạm vi thông tin quy tắc của mã được phép trả về cho client sau khi áp dụng thành công (loại, giá trị, mức trần, tối thiểu, ngày hết hạn) có được giới hạn rõ ràng không? [Clarity, Contracts coupons-validate.md]
-- [ ] CHK024 Thông báo lỗi có được yêu cầu không chứa chi tiết nội bộ (stack, dữ liệu mã khác) và luôn theo định dạng lỗi chuẩn của cửa hàng không? [Completeness, Spec §FR-014, Constitution III]
+- [x] CHK021 Spec có yêu cầu danh sách mã khuyến mãi (đặc biệt mã chưa công bố) không được lộ ra phía trình duyệt không? Hiện ràng buộc này chỉ xuất hiện trong plan (R1, Constraints). [Gap, Plan research R1]
+- [x] CHK022 Việc phân biệt "không tồn tại" và "đã hết hạn" (FR-014) cho phép xác nhận một mã từng tồn tại. Spec có ghi đây là đánh đổi được chấp nhận vì trải nghiệm người dùng không? [Assumption, Spec §FR-014]
+- [x] CHK023 Phạm vi thông tin quy tắc của mã được phép trả về cho client sau khi áp dụng thành công (loại, giá trị, mức trần, tối thiểu, ngày hết hạn) có được giới hạn rõ ràng không? [Clarity, Contracts coupons-validate.md]
+- [x] CHK024 Thông báo lỗi có được yêu cầu không chứa chi tiết nội bộ (stack, dữ liệu mã khác) và luôn theo định dạng lỗi chuẩn của cửa hàng không? [Completeness, Spec §FR-014, Constitution III]
 
 ## Toàn vẹn dữ liệu đơn hàng
 
-- [ ] CHK025 FR-023 ("không đổi về sau") có bao gồm cả các thao tác hiện có lên đơn (hủy đơn) và nói rõ không có đường nào để client sửa mã/số tiền giảm của đơn đã đặt không? [Completeness, Spec §FR-023]
-- [ ] CHK026 Spec có định nghĩa ràng buộc nhất quán giữa các trường đã lưu (tổng = tạm tính − giảm + phí ship; có số tiền giảm thì phải có mã) để phát hiện được dữ liệu sai không? [Gap, Spec §FR-009, §FR-023]
-- [ ] CHK027 Với đơn cũ không có thông tin giảm giá (FR-025), spec có nói rõ tổng hiển thị lấy từ giá trị đã lưu, không tính lại, để tránh hiển thị sai số tiền không? [Clarity, Spec §FR-025, §SC-006]
+- [x] CHK025 FR-023 ("không đổi về sau") có bao gồm cả các thao tác hiện có lên đơn (hủy đơn) và nói rõ không có đường nào để client sửa mã/số tiền giảm của đơn đã đặt không? [Completeness, Spec §FR-023]
+- [x] CHK026 Spec có định nghĩa ràng buộc nhất quán giữa các trường đã lưu (tổng = tạm tính − giảm + phí ship; có số tiền giảm thì phải có mã) để phát hiện được dữ liệu sai không? [Gap, Spec §FR-009, §FR-023]
+- [x] CHK027 Với đơn cũ không có thông tin giảm giá (FR-025), spec có nói rõ tổng hiển thị lấy từ giá trị đã lưu, không tính lại, để tránh hiển thị sai số tiền không? [Clarity, Spec §FR-025, §SC-006]
 
 ## Kịch bản ngoại lệ & phục hồi
 
-- [ ] CHK028 Khi đơn bị từ chối vì mã, spec có đảm bảo không có trạng thái nửa vời (đơn đã lưu một phần, giỏ hàng đã bị xóa) không? [Coverage, Exception Flow, Spec §FR-021]
-- [ ] CHK029 Các kịch bản lạm dụng có tiêu chí chấp nhận đo được không: SC-003/SC-004 nói "100%"/"0 đơn", vậy có xác định tập ca gian lận tối thiểu phải kiểm không? [Measurability, Spec §SC-003, §SC-004]
-- [ ] CHK030 Có yêu cầu ghi log/kiểm toán các lần đặt hàng bị từ chối vì mã, hoặc việc dùng mã, để phát hiện lạm dụng không? Nếu không cần, điều đó có được ghi là ngoài phạm vi không? [Gap, Non-Functional]
+- [x] CHK028 Khi đơn bị từ chối vì mã, spec có đảm bảo không có trạng thái nửa vời (đơn đã lưu một phần, giỏ hàng đã bị xóa) không? [Coverage, Exception Flow, Spec §FR-021]
+- [x] CHK029 Các kịch bản lạm dụng có tiêu chí chấp nhận đo được không: SC-003/SC-004 nói "100%"/"0 đơn", vậy có xác định tập ca gian lận tối thiểu phải kiểm không? [Measurability, Spec §SC-003, §SC-004]
+- [x] CHK030 Có yêu cầu ghi log/kiểm toán các lần đặt hàng bị từ chối vì mã, hoặc việc dùng mã, để phát hiện lạm dụng không? Nếu không cần, điều đó có được ghi là ngoài phạm vi không? [Gap, Non-Functional]
 
 ## Notes
 
