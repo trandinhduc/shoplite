@@ -54,3 +54,32 @@ test("lọc theo danh mục và sắp xếp theo giá", async ({ page }) => {
     "Loa Bluetooth BeatBox Mini",
   );
 });
+
+test("khách hàng áp dụng mã giảm giá SHOPLITE10 khi thanh toán và đặt hàng thành công", async ({ page }) => {
+  await page.goto("/products/tai-nghe-khong-day-soundmax-pro");
+  // Thêm tai nghe 1.290.000 ₫ vào giỏ
+  await page.getByTestId("purchase-panel").getByRole("button", { name: "Thêm vào giỏ" }).click();
+  await expect(page.getByTestId("cart-count")).toHaveText("1");
+
+  await page.goto("/checkout");
+
+  // Áp dụng mã SHOPLITE10 (giảm 10% max 100.000 ₫ -> giảm 100.000 ₫)
+  await page.getByLabel("Mã giảm giá").fill("SHOPLITE10");
+  await page.getByRole("button", { name: "Áp dụng" }).click();
+
+  // Kiểm tra dòng giảm giá xuất hiện và tổng thanh toán giảm chính xác
+  await expect(page.getByTestId("discount-line")).toContainText("-100.000");
+  await expect(page.getByTestId("checkout-total")).toContainText("1.190.000");
+
+  // Điền thông tin giao hàng
+  await page.getByLabel(/Họ và tên/).fill("Nguyễn Văn Coupon");
+  await page.getByLabel(/Số điện thoại/).fill("0912345678");
+  await page.getByLabel(/Địa chỉ giao hàng/).fill("123 Lê Duẩn, Quận 1, TP.HCM");
+  await page.getByRole("button", { name: "Đặt hàng" }).click();
+
+  // Kiểm tra trang chi tiết đơn hàng hiển thị mã và số tiền giảm
+  await expect(page).toHaveURL(/\/orders\/SL-\d{8}-[0-9A-F]{6}\?placed=1/);
+  await expect(page.getByTestId("order-discount")).toBeVisible();
+  await expect(page.getByTestId("order-discount")).toContainText("SHOPLITE10");
+  await expect(page.getByTestId("order-discount")).toContainText("-100.000");
+});

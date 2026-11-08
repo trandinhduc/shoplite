@@ -54,6 +54,31 @@ describe("POST /api/orders", () => {
     expect(response.status).toBe(409);
     expect((await response.json()).error.code).toBe("INSUFFICIENT_STOCK");
   });
+
+  it("201 - áp dụng couponCode và server tự tính discount, phớt lờ số tiền client gửi", async () => {
+    // p006 có giá 450.000 ₫ >= 300.000 ₫ (đủ minOrderValue của SHOPLITE10)
+    // 10% của 450.000 ₫ = 45.000 ₫, phí ship express 60.000 ₫ -> total: 465.000 ₫
+    const response = await postOrder({
+      ...validBody,
+      couponCode: "SHOPLITE10",
+      discount: 300_000, // client cố tình gửi khống
+      total: 10_000,
+    });
+    expect(response.status).toBe(201);
+    const order = await response.json();
+    expect(order.couponCode).toBe("SHOPLITE10");
+    expect(order.discount).toBe(45_000);
+    expect(order.total).toBe(465_000); // (450k - 45k) + 60k
+  });
+
+  it("422 - từ chối khi mã giảm giá đã hết hạn sử dụng", async () => {
+    const response = await postOrder({
+      ...validBody,
+      couponCode: "TET2026",
+    });
+    expect(response.status).toBe(422);
+    expect((await response.json()).error.code).toBe("COUPON_EXPIRED");
+  });
 });
 
 describe("GET /api/orders", () => {

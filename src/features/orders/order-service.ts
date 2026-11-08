@@ -1,7 +1,9 @@
 import { getProductById } from "@/features/catalog/catalog-service";
 import type { Product } from "@/features/catalog/types";
 import { placeOrderSchema, toFieldErrors } from "@/features/checkout/checkout-schema";
-import { calculateOrderTotals } from "@/features/checkout/pricing";
+import { calculateOrderTotals, calculateSubtotal } from "@/features/checkout/pricing";
+import { findCouponByCode, validateCoupon } from "@/features/coupons/coupon-service";
+import type { AppliedCoupon } from "@/features/coupons/types";
 import { OrderError } from "./order-errors";
 import type { OrderRepository } from "./order-repository";
 import type { Order, OrderItem } from "./types";
@@ -60,7 +62,7 @@ export function createOrderService({
         );
       }
 
-      const { customer, items, shippingMethod, paymentMethod } = parsed.data;
+      const { customer, items, shippingMethod, paymentMethod, couponCode } = parsed.data;
 
       const orderItems: OrderItem[] = mergeItems(items).map(({ productId, quantity }) => {
         const product = findProduct(productId);
@@ -87,6 +89,28 @@ export function createOrderService({
       });
 
       const createdAt = now();
+      const subtotal = calculateSubtotal(orderItems);
+
+      let appliedCoupon: AppliedCoupon | null = null;
+      if (couponCode) {
+        const coupon = findCouponByCode(couponCode);
+        const validation = validateCoupon(coupon, subtotal, createdAt);
+        if (!validation.valid) {
+          throw new OrderError(
+            validation.error.code,
+            validation.error.message,
+            validation.error.details,
+          );
+        }
+        appliedCoupon = {
+          code: validation.coupon.code,
+          discountAmount: validation.discountAmount,
+          description: validation.coupon.description,
+        };
+      }
+
+      const totals = calculateOrderTotals(orderItems, shippingMethod, appliedCoupon);
+
       const order: Order = {
         id: generateId(createdAt),
         status: "pending",
@@ -102,7 +126,11 @@ export function createOrderService({
         shippingMethod,
         paymentMethod,
         items: orderItems,
-        ...calculateOrderTotals(orderItems, shippingMethod),
+        subtotal: totals.subtotal,
+        shippingFee: totals.shippingFee,
+        discount: totals.discount,
+        total: totals.total,
+        ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
       };
 
       await repository.save(order);

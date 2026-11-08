@@ -51,4 +51,6 @@ export interface Order {
   subtotal: number;
   shippingFee: number;
   total: number;
+  couponCode?: string;
+  discount?: number;
 }

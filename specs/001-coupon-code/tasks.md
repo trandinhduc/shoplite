@@ -16,9 +16,9 @@
 
 **Purpose**: Khởi tạo cấu trúc module và dữ liệu tĩnh danh mục mã giảm giá.
 
-- [ ] T001 [P] Tạo danh mục mã giảm giá tĩnh ban đầu (`SHOPLITE10`, `GIAM50K`, `TET2026`) trong `src/data/coupons.ts`
-- [ ] T002 [P] Định nghĩa kiểu dữ liệu `Coupon`, `AppliedCoupon`, `ValidateCouponResult`, `CouponErrorCode` trong `src/features/coupons/types.ts`
-- [ ] T003 Kiểm tra chất lượng code Phase 1: chạy `npm run check`
+- [x] T001 [P] Tạo danh mục mã giảm giá tĩnh ban đầu (`SHOPLITE10`, `GIAM50K`, `TET2026`) trong `src/data/coupons.ts`
+- [x] T002 [P] Định nghĩa kiểu dữ liệu `Coupon`, `AppliedCoupon`, `ValidateCouponResult`, `CouponErrorCode` trong `src/features/coupons/types.ts`
+- [x] T003 Kiểm tra chất lượng code Phase 1: chạy `npm run check`
 
 ---
 
@@ -26,12 +26,12 @@
 
 **Purpose**: Xây dựng nền tảng hàm thuần, Zod schema và tích hợp vào quy tắc tính tiền dùng chung trước khi triển khai các User Story.
 
-- [ ] T004 [P] Định nghĩa schema Zod xác thực mã giảm giá `validateCouponSchema` trong `src/features/coupons/coupon-schema.ts`
-- [ ] T005 [P] Viết unit tests TDD cho các hàm thuần `normalizeCouponCode`, `findCouponByCode`, `calculateDiscount` trong `src/features/coupons/coupon-service.test.ts`
-- [ ] T006 Cài đặt các hàm thuần `normalizeCouponCode`, `findCouponByCode`, `calculateDiscount` trong `src/features/coupons/coupon-service.ts`
-- [ ] T007 [P] Viết unit tests TDD cho `calculateOrderTotals` khi nhận thêm coupon trong `src/features/checkout/pricing.test.ts`
-- [ ] T008 Cập nhật `calculateOrderTotals` và kiểu `OrderTotals` nhận `coupon?: AppliedCoupon | null` trong `src/features/checkout/pricing.ts`
-- [ ] T009 Kiểm tra chất lượng code Phase 2: chạy `npm run check`
+- [x] T004 [P] Định nghĩa schema Zod xác thực mã giảm giá `validateCouponSchema` trong `src/features/coupons/coupon-schema.ts`
+- [x] T005 [P] Viết unit tests TDD cho các hàm thuần `normalizeCouponCode`, `findCouponByCode`, `calculateDiscount` trong `src/features/coupons/coupon-service.test.ts`
+- [x] T006 Cài đặt các hàm thuần `normalizeCouponCode`, `findCouponByCode`, `calculateDiscount` trong `src/features/coupons/coupon-service.ts`
+- [x] T007 [P] Viết unit tests TDD cho `calculateOrderTotals` khi nhận thêm coupon trong `src/features/checkout/pricing.test.ts`
+- [x] T008 Cập nhật `calculateOrderTotals` và kiểu `OrderTotals` nhận `coupon?: AppliedCoupon | null` trong `src/features/checkout/pricing.ts`
+- [x] T009 Kiểm tra chất lượng code Phase 2: chạy `npm run check`
 
 **Checkpoint**: Nền tảng dữ liệu và logic tính tiền hoàn tất - sẵn sàng bắt đầu triển khai User Stories.
 
@@ -44,18 +44,18 @@
 **Independent Test**: Thêm sản phẩm vào giỏ, đi tới `/checkout`, nhập mã `SHOPLITE10` và bấm "Áp dụng", xác nhận dòng giảm giá hiển thị `-100.000 ₫`, tổng tiền giảm 100.000 ₫; sau đó bấm nút "Gỡ bỏ" để phục hồi tổng tiền ban đầu.
 
 ### Tests for User Story 1 (TDD - Viết trước khi code) ⚠️
-- [ ] T010 [P] [US1] Viết unit tests TDD cho hàm `validateCoupon` (mã hợp lệ, tính giảm % có trần, giảm tiền cố định) trong `src/features/coupons/coupon-service.test.ts`
-- [ ] T011 [P] [US1] Viết route test TDD cho API handler `POST /api/coupons/validate` (trường hợp mã hợp lệ) trong `src/app/api/coupons/validate/route.test.ts`
-- [ ] T012 [P] [US1] Viết component test TDD cho `CouponInput` (nhập mã, trigger áp dụng, hiển thị mã đang áp dụng và nút gỡ bỏ) trong `src/features/coupons/components/coupon-input.test.tsx`
-- [ ] T013 [P] [US1] Viết component test TDD cho `CheckoutSummary` (hiển thị dòng giảm giá khi có coupon) trong `src/features/checkout/components/checkout-summary.test.tsx`
+- [x] T010 [P] [US1] Viết unit tests TDD cho hàm `validateCoupon` (mã hợp lệ, tính giảm % có trần, giảm tiền cố định) trong `src/features/coupons/coupon-service.test.ts`
+- [x] T011 [P] [US1] Viết route test TDD cho API handler `POST /api/coupons/validate` (trường hợp mã hợp lệ) trong `src/app/api/coupons/validate/route.test.ts`
+- [x] T012 [P] [US1] Viết component test TDD cho `CouponInput` (nhập mã, trigger áp dụng, hiển thị mã đang áp dụng và nút gỡ bỏ) trong `src/features/coupons/components/coupon-input.test.tsx`
+- [x] T013 [P] [US1] Viết component test TDD cho `CheckoutSummary` (hiển thị dòng giảm giá khi có coupon) trong `src/features/checkout/components/checkout-summary.test.tsx`
 
 ### Implementation for User Story 1
-- [ ] T014 [US1] Cài đặt hàm `validateCoupon` cho trường hợp hợp lệ trong `src/features/coupons/coupon-service.ts`
-- [ ] T015 [US1] Cài đặt API route handler mỏng `POST /api/coupons/validate` trong `src/app/api/coupons/validate/route.ts`
-- [ ] T016 [US1] Cài đặt component `CouponInput` với ô nhập, nút "Áp dụng", trạng thái đã áp dụng và nút "Gỡ bỏ" trong `src/features/coupons/components/coupon-input.tsx`
-- [ ] T017 [US1] Cập nhật component `CheckoutSummary` để hiển thị dòng giảm giá `-formatCurrency(discount)` trong `src/features/checkout/components/checkout-summary.tsx`
-- [ ] T018 [US1] Tích hợp `CouponInput` vào `CheckoutForm`, quản lý client state `appliedCoupon`, tính toán lại tổng tiền khi áp dụng/gỡ mã trong `src/features/checkout/components/checkout-form.tsx`
-- [ ] T019 [US1] Kiểm tra chất lượng code Phase 3: chạy `npm run check`
+- [x] T014 [US1] Cài đặt hàm `validateCoupon` cho trường hợp hợp lệ trong `src/features/coupons/coupon-service.ts`
+- [x] T015 [US1] Cài đặt API route handler mỏng `POST /api/coupons/validate` trong `src/app/api/coupons/validate/route.ts`
+- [x] T016 [US1] Cài đặt component `CouponInput` với ô nhập, nút "Áp dụng", trạng thái đã áp dụng và nút "Gỡ bỏ" trong `src/features/coupons/components/coupon-input.tsx`
+- [x] T017 [US1] Cập nhật component `CheckoutSummary` để hiển thị dòng giảm giá `-formatCurrency(discount)` trong `src/features/checkout/components/checkout-summary.tsx`
+- [x] T018 [US1] Tích hợp `CouponInput` vào `CheckoutForm`, quản lý client state `appliedCoupon`, tính toán lại tổng tiền khi áp dụng/gỡ mã trong `src/features/checkout/components/checkout-form.tsx`
+- [x] T019 [US1] Kiểm tra chất lượng code Phase 3: chạy `npm run check`
 
 **Checkpoint**: User Story 1 (MVP) đã hoàn chỉnh và có thể kiểm thử độc lập trực tiếp trên trình duyệt.
 
@@ -68,17 +68,17 @@
 **Independent Test**: Nhập lần lượt `KHONGTONTAI`, `TET2026`, và mã có điều kiện với giỏ hàng dưới ngưỡng; xác nhận thông điệp lỗi tiếng Việt chính xác. Thử xóa bớt hàng trong giỏ rồi quay lại checkout để kiểm tra tự động hủy mã.
 
 ### Tests for User Story 2 (TDD - Viết trước khi code) ⚠️
-- [ ] T020 [P] [US2] Viết unit tests TDD cho `validateCoupon` với các case lỗi (mã không tồn tại, mã hết hạn theo múi giờ VN, đơn chưa đủ giá trị tối thiểu tính số tiền cần mua thêm) trong `src/features/coupons/coupon-service.test.ts`
-- [ ] T021 [P] [US2] Bổ sung test route TDD cho `POST /api/coupons/validate` trả về HTTP 422 kèm mã lỗi `COUPON_NOT_FOUND`, `COUPON_EXPIRED`, `COUPON_MIN_ORDER_NOT_MET` trong `src/app/api/coupons/validate/route.test.ts`
-- [ ] T022 [P] [US2] Bổ sung component test TDD cho `CouponInput` hiển thị thông báo lỗi và `aria-invalid` trong `src/features/coupons/components/coupon-input.test.tsx`
-- [ ] T023 [P] [US2] Viết unit test cho logic tự động hủy mã và hiển thị thông báo lý do khi tạm tính giỏ hàng thay đổi trong `src/features/checkout/components/checkout-form.test.tsx`
+- [x] T020 [P] [US2] Viết unit tests TDD cho `validateCoupon` với các case lỗi (mã không tồn tại, mã hết hạn theo múi giờ VN, đơn chưa đủ giá trị tối thiểu tính số tiền cần mua thêm) trong `src/features/coupons/coupon-service.test.ts`
+- [x] T021 [P] [US2] Bổ sung test route TDD cho `POST /api/coupons/validate` trả về HTTP 422 kèm mã lỗi `COUPON_NOT_FOUND`, `COUPON_EXPIRED`, `COUPON_MIN_ORDER_NOT_MET` trong `src/app/api/coupons/validate/route.test.ts`
+- [x] T022 [P] [US2] Bổ sung component test TDD cho `CouponInput` hiển thị thông báo lỗi và `aria-invalid` trong `src/features/coupons/components/coupon-input.test.tsx`
+- [x] T023 [P] [US2] Viết unit test cho logic tự động hủy mã và hiển thị thông báo lý do khi tạm tính giỏ hàng thay đổi trong `src/features/checkout/components/checkout-form.test.tsx`
 
 ### Implementation for User Story 2
-- [ ] T024 [US2] Hoàn thiện kiểm tra lỗi (mã không tồn tại, hết hạn, chưa đủ giá trị tối thiểu) trong `validateCoupon` (`src/features/coupons/coupon-service.ts`)
-- [ ] T025 [US2] Cập nhật `POST /api/coupons/validate` trả về format lỗi chuẩn `{ error: { code, message, details } }` trong `src/app/api/coupons/validate/route.ts`
-- [ ] T026 [US2] Cập nhật `CouponInput` render thông điệp lỗi tiếng Việt và accessibility tags (`aria-describedby`, `role="alert"`) trong `src/features/coupons/components/coupon-input.tsx`
-- [ ] T027 [US2] Cài đặt hiệu ứng kiểm tra lại điều kiện mã khi `subtotal` giỏ hàng thay đổi; tự động hủy mã và hiện thông báo nếu đơn không còn đủ giá trị tối thiểu trong `src/features/checkout/components/checkout-form.tsx`
-- [ ] T028 [US2] Kiểm tra chất lượng code Phase 4: chạy `npm run check`
+- [x] T024 [US2] Hoàn thiện kiểm tra lỗi (mã không tồn tại, hết hạn, chưa đủ giá trị tối thiểu) trong `validateCoupon` (`src/features/coupons/coupon-service.ts`)
+- [x] T025 [US2] Cập nhật `POST /api/coupons/validate` trả về format lỗi chuẩn `{ error: { code, message, details } }` trong `src/app/api/coupons/validate/route.ts`
+- [x] T026 [US2] Cập nhật `CouponInput` render thông điệp lỗi tiếng Việt và accessibility tags (`aria-describedby`, `role="alert"`) trong `src/features/coupons/components/coupon-input.tsx`
+- [x] T027 [US2] Cài đặt hiệu ứng kiểm tra lại điều kiện mã khi `subtotal` giỏ hàng thay đổi; tự động hủy mã và hiện thông báo nếu đơn không còn đủ giá trị tối thiểu trong `src/features/checkout/components/checkout-form.tsx`
+- [x] T028 [US2] Kiểm tra chất lượng code Phase 4: chạy `npm run check`
 
 **Checkpoint**: User Stories 1 và 2 đều hoạt động độc lập và hoàn tất toàn bộ luồng phản hồi người dùng.
 
@@ -91,17 +91,17 @@
 **Independent Test**: Đặt một đơn hàng có áp dụng mã `SHOPLITE10`, mở `/orders/[id]` xác nhận dòng giảm giá; gửi yêu cầu API giả lập với số tiền giảm sai lệch để kiểm chứng server tính toán lại; mở một đơn hàng cũ trong hệ thống xác nhận không bị lỗi hiển thị.
 
 ### Tests for User Story 3 (TDD - Viết trước khi code) ⚠️
-- [ ] T029 [P] [US3] Viết unit tests TDD cho `orderService.placeOrder` nhận `couponCode`, tự tra cứu catalog, tính lại discount, lưu đơn và xử lý mã hết hạn lúc đặt hàng trong `src/features/orders/order-service.test.ts`
-- [ ] T030 [P] [US3] Viết route test TDD cho `POST /api/orders` với payload có `couponCode` và kiểm tra chống can thiệp giá từ client trong `src/app/api/orders/route.test.ts`
-- [ ] T031 [P] [US3] Viết component/page test TDD cho trang chi tiết đơn hàng `src/app/orders/[id]/page.test.tsx` (kiểm tra cả đơn có giảm giá và đơn cũ không có trường giảm giá)
+- [x] T029 [P] [US3] Viết unit tests TDD cho `orderService.placeOrder` nhận `couponCode`, tự tra cứu catalog, tính lại discount, lưu đơn và xử lý mã hết hạn lúc đặt hàng trong `src/features/orders/order-service.test.ts`
+- [x] T030 [P] [US3] Viết route test TDD cho `POST /api/orders` với payload có `couponCode` và kiểm tra chống can thiệp giá từ client trong `src/app/api/orders/route.test.ts`
+- [x] T031 [P] [US3] Viết component/page test TDD cho trang chi tiết đơn hàng `src/app/orders/[id]/page.test.tsx` (kiểm tra cả đơn có giảm giá và đơn cũ không có trường giảm giá)
 
 ### Implementation for User Story 3
-- [ ] T032 [US3] Mở rộng schema `placeOrderSchema` tiếp nhận trường tùy chọn `couponCode: z.string().trim().optional()` trong `src/features/checkout/checkout-schema.ts`
-- [ ] T033 [US3] Mở rộng kiểu dữ liệu `Order` thêm `couponCode?: string` và `discount?: number` trong `src/features/orders/types.ts`
-- [ ] T034 [US3] Cập nhật `orderService.placeOrder` để tự động xác thực mã, tính lại giảm giá từ server catalog, throw lỗi `OrderError` nếu mã không hợp lệ/hết hạn, và lưu `couponCode`, `discount` vào đơn trong `src/features/orders/order-service.ts`
-- [ ] T035 [US3] Cập nhật `CheckoutForm` gửi `couponCode` lên `POST /api/orders`; nếu server trả về `COUPON_EXPIRED`, giữ mã trong ô nhập với nhãn `[đã hết hạn]`, khóa nút đặt hàng và yêu cầu bấm "Gỡ mã" trong `src/features/checkout/components/checkout-form.tsx`
-- [ ] T036 [US3] Cập nhật trang chi tiết đơn hàng hiển thị dòng `Giảm giá ({order.couponCode}): -{formatCurrency(order.discount)}` khi `order.discount !== undefined && order.discount > 0` trong `src/app/orders/[id]/page.tsx`
-- [ ] T037 [US3] Kiểm tra chất lượng code Phase 5: chạy `npm run check`
+- [x] T032 [US3] Mở rộng schema `placeOrderSchema` tiếp nhận trường tùy chọn `couponCode: z.string().trim().optional()` trong `src/features/checkout/checkout-schema.ts`
+- [x] T033 [US3] Mở rộng kiểu dữ liệu `Order` thêm `couponCode?: string` và `discount?: number` trong `src/features/orders/types.ts`
+- [x] T034 [US3] Cập nhật `orderService.placeOrder` để tự động xác thực mã, tính lại giảm giá từ server catalog, throw lỗi `OrderError` nếu mã không hợp lệ/hết hạn, và lưu `couponCode`, `discount` vào đơn trong `src/features/orders/order-service.ts`
+- [x] T035 [US3] Cập nhật `CheckoutForm` gửi `couponCode` lên `POST /api/orders`; nếu server trả về `COUPON_EXPIRED`, giữ mã trong ô nhập với nhãn `[đã hết hạn]`, khóa nút đặt hàng và yêu cầu bấm "Gỡ mã" trong `src/features/checkout/components/checkout-form.tsx`
+- [x] T036 [US3] Cập nhật trang chi tiết đơn hàng hiển thị dòng `Giảm giá ({order.couponCode}): -{formatCurrency(order.discount)}` khi `order.discount !== undefined && order.discount > 0` trong `src/app/orders/[id]/page.tsx`
+- [x] T037 [US3] Kiểm tra chất lượng code Phase 5: chạy `npm run check`
 
 **Checkpoint**: Cả 3 User Stories hoàn tất 100%, bảo đảm an toàn dữ liệu và tương thích ngược.
 
@@ -111,10 +111,10 @@
 
 **Purpose**: Nâng cấp kịch bản kiểm thử End-to-End, thực hiện kiểm thử tự động, và hoàn thiện tài liệu.
 
-- [ ] T038 [P] Thêm kịch bản E2E kiểm thử luồng mua sắm có áp dụng mã `SHOPLITE10` và xác nhận giảm giá tại `/checkout` và `/orders/[id]` trong `e2e/shopping-flow.spec.ts`
-- [ ] T039 [P] Thẩm định lại 8 kịch bản kiểm thử thủ công theo hướng dẫn trong `specs/001-coupon-code/quickstart.md`
-- [ ] T040 Cập nhật tài liệu `README.md` nếu có endpoint mới `POST /api/coupons/validate`
-- [ ] T041 Chạy toàn bộ bộ kiểm thử chất lượng cuối cùng: `npm run check` và `npm run test:e2e`
+- [x] T038 [P] Thêm kịch bản E2E kiểm thử luồng mua sắm có áp dụng mã `SHOPLITE10` và xác nhận giảm giá tại `/checkout` và `/orders/[id]` trong `e2e/shopping-flow.spec.ts`
+- [x] T039 [P] Thẩm định lại 8 kịch bản kiểm thử thủ công theo hướng dẫn trong `specs/001-coupon-code/quickstart.md`
+- [x] T040 Cập nhật tài liệu `README.md` nếu có endpoint mới `POST /api/coupons/validate`
+- [x] T041 Chạy toàn bộ bộ kiểm thử chất lượng cuối cùng: `npm run check` và `npm run test:e2e`
 
 ---
 
@@ -141,3 +141,4 @@
 - **FR-010**: T008, T034 (Khấu trừ vào tạm tính, không trừ phí ship, không làm tổng âm)
 - **FR-011**: T008 (Ngưỡng miễn phí vận chuyển tính trên tạm tính trước giảm)
 - **FR-012**: T017, T036 (Hiển thị dòng giảm giá ở tóm tắt thanh toán và trang chi tiết đơn hàng)
+

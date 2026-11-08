@@ -7,6 +7,9 @@ import { Banknote, CreditCard, Truck, Zap } from "lucide-react";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useCart } from "@/features/cart/use-cart";
+import { CouponInput } from "@/features/coupons/components/coupon-input";
+import { findCouponByCode } from "@/features/coupons/coupon-service";
+import type { AppliedCoupon } from "@/features/coupons/types";
 import {
   checkoutFormSchema,
   PAYMENT_METHODS,
@@ -57,6 +60,23 @@ export function CheckoutForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [isExpiredAtOrder, setIsExpiredAtOrder] = useState(false);
+  const [manualNotice, setManualNotice] = useState<string | null>(null);
+
+  // Tự động kiểm tra nếu giỏ hàng thay đổi làm tạm tính không còn đạt giá trị tối thiểu
+  const subtotalUnderMinNotice = (() => {
+    if (!appliedCoupon) return null;
+    const coupon = findCouponByCode(appliedCoupon.code);
+    if (coupon && subtotal < coupon.minOrderValue) {
+      const missing = coupon.minOrderValue - subtotal;
+      return `Mã ${coupon.code} đã bị hủy do đơn hàng chưa đạt giá trị tối thiểu ${formatCurrency(coupon.minOrderValue)} (cần mua thêm ${formatCurrency(missing)})`;
+    }
+    return null;
+  })();
+
+  const activeCoupon = subtotalUnderMinNotice ? null : appliedCoupon;
+  const couponNotice = subtotalUnderMinNotice || manualNotice;
 
   if (!hydrated) {
     return <div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />;
@@ -116,12 +136,21 @@ export function CheckoutForm() {
           shippingMethod,
           paymentMethod,
           items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          ...(activeCoupon ? { couponCode: activeCoupon.code } : {}),
         }),
       });
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
-        setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
+        if (body?.error.code === "COUPON_EXPIRED") {
+          setIsExpiredAtOrder(true);
+          setSubmitError(
+            body.error.message ||
+              "Mã giảm giá đã hết hạn sử dụng. Vui lòng gỡ mã để tiếp tục đặt hàng.",
+          );
+        } else {
+          setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
+        }
         setStatus("idle");
         return;
       }
@@ -257,13 +286,51 @@ export function CheckoutForm() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} />
+        <CheckoutSummary
+          items={items}
+          shippingMethod={values.shippingMethod}
+          appliedCoupon={activeCoupon}
+        />
+
+        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <CouponInput
+            appliedCoupon={activeCoupon}
+            subtotal={subtotal}
+            onApply={(coupon) => {
+              setAppliedCoupon(coupon);
+              setIsExpiredAtOrder(false);
+              setManualNotice(null);
+              setSubmitError(null);
+            }}
+            onRemove={() => {
+              setAppliedCoupon(null);
+              setIsExpiredAtOrder(false);
+              setManualNotice(null);
+              setSubmitError(null);
+            }}
+            isExpiredAtOrder={isExpiredAtOrder}
+            disabled={status !== "idle"}
+          />
+          {couponNotice && (
+            <p
+              role="status"
+              className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-medium text-amber-800 ring-1 ring-amber-200"
+            >
+              {couponNotice}
+            </p>
+          )}
+        </div>
+
         {submitError && (
           <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {submitError}
           </p>
         )}
-        <Button type="submit" size="lg" disabled={status !== "idle"}>
+        <Button
+          type="submit"
+          size="lg"
+          disabled={status !== "idle" || isExpiredAtOrder}
+        >
           {status === "submitting" ? "Đang đặt hàng…" : "Đặt hàng"}
         </Button>
       </div>

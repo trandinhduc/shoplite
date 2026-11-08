@@ -119,6 +119,56 @@ describe("orderService", () => {
         "INSUFFICIENT_STOCK",
       );
     });
+
+    it("tạo đơn hàng với mã giảm giá hợp lệ, server độc lập tính toán lại discount", async () => {
+      // 2 x 150.000 = 300.000 ₫, mã SHOPLITE10 giảm 10% (30.000 ₫)
+      const order = await service.placeOrder(
+        validInput({
+          couponCode: "shoplite10", // chữ thường -> server tự chuẩn hóa
+          discount: 999_999, // client cố tình gửi sai -> server phớt lờ
+          total: 0,
+        }),
+      );
+
+      expect(order.couponCode).toBe("SHOPLITE10");
+      expect(order.discount).toBe(30_000);
+      expect(order.subtotal).toBe(300_000);
+      expect(order.shippingFee).toBe(30_000);
+      expect(order.total).toBe(300_000); // (300k - 30k) + 30k ship
+    });
+
+    it("từ chối tạo đơn khi mã giảm giá không tồn tại (COUPON_NOT_FOUND)", async () => {
+      await expectOrderError(
+        service.placeOrder(validInput({ couponCode: "KHONGTONTAI" })),
+        "COUPON_NOT_FOUND",
+      );
+    });
+
+    it("từ chối tạo đơn khi mã giảm giá đã hết hạn tại thời điểm đặt hàng (COUPON_EXPIRED)", async () => {
+      // TET2026 hết hạn 2026-02-28, FIXED_DATE là 2026-10-21
+      await expectOrderError(
+        service.placeOrder(
+          validInput({
+            items: [{ productId: "p002", quantity: 1 }], // Loa 690k
+            couponCode: "TET2026",
+          }),
+        ),
+        "COUPON_EXPIRED",
+      );
+    });
+
+    it("từ chối tạo đơn khi đơn chưa đạt giá trị tối thiểu của mã (COUPON_MIN_ORDER_NOT_MET)", async () => {
+      // 1 x 150.000 = 150.000 ₫, mã SHOPLITE10 yêu cầu tối thiểu 300.000 ₫
+      await expectOrderError(
+        service.placeOrder(
+          validInput({
+            items: [{ productId: "p010", quantity: 1 }],
+            couponCode: "SHOPLITE10",
+          }),
+        ),
+        "COUPON_MIN_ORDER_NOT_MET",
+      );
+    });
   });
 
   describe("listOrders / getOrder", () => {
