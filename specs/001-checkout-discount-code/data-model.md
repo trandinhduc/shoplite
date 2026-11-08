@@ -88,7 +88,9 @@ Thêm `couponCode: couponCodeSchema.optional()` với `couponCodeSchema` (đặt
 Khóa lạ (`discount`, `total`…) bị Zod loại bỏ. Mảng/kiểu khác → `VALIDATION_ERROR`
 (`details["couponCode"]`).
 
-`validateCouponSchema` (cùng file): `{ code: couponCodeSchema, items: <cùng schema items của placeOrderSchema> }`.
+`validateCouponSchema` đặt trong `checkout-schema.ts`, cạnh `placeOrderSchema`, để tránh vòng import:
+`{ code: couponCodeSchema, items: orderItemsSchema }`, với `orderItemsSchema` được tách ra từ
+`placeOrderSchema`. `coupon-schema.ts` không import gì từ `@/features/checkout`.
 
 ## 6. Trạng thái mã ở trang thanh toán (client) — Clarifications Q1/Q2
 

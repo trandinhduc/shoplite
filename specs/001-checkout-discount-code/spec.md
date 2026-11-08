@@ -173,8 +173,11 @@ kiểm tra đơn được lưu với con số do hệ thống tính. Gửi yêu 
 - **Giỏ hàng trống**: không cho áp dụng mã khi giỏ trống (trang thanh toán vốn đã không cho đặt).
 - **Nhiều mã**: hệ thống chỉ nhận một mã cho mỗi đơn; yêu cầu đặt hàng chứa nhiều hơn một mã bị từ
   chối do dữ liệu không hợp lệ.
-- **Mã quá dài / ký tự lạ**: dữ liệu mã không đúng định dạng được xử lý như "mã không tồn tại" hoặc lỗi
-  dữ liệu, không làm hỏng trang.
+- **Mã sai định dạng**: mã để trống, chỉ có khoảng trắng hoặc dài quá 32 ký tự (sau khi bỏ khoảng
+  trắng đầu/cuối) bị coi là dữ liệu không hợp lệ. Hệ thống hiển thị thông báo định dạng ("Vui lòng
+  nhập mã giảm giá" / "Mã giảm giá tối đa 32 ký tự") và không tra mã. Mã đúng độ dài nhưng chứa ký tự
+  lạ (khoảng trắng ở giữa, ký tự có dấu…) được tra như bình thường và nhận lỗi "Mã giảm giá không tồn
+  tại". Trang không bị lỗi.
 - **Lỗi kết nối khi kiểm tra mã**: hiển thị thông báo lỗi chung, cho phép thử lại, tổng tiền không
   đổi.
 
@@ -191,7 +194,9 @@ kiểm tra đơn được lưu với con số do hệ thống tính. Gửi yêu 
   - `SHOPLITE10`: giảm 10%, tối đa 100.000đ, đơn tối thiểu 300.000đ, không hết hạn.
   - `GIAM50K`: giảm 50.000đ, đơn tối thiểu 500.000đ, không hết hạn.
   - `TET2026`: giảm 15%, tối đa 200.000đ, không có tối thiểu, hết hạn sau ngày 28/02/2026.
-- **FR-004**: Mã MUST được so khớp không phân biệt hoa/thường và bỏ khoảng trắng ở đầu/cuối.
+- **FR-004**: Mã MUST được so khớp không phân biệt hoa/thường và bỏ khoảng trắng ở đầu/cuối. Mã hợp
+  lệ về định dạng dài 1–32 ký tự sau khi bỏ khoảng trắng đầu/cuối; hệ thống không bỏ khoảng trắng ở
+  giữa mã và không bỏ dấu.
 
 **Kiểm tra và tính số tiền giảm**
 
@@ -212,9 +217,10 @@ kiểm tra đơn được lưu với con số do hệ thống tính. Gửi yêu 
 - **FR-012**: Trang thanh toán MUST có ô nhập mã giảm giá (có nhãn) và nút "Áp dụng".
 - **FR-013**: Khi áp dụng thành công, phần tóm tắt đơn hàng MUST hiển thị ngay mã đã áp dụng, số
   tiền được giảm và tổng tiền mới, không cần tải lại trang.
-- **FR-014**: Khi mã không hợp lệ, hệ thống MUST hiển thị thông báo tiếng Việt cạnh ô nhập mã, đúng
-  một trong các lý do: mã không tồn tại; mã đã hết hạn; đơn chưa đạt giá trị tối thiểu — kèm mức tối
-  thiểu và số tiền cần mua thêm (= mức tối thiểu − tạm tính hiện tại). Ô nhập mã MUST được đánh dấu
+- **FR-014**: Khi mã không hợp lệ, hệ thống MUST hiển thị thông báo tiếng Việt cạnh ô nhập mã. Thông
+  báo là đúng một trong ba lý do nghiệp vụ: mã không tồn tại; mã đã hết hạn; đơn chưa đạt giá trị tối
+  thiểu (kèm mức tối thiểu và số tiền cần mua thêm = mức tối thiểu − tạm tính hiện tại). Riêng mã sai
+  định dạng (xem Edge Cases) thì hiển thị thông báo định dạng. Ô nhập mã MUST được đánh dấu
   là không hợp lệ cho công nghệ hỗ trợ (trình đọc màn hình).
 - **FR-015**: Khách MUST gỡ được mã đã áp dụng; sau khi gỡ, tóm tắt trở về tổng tiền chưa giảm.
 - **FR-016**: Mỗi đơn hàng MUST chỉ có tối đa một mã; áp dụng thành công mã mới thay thế mã cũ; áp
@@ -223,8 +229,9 @@ kiểm tra đơn được lưu với con số do hệ thống tính. Gửi yêu 
   rơi xuống dưới mức tối thiểu, hệ thống MUST giữ mã trong tóm tắt ở trạng thái lỗi, hiển thị số tiền
   cần mua thêm và không trừ giảm giá vào tổng; MUST NOT tự gỡ mã. Khi tạm tính đạt lại mức tối thiểu,
   mã MUST tự động có hiệu lực lại mà khách không cần áp dụng lại.
-- **FR-017a**: Khi mã đang ở trạng thái lỗi (bất kỳ lý do nào), yêu cầu đặt hàng kèm mã đó MUST bị từ
-  chối theo FR-021.
+- **FR-017a**: Khi đặt hàng, nếu hệ thống tự đánh giá lại và thấy mã đi kèm không hợp lệ (vì bất kỳ
+  lý do nào), yêu cầu MUST bị từ chối theo FR-021. Trạng thái lỗi hiển thị ở trang thanh toán chỉ để
+  báo cho khách, không phải căn cứ để từ chối.
 - **FR-018**: Mọi số tiền MUST hiển thị theo định dạng tiền tệ thống nhất của cửa hàng.
 
 **Đặt hàng và chống gian lận**
@@ -239,6 +246,10 @@ kiểm tra đơn được lưu với con số do hệ thống tính. Gửi yêu 
   trước khi đặt hàng lại.
 - **FR-022**: Các kiểm tra hiện có khi đặt hàng (sản phẩm tồn tại, tồn kho, giới hạn số lượng) MUST
   vẫn được thực hiện như trước.
+- **FR-022a**: Danh sách mã giảm giá MUST NOT được gửi xuống trình duyệt. Khách chỉ nhận được quy tắc
+  của đúng mã mình đã nhập và áp dụng thành công.
+- **FR-022b**: Thời điểm xét hạn của mã khi đặt hàng MUST lấy từ đồng hồ của hệ thống, không lấy thời
+  gian do trình duyệt cung cấp. Việc xét hạn ở trình duyệt (nếu có) chỉ để hiển thị.
 
 **Lưu trữ và hiển thị đơn hàng**
 
@@ -300,3 +311,5 @@ kiểm tra đơn được lưu với con số do hệ thống tính. Gửi yêu 
   kiểm thử thông báo "mã đã hết hạn"; kiểm thử tự động MUST cố định thời điểm để không phụ thuộc
   ngày chạy.
 - Khách không cần đăng nhập; tính năng dùng lại luồng giỏ hàng, thanh toán và đơn hàng hiện có.
+- Không giới hạn số lần thử mã; việc dò mã bằng cách thử nhiều lần là rủi ro được chấp nhận trong
+  phạm vi này.

@@ -18,7 +18,10 @@ cột phải, phía trên `CheckoutSummary`. Trạng thái và quy tắc chuyể
 ## Hành vi
 
 - Enter trong ô mã = bấm "Áp dụng", **không** submit đơn hàng.
-- Ô trống + "Áp dụng" → "Vui lòng nhập mã giảm giá", không gọi API.
+- Mã sai định dạng (kiểm bằng `couponCodeSchema` ở client, không gọi API):
+  - ô trống hoặc chỉ khoảng trắng + "Áp dụng" → "Vui lòng nhập mã giảm giá";
+  - dài hơn 32 ký tự sau trim → "Mã giảm giá tối đa 32 ký tự". Ô không đặt `maxLength`.
+- Nếu API vẫn trả 400 `VALIDATION_ERROR`, hiện `error.details.code` (nếu có), nếu không thì `error.message`.
 - Áp dụng thành công → ô mã được xóa trắng, hiện mã đang áp dụng, dòng giảm giá và tổng mới.
 - Áp dụng thất bại → thông báo lý do (message từ API), mã cũ (nếu có) giữ nguyên.
 - Lỗi mạng → "Không kiểm tra được mã, vui lòng thử lại.", tổng không đổi.

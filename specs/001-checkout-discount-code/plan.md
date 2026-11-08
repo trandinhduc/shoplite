@@ -49,14 +49,14 @@ không hard-code hằng số nghiệp vụ; text tiếng Việt; đơn cũ hiể
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Nguyên tắc                                 | Đánh giá trước Phase 0                                                                                                                                                                                                                                                                                   | Sau Phase 1                                                                                                                                                                         |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **I. Kiến trúc theo tính năng**            | Logic mã trong `src/features/coupons/`; `src/app/api/coupons/validate/route.ts` mỏng (đọc body → service → `handleRouteError`); dữ liệu ở `src/data/`. Server Component trang chi tiết đơn đọc `orderService` trực tiếp. Tên file kebab-case, test cạnh nguồn.                                           | ✅ Giữ nguyên. `coupon-service.ts` (import dữ liệu mã) chỉ dùng từ Route Handler và `order-service`; Client Component chỉ import `coupon-rules.ts`, `types.ts`, `coupon-schema.ts`. |
-| **II. Test trước (NON-NEGOTIABLE)**        | Test viết trước cho: `evaluateCoupon`/`calculateCouponDiscount` (biên `minSubtotal − 1`, `= minSubtotal`; trần `maxDiscount`; làm tròn; hết hạn 23:59:59.999 vs 00:00 +07:00), `calculateOrderTotals` có giảm, `placeOrder` với mã, `deriveCouponStatus`, route test, e2e. `now` được inject.            | ✅ Thứ tự Red→Green ghi trong phần "Thứ tự hiện thực" bên dưới; e2e chạy lại vì đụng luồng mua hàng.                                                                                |
-| **III. Server là nguồn sự thật về tiền**   | Client chỉ gửi `couponCode`; Zod loại khóa tiền lạ; `placeOrder` tự tra mã + tính lại; tồn kho vẫn kiểm trước. Lỗi mới thêm vào `OrderErrorCode` + `HTTP_STATUS_BY_CODE`; phản hồi qua `handleRouteError`. Ngưỡng/giá trị mã nằm trong dữ liệu `coupons.ts`, `COUPON_CODE_MAX_LENGTH` là hằng số export. | ✅ `calculateOrderTotals` là công thức duy nhất cho cả client và server. Số tiền client hiển thị chỉ để xem.                                                                        |
-| **IV. Đơn giản trước**                     | Không dependency/database/dịch vụ mới; dữ liệu tĩnh như `products.ts`; một endpoint mới là tối thiểu cần để không lộ mã (R1). Không làm admin, giới hạn lượt, rate-limit (YAGNI).                                                                                                                        | ✅ Không có mục Complexity Tracking.                                                                                                                                                |
-| **V. Tiếng Việt & dễ tiếp cận**            | Thông báo tiếng Việt; tiền qua `formatCurrency`; ô mã có `<label>`, `aria-invalid`, `aria-describedby`; lỗi hiển thị cạnh ô; nút có tên rõ ("Áp dụng", "Gỡ mã").                                                                                                                                         | ✅ Xem [contracts/checkout-ui.md](./contracts/checkout-ui.md).                                                                                                                      |
-| **Ràng buộc kỹ thuật / quy tắc hiện hành** | `MAX_QUANTITY_PER_ITEM`, tồn kho, `SHIPPING_OPTIONS`, `FREE_SHIPPING_THRESHOLD`, hủy chỉ khi `pending` — không đổi. Không ghi `storage/` trong test.                                                                                                                                                     | ✅ Phí ship tính trên subtotal trước giảm (FR-010) nên ngưỡng miễn phí ship không đổi ý nghĩa.                                                                                      |
+| Nguyên tắc                                 | Đánh giá trước Phase 0                                                                                                                                                                                                                                                                                   | Sau Phase 1                                                                                                                                                                                     |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **I. Kiến trúc theo tính năng**            | Logic mã trong `src/features/coupons/`; `src/app/api/coupons/validate/route.ts` mỏng (đọc body → service → `handleRouteError`); dữ liệu ở `src/data/`. Server Component trang chi tiết đơn đọc `orderService` trực tiếp. Tên file kebab-case, test cạnh nguồn.                                           | ✅ Giữ nguyên. `coupon-service.ts` (import dữ liệu mã) chỉ dùng từ Route Handler và `order-service`; Client Component chỉ import `coupon-rules.ts`, `types.ts`, `checkout-schema.ts` (FR-022a). |
+| **II. Test trước (NON-NEGOTIABLE)**        | Test viết trước cho: `evaluateCoupon`/`calculateCouponDiscount` (biên `minSubtotal − 1`, `= minSubtotal`; trần `maxDiscount`; làm tròn; hết hạn 23:59:59.999 vs 00:00 +07:00), `calculateOrderTotals` có giảm, `placeOrder` với mã, `deriveCouponStatus`, route test, e2e. `now` được inject.            | ✅ Thứ tự Red→Green ghi trong phần "Thứ tự hiện thực" bên dưới; e2e chạy lại vì đụng luồng mua hàng.                                                                                            |
+| **III. Server là nguồn sự thật về tiền**   | Client chỉ gửi `couponCode`; Zod loại khóa tiền lạ; `placeOrder` tự tra mã + tính lại; tồn kho vẫn kiểm trước. Lỗi mới thêm vào `OrderErrorCode` + `HTTP_STATUS_BY_CODE`; phản hồi qua `handleRouteError`. Ngưỡng/giá trị mã nằm trong dữ liệu `coupons.ts`, `COUPON_CODE_MAX_LENGTH` là hằng số export. | ✅ `calculateOrderTotals` là công thức duy nhất cho cả client và server. Số tiền client hiển thị chỉ để xem.                                                                                    |
+| **IV. Đơn giản trước**                     | Không dependency/database/dịch vụ mới; dữ liệu tĩnh như `products.ts`; một endpoint mới là tối thiểu cần để không lộ mã (R1). Không làm admin, giới hạn lượt, rate-limit (YAGNI).                                                                                                                        | ✅ Không có mục Complexity Tracking.                                                                                                                                                            |
+| **V. Tiếng Việt & dễ tiếp cận**            | Thông báo tiếng Việt; tiền qua `formatCurrency`; ô mã có `<label>`, `aria-invalid`, `aria-describedby`; lỗi hiển thị cạnh ô; nút có tên rõ ("Áp dụng", "Gỡ mã").                                                                                                                                         | ✅ Xem [contracts/checkout-ui.md](./contracts/checkout-ui.md).                                                                                                                                  |
+| **Ràng buộc kỹ thuật / quy tắc hiện hành** | `MAX_QUANTITY_PER_ITEM`, tồn kho, `SHIPPING_OPTIONS`, `FREE_SHIPPING_THRESHOLD`, hủy chỉ khi `pending` — không đổi. Không ghi `storage/` trong test.                                                                                                                                                     | ✅ Phí ship tính trên subtotal trước giảm (FR-010) nên ngưỡng miễn phí ship không đổi ý nghĩa.                                                                                                  |
 
 **Kết quả gate**: PASS (trước Phase 0 và sau Phase 1). Không có vi phạm cần giải thích.
 
@@ -89,13 +89,13 @@ src/
 │   ├── coupons/                            # MỚI
 │   │   ├── types.ts                        #   COUPON_TYPES, Coupon, CouponRule, CouponEvaluation
 │   │   ├── coupon-rules.ts (+ .test.ts)    #   thuần, client-safe: normalize, cutoff, discount, evaluate, message, deriveCouponStatus
-│   │   ├── coupon-schema.ts (+ .test.ts)   #   COUPON_CODE_MAX_LENGTH, couponCodeSchema, validateCouponSchema
+│   │   ├── coupon-schema.ts (+ .test.ts)   #   COUPON_CODE_MAX_LENGTH, couponCodeSchema (không import checkout)
 │   │   ├── coupon-service.ts (+ .test.ts)  #   server: findCouponByCode, toCouponError, createCouponService().validateCoupon, couponService
 │   │   └── components/
 │   │       └── coupon-field.tsx (+ .test.tsx)  # "use client": ô mã, Áp dụng, Gỡ mã, thông báo
 │   ├── checkout/
 │   │   ├── pricing.ts (+ .test.ts)         # SỬA  calculateOrderTotals(lines, method, discount = 0) → + discount
-│   │   ├── checkout-schema.ts (+ .test.ts) # SỬA  placeOrderSchema + couponCode
+│   │   ├── checkout-schema.ts (+ .test.ts) # SỬA  orderItemsSchema, placeOrderSchema + couponCode, validateCouponSchema
 │   │   └── components/
 │   │       ├── checkout-form.tsx (+ .test.tsx)  # SỬA  state appliedCoupon, gọi validate, gửi couponCode, xử lý 422 COUPON_*
 │   │       └── checkout-summary.tsx        # SỬA  nhận discount/couponCode, dòng giảm giá
@@ -112,7 +112,7 @@ src/
 │   ├── api/orders/route.test.ts            # SỬA  thêm ca couponCode / gian lận / mã lỗi
 │   └── orders/[id]/page.tsx                # SỬA  dùng OrderTotals
 e2e/
-└── coupon-flow.spec.ts                     # MỚI  áp mã → đặt hàng → chi tiết đơn; mã lỗi
+└── shopping-flow.spec.ts                   # SỬA  thêm kịch bản dùng mã SHOPLITE10 (giữ test cũ)
 AGENTS.md                                   # SỬA  codemap: feature coupons, luồng mã, lỗi mới
 ```
 
@@ -135,7 +135,7 @@ AGENTS.md                                   # SỬA  codemap: feature coupons, l
    `checkout-form.test.tsx` (áp/gỡ/thay mã, Enter không submit, 422 COUPON_EXPIRED → khóa lỗi) →
    hiện thực `coupon-field.tsx`, `checkout-summary.tsx`, `checkout-form.tsx`.
 5. **Chi tiết đơn** — `order-totals.tsx` + trang `orders/[id]`; đơn cũ không có dòng giảm giá.
-6. **E2E + tài liệu** — `e2e/coupon-flow.spec.ts`, cập nhật `AGENTS.md`; `npm run format`,
+6. **E2E + tài liệu** — kịch bản mới trong `e2e/shopping-flow.spec.ts`, cập nhật `AGENTS.md`; `npm run format`,
    `npm run check`, `npm run test:e2e`.
 
 ### Rủi ro & lưu ý
