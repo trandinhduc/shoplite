@@ -49,6 +49,9 @@ export interface Order {
   paymentMethod: PaymentMethod;
   items: OrderItem[];
   subtotal: number;
+  /** Mã và số tiền giảm có thể thiếu trong các đơn hàng cũ. */
+  discountCode?: string;
+  discountAmount?: number;
   shippingFee: number;
   total: number;
 }

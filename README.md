@@ -77,6 +77,19 @@ storage/                    # (tự tạo khi chạy) orders.json - đã đượ
 - **Đặt hàng:** server tự tính lại giá từ dữ liệu sản phẩm, không tin giá do client gửi lên.
 - **Hủy đơn:** chỉ được hủy khi đơn đang ở trạng thái _Chờ xác nhận_.
 
+### Mã giảm giá
+
+Trang thanh toán hỗ trợ tối đa một mã giảm giá cho mỗi đơn:
+
+- `SHOPLITE10`: giảm 10%, tối đa 100.000đ, cho đơn từ 300.000đ.
+- `GIAM50K`: giảm 50.000đ, cho đơn từ 500.000đ.
+- `TET2026`: giảm 15%, tối đa 200.000đ, hết hạn cuối ngày 28/02/2026 theo
+  múi giờ `Asia/Ho_Chi_Minh`.
+
+Client chỉ gửi mã khi đặt hàng; server luôn kiểm tra lại điều kiện, lấy giá
+catalog và tính lại số tiền giảm/tổng tiền. Đơn cũ không có thông tin mã giảm giá
+vẫn được hiển thị bình thường.
+
 ## API
 
 | Method  | Endpoint              | Mô tả                                                                             |
@@ -84,7 +97,7 @@ storage/                    # (tự tạo khi chạy) orders.json - đã đượ
 | `GET`   | `/api/products`       | Danh sách sản phẩm. Query: `q, category, minPrice, maxPrice, inStock, sort, page` |
 | `GET`   | `/api/products/:slug` | Chi tiết sản phẩm                                                                 |
 | `GET`   | `/api/orders`         | Danh sách đơn hàng                                                                |
-| `POST`  | `/api/orders`         | Tạo đơn hàng                                                                      |
+| `POST`  | `/api/orders`         | Tạo đơn hàng, nhận thêm `couponCode` tùy chọn                                     |
 | `GET`   | `/api/orders/:id`     | Chi tiết đơn hàng                                                                 |
 | `PATCH` | `/api/orders/:id`     | Hủy đơn: `{ "status": "cancelled" }`                                              |
 

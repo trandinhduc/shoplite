@@ -1,17 +1,27 @@
 import { ProductImage } from "@/features/catalog/components/product-image";
 import type { CartItem } from "@/features/cart/types";
-import { calculateOrderTotals, type ShippingMethod } from "@/features/checkout/pricing";
+import type { Coupon } from "@/features/coupons/coupon-service";
+import {
+  calculateOrderTotals,
+  type ShippingMethod,
+} from "@/features/checkout/pricing";
 import { formatCurrency } from "@/lib/format";
 
 interface CheckoutSummaryProps {
   items: CartItem[];
   shippingMethod: ShippingMethod;
+  coupon?: Coupon;
 }
 
-export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps) {
+export function CheckoutSummary({
+  items,
+  shippingMethod,
+  coupon,
+}: CheckoutSummaryProps) {
   const totals = calculateOrderTotals(
     items.map((item) => ({ unitPrice: item.price, quantity: item.quantity })),
     shippingMethod,
+    coupon,
   );
 
   return (
@@ -26,8 +36,12 @@ export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps)
                 {item.quantity}
               </span>
             </div>
-            <span className="flex-1 font-medium text-slate-800">{item.name}</span>
-            <span className="font-semibold">{formatCurrency(item.price * item.quantity)}</span>
+            <span className="flex-1 font-medium text-slate-800">
+              {item.name}
+            </span>
+            <span className="font-semibold">
+              {formatCurrency(item.price * item.quantity)}
+            </span>
           </li>
         ))}
       </ul>
@@ -39,12 +53,25 @@ export function CheckoutSummary({ items, shippingMethod }: CheckoutSummaryProps)
         <div className="flex justify-between">
           <dt className="text-slate-600">Phí giao hàng</dt>
           <dd className="font-medium" data-testid="shipping-fee">
-            {totals.shippingFee === 0 ? "Miễn phí" : formatCurrency(totals.shippingFee)}
+            {totals.shippingFee === 0
+              ? "Miễn phí"
+              : formatCurrency(totals.shippingFee)}
           </dd>
         </div>
+        {coupon && totals.discountAmount > 0 && (
+          <div className="flex justify-between text-emerald-700">
+            <dt>Giảm giá ({coupon.code})</dt>
+            <dd data-testid="discount-amount">
+              -{formatCurrency(totals.discountAmount)}
+            </dd>
+          </div>
+        )}
         <div className="flex justify-between border-t border-slate-200 pt-3 text-base">
           <dt className="font-semibold">Tổng thanh toán</dt>
-          <dd className="font-bold text-indigo-700" data-testid="checkout-total">
+          <dd
+            className="font-bold text-indigo-700"
+            data-testid="checkout-total"
+          >
             {formatCurrency(totals.total)}
           </dd>
         </div>

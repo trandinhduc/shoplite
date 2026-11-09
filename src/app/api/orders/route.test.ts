@@ -4,9 +4,15 @@ import { GET, POST } from "./route";
 
 // Thay orderService (ghi file) bằng bản dùng repository trong bộ nhớ.
 vi.mock("@/features/orders/server", async () => {
-  const { createOrderService } = await import("@/features/orders/order-service");
-  const { createInMemoryOrderRepository } = await import("@/features/orders/order-repository");
-  return { orderService: createOrderService({ repository: createInMemoryOrderRepository() }) };
+  const { createOrderService } =
+    await import("@/features/orders/order-service");
+  const { createInMemoryOrderRepository } =
+    await import("@/features/orders/order-repository");
+  return {
+    orderService: createOrderService({
+      repository: createInMemoryOrderRepository(),
+    }),
+  };
 });
 
 const postOrder = (body: unknown) =>
@@ -19,7 +25,11 @@ const postOrder = (body: unknown) =>
   );
 
 const validBody = {
-  customer: { fullName: "Phạm Minh D", phone: "0356789012", address: "99 Hai Bà Trưng, Huế" },
+  customer: {
+    fullName: "Phạm Minh D",
+    phone: "0356789012",
+    address: "99 Hai Bà Trưng, Huế",
+  },
   shippingMethod: "express",
   paymentMethod: "bank_transfer",
   items: [{ productId: "p006", quantity: 1 }],
@@ -30,7 +40,36 @@ describe("POST /api/orders", () => {
     const response = await postOrder(validBody);
     expect(response.status).toBe(201);
     const order = await response.json();
-    expect(order).toMatchObject({ status: "pending", subtotal: 450_000, shippingFee: 60_000 });
+    expect(order).toMatchObject({
+      status: "pending",
+      subtotal: 450_000,
+      shippingFee: 60_000,
+    });
+  });
+
+  it("201 - server tự tính lại mã và tổng tiền", async () => {
+    const response = await postOrder({
+      ...validBody,
+      shippingMethod: "standard",
+      items: [{ productId: "p006", quantity: 2 }],
+      couponCode: "shoplite10",
+      discountAmount: 1,
+      total: 1,
+    });
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      subtotal: 900_000,
+      discountCode: "SHOPLITE10",
+      discountAmount: 90_000,
+      shippingFee: 0,
+      total: 810_000,
+    });
+  });
+
+  it("422 - từ chối mã không đủ điều kiện khi đặt hàng", async () => {
+    const response = await postOrder({ ...validBody, couponCode: "GIAM50K" });
+    expect(response.status).toBe(422);
+    expect((await response.json()).error.code).toBe("INVALID_COUPON");
   });
 
   it("400 - body không phải JSON", async () => {
@@ -50,7 +89,10 @@ describe("POST /api/orders", () => {
   });
 
   it("409 - vượt quá tồn kho", async () => {
-    const response = await postOrder({ ...validBody, items: [{ productId: "p004", quantity: 1 }] });
+    const response = await postOrder({
+      ...validBody,
+      items: [{ productId: "p004", quantity: 1 }],
+    });
     expect(response.status).toBe(409);
     expect((await response.json()).error.code).toBe("INSUFFICIENT_STOCK");
   });

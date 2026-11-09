@@ -2,11 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { Banknote, CreditCard, Truck, Zap } from "lucide-react";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useCart } from "@/features/cart/use-cart";
+import { evaluateCoupon, type Coupon } from "@/features/coupons/coupon-service";
 import {
   checkoutFormSchema,
   PAYMENT_METHODS,
@@ -56,15 +62,39 @@ export function CheckoutForm() {
   const [values, setValues] = useState<CheckoutFormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | undefined>();
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">(
+    "idle",
+  );
+
+  const appliedCouponEvaluation = appliedCoupon
+    ? evaluateCoupon(appliedCoupon.code, subtotal)
+    : undefined;
+  const activeCoupon = appliedCouponEvaluation?.valid
+    ? appliedCoupon
+    : undefined;
+  const displayedCouponError =
+    couponError ??
+    (appliedCouponEvaluation && !appliedCouponEvaluation.valid
+      ? appliedCouponEvaluation.message
+      : null);
 
   if (!hydrated) {
-    return <div className="h-96 animate-pulse rounded-2xl bg-slate-200/60" aria-busy />;
+    return (
+      <div
+        className="h-96 animate-pulse rounded-2xl bg-slate-200/60"
+        aria-busy
+      />
+    );
   }
 
   if (status === "redirecting") {
     return (
-      <p className="py-16 text-center text-slate-600">Đặt hàng thành công, đang chuyển trang…</p>
+      <p className="py-16 text-center text-slate-600">
+        Đặt hàng thành công, đang chuyển trang…
+      </p>
     );
   }
 
@@ -83,7 +113,9 @@ export function CheckoutForm() {
     );
   }
 
-  function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleChange(
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
     setErrors((current) => {
@@ -92,6 +124,23 @@ export function CheckoutForm() {
       delete next[name];
       return next;
     });
+  }
+
+  function handleApplyCoupon() {
+    const result = evaluateCoupon(couponCode, subtotal);
+    if (!result.valid) {
+      setCouponError(result.message);
+      return;
+    }
+    setAppliedCoupon(result.coupon);
+    setCouponCode(result.normalizedCode);
+    setCouponError(null);
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(undefined);
+    setCouponCode("");
+    setCouponError(null);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -115,13 +164,21 @@ export function CheckoutForm() {
           customer,
           shippingMethod,
           paymentMethod,
-          items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          items: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          ...(activeCoupon ? { couponCode: activeCoupon.code } : {}),
         }),
       });
 
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
-        setSubmitError(body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.");
+        const body = (await response
+          .json()
+          .catch(() => null)) as ApiErrorBody | null;
+        setSubmitError(
+          body?.error.message ?? "Không thể đặt hàng, vui lòng thử lại.",
+        );
         setStatus("idle");
         return;
       }
@@ -137,12 +194,21 @@ export function CheckoutForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="grid gap-6 lg:grid-cols-[1fr_380px]">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="grid gap-6 lg:grid-cols-[1fr_380px]"
+    >
       <div className="flex flex-col gap-6">
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
           <h2 className="mb-4 text-lg font-semibold">Thông tin nhận hàng</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Họ và tên" name="fullName" error={errors.fullName} required>
+            <Field
+              label="Họ và tên"
+              name="fullName"
+              error={errors.fullName}
+              required
+            >
               <input
                 id="fullName"
                 name="fullName"
@@ -151,10 +217,18 @@ export function CheckoutForm() {
                 autoComplete="name"
                 placeholder="Nguyễn Văn A"
                 aria-invalid={Boolean(errors.fullName)}
-                className={cn(inputClass, errors.fullName ? "ring-rose-400" : "ring-slate-300")}
+                className={cn(
+                  inputClass,
+                  errors.fullName ? "ring-rose-400" : "ring-slate-300",
+                )}
               />
             </Field>
-            <Field label="Số điện thoại" name="phone" error={errors.phone} required>
+            <Field
+              label="Số điện thoại"
+              name="phone"
+              error={errors.phone}
+              required
+            >
               <input
                 id="phone"
                 name="phone"
@@ -164,10 +238,18 @@ export function CheckoutForm() {
                 autoComplete="tel"
                 placeholder="0912345678"
                 aria-invalid={Boolean(errors.phone)}
-                className={cn(inputClass, errors.phone ? "ring-rose-400" : "ring-slate-300")}
+                className={cn(
+                  inputClass,
+                  errors.phone ? "ring-rose-400" : "ring-slate-300",
+                )}
               />
             </Field>
-            <Field label="Email" name="email" error={errors.email} className="sm:col-span-2">
+            <Field
+              label="Email"
+              name="email"
+              error={errors.email}
+              className="sm:col-span-2"
+            >
               <input
                 id="email"
                 name="email"
@@ -177,7 +259,10 @@ export function CheckoutForm() {
                 autoComplete="email"
                 placeholder="ban@example.com (không bắt buộc)"
                 aria-invalid={Boolean(errors.email)}
-                className={cn(inputClass, errors.email ? "ring-rose-400" : "ring-slate-300")}
+                className={cn(
+                  inputClass,
+                  errors.email ? "ring-rose-400" : "ring-slate-300",
+                )}
               />
             </Field>
             <Field
@@ -195,10 +280,18 @@ export function CheckoutForm() {
                 autoComplete="street-address"
                 placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
                 aria-invalid={Boolean(errors.address)}
-                className={cn(inputClass, errors.address ? "ring-rose-400" : "ring-slate-300")}
+                className={cn(
+                  inputClass,
+                  errors.address ? "ring-rose-400" : "ring-slate-300",
+                )}
               />
             </Field>
-            <Field label="Ghi chú" name="note" error={errors.note} className="sm:col-span-2">
+            <Field
+              label="Ghi chú"
+              name="note"
+              error={errors.note}
+              className="sm:col-span-2"
+            >
               <textarea
                 id="note"
                 name="note"
@@ -217,6 +310,60 @@ export function CheckoutForm() {
         </section>
 
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <h2 className="mb-4 text-lg font-semibold">Mã giảm giá</h2>
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="couponCode"
+              className="text-sm font-medium text-slate-700"
+            >
+              Mã giảm giá
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="couponCode"
+                value={couponCode}
+                onChange={(event) => setCouponCode(event.target.value)}
+                placeholder="Ví dụ: SHOPLITE10"
+                aria-invalid={Boolean(displayedCouponError)}
+                className={cn(
+                  inputClass,
+                  displayedCouponError ? "ring-rose-400" : "ring-slate-300",
+                )}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleApplyCoupon}
+                disabled={Boolean(activeCoupon) || couponCode.trim() === ""}
+              >
+                Áp dụng
+              </Button>
+            </div>
+            {activeCoupon && (
+              <div
+                className="flex items-center justify-between text-sm text-emerald-700"
+                data-testid="applied-coupon"
+              >
+                <span>Đã áp dụng: {activeCoupon.code}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveCoupon}
+                >
+                  Gỡ mã
+                </Button>
+              </div>
+            )}
+            {displayedCouponError && (
+              <p role="alert" className="text-xs text-rose-600">
+                {displayedCouponError}
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
           <h2 className="mb-4 text-lg font-semibold">Phương thức giao hàng</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {SHIPPING_METHODS.map((method) => {
@@ -227,7 +374,12 @@ export function CheckoutForm() {
                   name="shippingMethod"
                   value={method}
                   checked={values.shippingMethod === method}
-                  onChange={() => setValues((current) => ({ ...current, shippingMethod: method }))}
+                  onChange={() =>
+                    setValues((current) => ({
+                      ...current,
+                      shippingMethod: method,
+                    }))
+                  }
                   icon={SHIPPING_ICONS[method]}
                   title={SHIPPING_OPTIONS[method].label}
                   description={`${SHIPPING_OPTIONS[method].description} · ${fee === 0 ? "Miễn phí" : formatCurrency(fee)}`}
@@ -246,7 +398,12 @@ export function CheckoutForm() {
                 name="paymentMethod"
                 value={method}
                 checked={values.paymentMethod === method}
-                onChange={() => setValues((current) => ({ ...current, paymentMethod: method }))}
+                onChange={() =>
+                  setValues((current) => ({
+                    ...current,
+                    paymentMethod: method,
+                  }))
+                }
                 icon={PAYMENT_ICONS[method]}
                 title={PAYMENT_OPTIONS[method].label}
                 description={PAYMENT_OPTIONS[method].description}
@@ -257,9 +414,16 @@ export function CheckoutForm() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <CheckoutSummary items={items} shippingMethod={values.shippingMethod} />
+        <CheckoutSummary
+          items={items}
+          shippingMethod={values.shippingMethod}
+          coupon={activeCoupon}
+        />
         {submitError && (
-          <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <p
+            role="alert"
+            className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700"
+          >
             {submitError}
           </p>
         )}
@@ -280,7 +444,14 @@ interface FieldProps {
   children: ReactNode;
 }
 
-function Field({ label, name, error, required, className, children }: FieldProps) {
+function Field({
+  label,
+  name,
+  error,
+  required,
+  className,
+  children,
+}: FieldProps) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       <label htmlFor={name} className="text-sm font-medium text-slate-700">
@@ -306,7 +477,15 @@ interface OptionCardProps {
   description: string;
 }
 
-function OptionCard({ name, value, checked, onChange, icon, title, description }: OptionCardProps) {
+function OptionCard({
+  name,
+  value,
+  checked,
+  onChange,
+  icon,
+  title,
+  description,
+}: OptionCardProps) {
   return (
     <label
       className={cn(
@@ -324,7 +503,9 @@ function OptionCard({ name, value, checked, onChange, icon, title, description }
         onChange={onChange}
         className="sr-only"
       />
-      <span className={checked ? "text-indigo-600" : "text-slate-400"}>{icon}</span>
+      <span className={checked ? "text-indigo-600" : "text-slate-400"}>
+        {icon}
+      </span>
       <span className="flex flex-col">
         <span className="text-sm font-semibold text-slate-900">{title}</span>
         <span className="text-xs text-slate-500">{description}</span>

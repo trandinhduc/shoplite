@@ -7,12 +7,19 @@ import { cartStore } from "@/features/cart/cart-store";
 import { CheckoutForm } from "./checkout-form";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, refresh: vi.fn() }),
+}));
 
 describe("<CheckoutForm />", () => {
   beforeEach(() => {
     cartStore.reset();
-    cartStore.dispatch({ type: "add", item: toCartItem(getProductById("p010")!), quantity: 2 });
+    cartStore.dispatch({ type: "clear" });
+    cartStore.dispatch({
+      type: "add",
+      item: toCartItem(getProductById("p010")!),
+      quantity: 2,
+    });
   });
 
   afterEach(() => {
@@ -29,7 +36,9 @@ describe("<CheckoutForm />", () => {
     await user.click(screen.getByRole("button", { name: "Đặt hàng" }));
 
     expect(screen.getByTestId("error-fullName")).toBeVisible();
-    expect(screen.getByTestId("error-phone")).toHaveTextContent(/Số điện thoại không hợp lệ/);
+    expect(screen.getByTestId("error-phone")).toHaveTextContent(
+      /Số điện thoại không hợp lệ/,
+    );
     expect(screen.getByTestId("error-address")).toBeVisible();
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -43,19 +52,90 @@ describe("<CheckoutForm />", () => {
     expect(screen.getByTestId("shipping-fee")).toHaveTextContent(/60\.000/);
   });
 
+  it("áp dụng và gỡ mã giảm giá trong phần tóm tắt", async () => {
+    cartStore.reset();
+    cartStore.dispatch({ type: "clear" });
+    cartStore.dispatch({
+      type: "add",
+      item: toCartItem(getProductById("p006")!),
+      quantity: 2,
+    });
+    const user = userEvent.setup();
+    render(<CheckoutForm />);
+
+    await user.type(screen.getByLabelText("Mã giảm giá"), "shoplite10");
+    await user.click(screen.getByRole("button", { name: "Áp dụng" }));
+
+    expect(screen.getByTestId("discount-amount")).toHaveTextContent("-90.000");
+    expect(screen.getByTestId("checkout-total")).toHaveTextContent("810.000");
+
+    await user.click(screen.getByRole("button", { name: "Gỡ mã" }));
+    expect(screen.queryByTestId("discount-amount")).not.toBeInTheDocument();
+    expect(screen.getByTestId("checkout-total")).toHaveTextContent("900.000");
+  });
+
+  it("giữ mã hiện tại khi khách thử áp dụng mã thứ hai", async () => {
+    const user = userEvent.setup();
+    render(<CheckoutForm />);
+
+    const couponInput = screen.getByLabelText("Mã giảm giá");
+    await user.type(couponInput, "shoplite10");
+    await user.click(screen.getByRole("button", { name: "Áp dụng" }));
+    await user.clear(couponInput);
+    await user.type(couponInput, "GIAM50K");
+
+    expect(screen.getByRole("button", { name: "Áp dụng" })).toBeDisabled();
+    expect(screen.getByTestId("applied-coupon")).toHaveTextContent(
+      "SHOPLITE10",
+    );
+  });
+
+  it("hiển thị lý do rõ ràng khi mã không hợp lệ", async () => {
+    const user = userEvent.setup();
+    render(<CheckoutForm />);
+
+    await user.type(screen.getByLabelText("Mã giảm giá"), "GIAM50K");
+    await user.click(screen.getByRole("button", { name: "Áp dụng" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/cần thêm 200\.000đ/);
+  });
+
+  it("gỡ mã khi giỏ hàng thay đổi không còn đủ điều kiện", async () => {
+    const user = userEvent.setup();
+    render(<CheckoutForm />);
+
+    await user.type(screen.getByLabelText("Mã giảm giá"), "shoplite10");
+    await user.click(screen.getByRole("button", { name: "Áp dụng" }));
+    expect(screen.getByTestId("applied-coupon")).toBeVisible();
+
+    cartStore.dispatch({
+      type: "update-quantity",
+      productId: "p010",
+      quantity: 1,
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /cần thêm 150\.000đ/,
+    );
+    expect(screen.queryByTestId("applied-coupon")).not.toBeInTheDocument();
+  });
+
   it("gửi đơn hàng, xóa giỏ và chuyển tới trang đơn hàng", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ id: "SL-20261021-ABC123" }), { status: 201 }),
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: "SL-20261021-ABC123" }), {
+        status: 201,
+      }),
+    );
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
     render(<CheckoutForm />);
 
     await user.type(screen.getByLabelText(/Họ và tên/), "Nguyễn Văn A");
     await user.type(screen.getByLabelText(/Số điện thoại/), "0912345678");
-    await user.type(screen.getByLabelText(/Địa chỉ giao hàng/), "12 Nguyễn Huệ, Quận 1, TP.HCM");
+    await user.type(
+      screen.getByLabelText(/Địa chỉ giao hàng/),
+      "12 Nguyễn Huệ, Quận 1, TP.HCM",
+    );
     await user.click(screen.getByRole("button", { name: "Đặt hàng" }));
 
     const [url, init] = fetchMock.mock.calls[0];
@@ -76,7 +156,10 @@ describe("<CheckoutForm />", () => {
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            error: { code: "INSUFFICIENT_STOCK", message: "Sản phẩm đã hết hàng" },
+            error: {
+              code: "INSUFFICIENT_STOCK",
+              message: "Sản phẩm đã hết hàng",
+            },
           }),
           { status: 409 },
         ),
@@ -87,10 +170,15 @@ describe("<CheckoutForm />", () => {
 
     await user.type(screen.getByLabelText(/Họ và tên/), "Nguyễn Văn A");
     await user.type(screen.getByLabelText(/Số điện thoại/), "0912345678");
-    await user.type(screen.getByLabelText(/Địa chỉ giao hàng/), "12 Nguyễn Huệ, Quận 1, TP.HCM");
+    await user.type(
+      screen.getByLabelText(/Địa chỉ giao hàng/),
+      "12 Nguyễn Huệ, Quận 1, TP.HCM",
+    );
     await user.click(screen.getByRole("button", { name: "Đặt hàng" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Sản phẩm đã hết hàng");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Sản phẩm đã hết hàng",
+    );
     expect(push).not.toHaveBeenCalled();
   });
 });

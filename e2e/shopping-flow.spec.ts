@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("khách hàng tìm sản phẩm, thêm vào giỏ và đặt hàng thành công", async ({ page }) => {
+test("khách hàng tìm sản phẩm, thêm vào giỏ và đặt hàng thành công", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Mua sắm ngay" }).click();
 
@@ -12,7 +14,9 @@ test("khách hàng tìm sản phẩm, thêm vào giỏ và đặt hàng thành c
 
   // Chi tiết sản phẩm -> thêm 2 sản phẩm vào giỏ
   await page.getByRole("link", { name: "Chuột không dây SwiftClick" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Chuột không dây SwiftClick");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Chuột không dây SwiftClick",
+  );
   const purchasePanel = page.getByTestId("purchase-panel");
   await purchasePanel.getByRole("button", { name: "Tăng số lượng" }).click();
   await purchasePanel.getByRole("button", { name: "Thêm vào giỏ" }).click();
@@ -26,7 +30,28 @@ test("khách hàng tìm sản phẩm, thêm vào giỏ và đặt hàng thành c
   // Thanh toán
   await page.getByLabel(/Họ và tên/).fill("Nguyễn Văn Test");
   await page.getByLabel(/Số điện thoại/).fill("0912345678");
-  await page.getByLabel(/Địa chỉ giao hàng/).fill("12 Nguyễn Huệ, Quận 1, TP.HCM");
+  await page
+    .getByLabel(/Địa chỉ giao hàng/)
+    .fill("12 Nguyễn Huệ, Quận 1, TP.HCM");
+  const couponInput = page.getByLabel("Mã giảm giá");
+  await couponInput.fill("SHOPLITE10");
+  const applyStartedAt = Date.now();
+  await page.getByRole("button", { name: "Áp dụng" }).click();
+  await expect(page.getByTestId("discount-amount")).toContainText("90.000");
+  await expect(page.getByTestId("checkout-total")).toContainText("810.000");
+  expect(Date.now() - applyStartedAt).toBeLessThan(1000);
+  const durations: number[] = [];
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    await page.getByRole("button", { name: "Gỡ mã" }).click();
+    await couponInput.fill("SHOPLITE10");
+    const startedAt = Date.now();
+    await page.getByRole("button", { name: "Áp dụng" }).click();
+    await expect(page.getByTestId("discount-amount")).toContainText("90.000");
+    durations.push(Date.now() - startedAt);
+  }
+  expect(
+    durations.filter((duration) => duration < 1000).length / durations.length,
+  ).toBeGreaterThanOrEqual(0.95);
   await page.getByRole("button", { name: "Đặt hàng" }).click();
 
   // Trang chi tiết đơn hàng
@@ -36,7 +61,9 @@ test("khách hàng tìm sản phẩm, thêm vào giỏ và đặt hàng thành c
 
   const orderId = page.url().match(/SL-\d{8}-[0-9A-F]{6}/)![0];
   await page.getByRole("link", { name: "Tất cả đơn hàng" }).click();
-  await expect(page.getByTestId("order-row").filter({ hasText: orderId })).toBeVisible();
+  await expect(
+    page.getByTestId("order-row").filter({ hasText: orderId }),
+  ).toBeVisible();
 });
 
 test("lọc theo danh mục và sắp xếp theo giá", async ({ page }) => {

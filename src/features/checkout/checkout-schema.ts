@@ -6,8 +6,14 @@ export const PAYMENT_METHODS = ["cod", "bank_transfer"] as const;
 
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
-export const PAYMENT_OPTIONS: Record<PaymentMethod, { label: string; description: string }> = {
-  cod: { label: "Thanh toán khi nhận hàng (COD)", description: "Trả tiền mặt cho shipper" },
+export const PAYMENT_OPTIONS: Record<
+  PaymentMethod,
+  { label: string; description: string }
+> = {
+  cod: {
+    label: "Thanh toán khi nhận hàng (COD)",
+    description: "Trả tiền mặt cho shipper",
+  },
   bank_transfer: {
     label: "Chuyển khoản ngân hàng",
     description: "Thông tin chuyển khoản hiển thị sau khi đặt hàng",
@@ -23,11 +29,17 @@ export const customerSchema = z.object({
     .trim()
     .min(2, "Họ tên phải có ít nhất 2 ký tự")
     .max(50, "Họ tên tối đa 50 ký tự"),
-  phone: z.string().trim().regex(VN_PHONE_REGEX, "Số điện thoại không hợp lệ (ví dụ: 0912345678)"),
+  phone: z
+    .string()
+    .trim()
+    .regex(VN_PHONE_REGEX, "Số điện thoại không hợp lệ (ví dụ: 0912345678)"),
   email: z
     .string()
     .trim()
-    .refine((value) => value === "" || z.email().safeParse(value).success, "Email không hợp lệ")
+    .refine(
+      (value) => value === "" || z.email().safeParse(value).success,
+      "Email không hợp lệ",
+    )
     .optional(),
   address: z
     .string()
@@ -41,8 +53,14 @@ export type CustomerInput = z.infer<typeof customerSchema>;
 
 /** Dữ liệu form thanh toán phía client. */
 export const checkoutFormSchema = customerSchema.extend({
-  shippingMethod: z.enum(SHIPPING_METHODS, "Vui lòng chọn phương thức giao hàng"),
-  paymentMethod: z.enum(PAYMENT_METHODS, "Vui lòng chọn phương thức thanh toán"),
+  shippingMethod: z.enum(
+    SHIPPING_METHODS,
+    "Vui lòng chọn phương thức giao hàng",
+  ),
+  paymentMethod: z.enum(
+    PAYMENT_METHODS,
+    "Vui lòng chọn phương thức thanh toán",
+  ),
 });
 
 export type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
@@ -60,6 +78,7 @@ export const placeOrderSchema = z.object({
       }),
     )
     .min(1, "Giỏ hàng đang trống"),
+  couponCode: z.string().trim().min(1).max(50).optional(),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;

@@ -16,9 +16,9 @@ dependency or database.
 
 **Purpose**: Confirm the existing repository structure and feature design inputs.
 
-- [ ] T001 [P] Verify the feature scope and source paths against `specs/001-checkout-discount-codes/spec.md` and `specs/001-checkout-discount-codes/plan.md`
-- [ ] T002 [P] Verify existing checkout, order, API, and E2E test conventions in `AGENTS.md`, `src/features/checkout/`, `src/features/orders/`, `src/app/api/orders/`, and `e2e/shopping-flow.spec.ts`
-- [ ] T003 Run `npm run check` for the repository defined by `package.json` and record the baseline result
+- [x] T001 [P] Verify the feature scope and source paths against `specs/001-checkout-discount-codes/spec.md` and `specs/001-checkout-discount-codes/plan.md`
+- [x] T002 [P] Verify existing checkout, order, API, and E2E test conventions in `AGENTS.md`, `src/features/checkout/`, `src/features/orders/`, `src/app/api/orders/`, and `e2e/shopping-flow.spec.ts`
+- [x] T003 Run `npm run check` for the repository defined by `package.json` and record the baseline result
 
 ---
 
@@ -29,9 +29,9 @@ behavior is implemented.
 
 **⚠️ CRITICAL**: No user story implementation begins until this phase is complete.
 
-- [ ] T004 [P] Define coupon domain types and evaluation result unions in `src/features/coupons/types.ts` for percentage/fixed discounts, validation reasons, and optional expiry/minimum fields
-- [ ] T005 [P] Add the shared order fixture shape for legacy orders without discount fields in `src/features/orders/order-service.test.ts`
-- [ ] T006 Run `npm run check` for the repository defined by `package.json` after foundational setup
+- [x] T004 [P] Define coupon domain types and evaluation result unions in `src/features/coupons/types.ts` for percentage/fixed discounts, validation reasons, and optional expiry/minimum fields
+- [x] T005 [P] Add the shared order fixture shape for legacy orders without discount fields in `src/features/orders/order-service.test.ts`
+- [x] T006 Run `npm run check` for the repository defined by `package.json` after foundational setup
 
 **Checkpoint**: Shared types and legacy test coverage seams are ready; user
 stories can now be implemented independently in priority order.
@@ -49,18 +49,18 @@ remove it and verify the original total returns.
 
 ### Tests for User Story 1 (write first)
 
-- [ ] T007 [P] [US1] Write failing unit tests for coupon normalization, `SHOPLITE10`, `GIAM50K`, `TET2026` definitions, one-coupon selection, and discount calculation in `src/features/coupons/coupon-service.test.ts`
-- [ ] T008 [P] [US1] Write failing unit tests for subtotal, shipping, discount, and final-total integration in `src/features/checkout/pricing.test.ts`
-- [ ] T009 [P] [US1] Write failing component tests for applying/removing a coupon, showing discount/total, and preventing a second coupon in `src/features/checkout/components/checkout-form.test.tsx` and `src/features/checkout/components/checkout-summary.test.tsx`
+- [x] T007 [P] [US1] Write failing unit tests for coupon normalization, `SHOPLITE10`, `GIAM50K`, `TET2026` definitions, one-coupon selection, and discount calculation in `src/features/coupons/coupon-service.test.ts`
+- [x] T008 [P] [US1] Write failing unit tests for subtotal, shipping, discount, and final-total integration in `src/features/checkout/pricing.test.ts`
+- [x] T009 [P] [US1] Write failing component tests for applying/removing a coupon, showing discount/total, and preventing a second coupon in `src/features/checkout/components/checkout-form.test.tsx` and `src/features/checkout/components/checkout-summary.test.tsx`
 
 ### Implementation for User Story 1
 
-- [ ] T010 [P] [US1] Add the three static coupon records with canonical uppercase codes and configured percentage/fixed/minimum/expiry values in `src/data/coupons.ts`
-- [ ] T011 [US1] Implement pure coupon normalization, lookup, valid evaluation, one-coupon enforcement, and discount calculation in `src/features/coupons/coupon-service.ts`
-- [ ] T012 [US1] Extend `OrderTotals` and `calculateOrderTotals` in `src/features/checkout/pricing.ts` to apply `subtotal - discountAmount + shippingFee` without negative totals and without discounting shipping
-- [ ] T013 [US1] Add checkout coupon input state, apply/remove actions, recalculation on cart/shipping changes, and Vietnamese accessible feedback in `src/features/checkout/components/checkout-form.tsx`
-- [ ] T014 [US1] Render the coupon input result, discount row, and updated total using `formatCurrency()` in `src/features/checkout/components/checkout-summary.tsx`
-- [ ] T015 Run `npm run check` for the repository defined by `package.json` after User Story 1 implementation
+- [x] T010 [P] [US1] Add the three static coupon records with canonical uppercase codes and configured percentage/fixed/minimum/expiry values in `src/data/coupons.ts`
+- [x] T011 [US1] Implement pure coupon normalization, lookup, valid evaluation, one-coupon enforcement, and discount calculation in `src/features/coupons/coupon-service.ts`
+- [x] T012 [US1] Extend `OrderTotals` and `calculateOrderTotals` in `src/features/checkout/pricing.ts` to apply `subtotal - discountAmount + shippingFee` without negative totals and without discounting shipping
+- [x] T013 [US1] Add checkout coupon input state, apply/remove actions, recalculation on cart/shipping changes, and Vietnamese accessible feedback in `src/features/checkout/components/checkout-form.tsx`
+- [x] T014 [US1] Render the coupon input result, discount row, and updated total using `formatCurrency()` in `src/features/checkout/components/checkout-summary.tsx`
+- [x] T015 Run `npm run check` for the repository defined by `package.json` after User Story 1 implementation
 
 **Checkpoint**: US1 is independently demoable and testable as the MVP.
 
@@ -77,16 +77,16 @@ the order total does not change.
 
 ### Tests for User Story 2 (write first)
 
-- [ ] T016 [P] [US2] Extend failing unit tests for `not_found`, `expired`, `minimum_subtotal`, exact threshold, 1đ shortfall, `Asia/Ho_Chi_Minh` end-of-day expiry, and cart invalidation in `src/features/coupons/coupon-service.test.ts`
-- [ ] T017 [P] [US2] Extend failing pricing tests for percentage cap, fixed discount greater than subtotal, rounding down to whole VND, and zero/non-negative totals in `src/features/checkout/pricing.test.ts`
-- [ ] T018 [P] [US2] Extend failing component tests for field-level Vietnamese error messages, minimum shortfall, expired-code feedback, and automatic removal after cart changes in `src/features/checkout/components/checkout-form.test.tsx` and `src/features/checkout/components/checkout-summary.test.tsx`
+- [x] T016 [P] [US2] Extend failing unit tests for `not_found`, `expired`, `minimum_subtotal`, exact threshold, 1đ shortfall, `Asia/Ho_Chi_Minh` end-of-day expiry, and cart invalidation in `src/features/coupons/coupon-service.test.ts`
+- [x] T017 [P] [US2] Extend failing pricing tests for percentage cap, fixed discount greater than subtotal, rounding down to whole VND, and zero/non-negative totals in `src/features/checkout/pricing.test.ts`
+- [x] T018 [P] [US2] Extend failing component tests for field-level Vietnamese error messages, minimum shortfall, expired-code feedback, and automatic removal after cart changes in `src/features/checkout/components/checkout-form.test.tsx` and `src/features/checkout/components/checkout-summary.test.tsx`
 
 ### Implementation for User Story 2
 
-- [ ] T019 [US2] Implement structured coupon evaluation errors, minimum shortfall, and `Asia/Ho_Chi_Minh` inclusive expiry comparison in `src/features/coupons/coupon-service.ts`
-- [ ] T020 [US2] Apply the specified rounding, cap, minimum-subtotal, and non-negative discount rules in `src/features/checkout/pricing.ts`
-- [ ] T021 [US2] Connect invalid-coupon results and cart-change invalidation to Vietnamese accessible form/summary feedback in `src/features/checkout/components/checkout-form.tsx` and `src/features/checkout/components/checkout-summary.tsx`
-- [ ] T022 Run `npm run check` for the repository defined by `package.json` after User Story 2 implementation
+- [x] T019 [US2] Implement structured coupon evaluation errors, minimum shortfall, and `Asia/Ho_Chi_Minh` inclusive expiry comparison in `src/features/coupons/coupon-service.ts`
+- [x] T020 [US2] Apply the specified rounding, cap, minimum-subtotal, and non-negative discount rules in `src/features/checkout/pricing.ts`
+- [x] T021 [US2] Connect invalid-coupon results and cart-change invalidation to Vietnamese accessible form/summary feedback in `src/features/checkout/components/checkout-form.tsx` and `src/features/checkout/components/checkout-summary.tsx`
+- [x] T022 Run `npm run check` for the repository defined by `package.json` after User Story 2 implementation
 
 **Checkpoint**: US1 and US2 both work independently; invalid inputs never alter
 the displayed payable total.
@@ -104,20 +104,20 @@ server-calculated discount is stored and displayed.
 
 ### Tests for User Story 3 (write first)
 
-- [ ] T023 [P] [US3] Write failing route tests for accepted `couponCode`, server-side recalculation, tampered discount/total rejection, invalid-coupon errors, and no-code orders in `src/app/api/orders/route.test.ts`
-- [ ] T024 [P] [US3] Write failing order-service tests for coupon revalidation at submit time, persisted `discountCode`/`discountAmount`, and legacy orders missing discount fields in `src/features/orders/order-service.test.ts` and `src/features/orders/order-repository.test.ts`
-- [ ] T025 [P] [US3] Write failing component tests for discount rendering on new orders and unchanged rendering for legacy orders in `src/app/orders/[id]/page.test.tsx`
-- [ ] T026 [P] [US3] Add a failing Playwright scenario applying `SHOPLITE10`, placing the order, and verifying the discount in `e2e/shopping-flow.spec.ts`
+- [x] T023 [P] [US3] Write failing route tests for accepted `couponCode`, server-side recalculation, tampered discount/total rejection, invalid-coupon errors, and no-code orders in `src/app/api/orders/route.test.ts`
+- [x] T024 [P] [US3] Write failing order-service tests for coupon revalidation at submit time, persisted `discountCode`/`discountAmount`, and legacy orders missing discount fields in `src/features/orders/order-service.test.ts` and `src/features/orders/order-repository.test.ts`
+- [x] T025 [P] [US3] Write failing component tests for discount rendering on new orders and unchanged rendering for legacy orders in `src/app/orders/[id]/page.test.tsx`
+- [x] T026 [P] [US3] Add a failing Playwright scenario applying `SHOPLITE10`, placing the order, and verifying the discount in `e2e/shopping-flow.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Extend the Zod order payload with optional normalized `couponCode` and keep discount amount/subtotal/total out of client input in `src/features/checkout/checkout-schema.ts`
-- [ ] T028 [US3] Add optional `discountCode` and `discountAmount` order fields with legacy-safe defaults/types in `src/features/orders/types.ts` and `src/features/orders/order-repository.ts`
-- [ ] T029 [US3] Revalidate coupon code after catalog price/stock resolution, calculate server-owned discount/totals, and persist confirmed fields in `src/features/orders/order-service.ts`
-- [ ] T030 [US3] Update checkout submission to send only the applied `couponCode`, handle `INVALID_COUPON`, and clear the cart only after a confirmed order in `src/features/checkout/components/checkout-form.tsx`
-- [ ] T031 [US3] Keep the POST orders route thin while exposing the documented coupon error shape through `src/app/api/orders/route.ts` and `src/features/orders/order-errors.ts`
-- [ ] T032 [US3] Display optional discount code and discount amount with `formatCurrency()` while preserving orders missing discount fields in `src/app/orders/[id]/page.tsx`
-- [ ] T033 Run `npm run check` for the repository defined by `package.json` after User Story 3 implementation
+- [x] T027 [US3] Extend the Zod order payload with optional normalized `couponCode` and keep discount amount/subtotal/total out of client input in `src/features/checkout/checkout-schema.ts`
+- [x] T028 [US3] Add optional `discountCode` and `discountAmount` order fields with legacy-safe defaults/types in `src/features/orders/types.ts` and `src/features/orders/order-repository.ts`
+- [x] T029 [US3] Revalidate coupon code after catalog price/stock resolution, calculate server-owned discount/totals, and persist confirmed fields in `src/features/orders/order-service.ts`
+- [x] T030 [US3] Update checkout submission to send only the applied `couponCode`, handle `INVALID_COUPON`, and clear the cart only after a confirmed order in `src/features/checkout/components/checkout-form.tsx`
+- [x] T031 [US3] Keep the POST orders route thin while exposing the documented coupon error shape through `src/app/api/orders/route.ts` and `src/features/orders/order-errors.ts`
+- [x] T032 [US3] Display optional discount code and discount amount with `formatCurrency()` while preserving orders missing discount fields in `src/app/orders/[id]/page.tsx`
+- [x] T033 Run `npm run check` for the repository defined by `package.json` after User Story 3 implementation
 
 **Checkpoint**: All three user stories are independently verifiable; server-owned
 money values and legacy order rendering are protected.
@@ -128,11 +128,11 @@ money values and legacy order rendering are protected.
 
 **Purpose**: Documentation, accessibility, E2E validation, and final quality gate.
 
-- [ ] T034 [P] Update the API and feature documentation with coupon behavior, initial codes, and backward compatibility in `README.md`
-- [ ] T035 [P] Review Vietnamese labels, error messages, keyboard access, responsive 390px layout, and `formatCurrency()` usage in `src/features/checkout/components/checkout-form.tsx`, `src/features/checkout/components/checkout-summary.tsx`, and `src/app/orders/[id]/page.tsx`
-- [ ] T036 [P] Add an acceptance performance check that repeats valid coupon application and verifies at least 95% of runs show the discount and new total within 1 second in `e2e/shopping-flow.spec.ts`
-- [ ] T037 [P] Run the documented scenarios from `specs/001-checkout-discount-codes/quickstart.md` and record any discrepancies in that file
-- [ ] T038 Run `npm run check` for the repository defined by `package.json` as the final phase quality gate
+- [x] T034 [P] Update the API and feature documentation with coupon behavior, initial codes, and backward compatibility in `README.md`
+- [x] T035 [P] Review Vietnamese labels, error messages, keyboard access, responsive 390px layout, and `formatCurrency()` usage in `src/features/checkout/components/checkout-form.tsx`, `src/features/checkout/components/checkout-summary.tsx`, and `src/app/orders/[id]/page.tsx`
+- [x] T036 [P] Add an acceptance performance check that repeats valid coupon application and verifies at least 95% of runs show the discount and new total within 1 second in `e2e/shopping-flow.spec.ts`
+- [x] T037 [P] Run the documented scenarios from `specs/001-checkout-discount-codes/quickstart.md` and record any discrepancies in that file
+- [x] T038 Run `npm run check` for the repository defined by `package.json` as the final phase quality gate
 
 ---
 
@@ -204,3 +204,21 @@ Task: T026 SHOPLITE10 E2E test in e2e/shopping-flow.spec.ts
   and concrete repository file paths.
 - No task adds a dependency, database, admin UI, usage limit, or customer-specific
   coupon behavior.
+
+---
+
+## Phase 7: Convergence
+
+**Purpose**: Close gaps found by comparing the current codebase with the feature
+specification, implementation plan, and existing task coverage.
+
+- [x] T039 [P] Create `src/features/coupons/types.ts` and move the shared Coupon/evaluation types out of the service so the implementation matches the planned feature structure per plan: source structure (partial)
+- [x] T040 [US1] Centralize discount calculation through the coupon feature and invalidate an applied coupon when the cart subtotal no longer meets its minimum in `src/features/coupons/coupon-service.ts`, `src/features/checkout/pricing.ts`, and `src/features/checkout/components/checkout-form.tsx` per FR-004 and Edge Cases (partial)
+- [x] T041 [P] [US2] Complete the failing unit, pricing, and component boundary tests already outlined by T016–T018 in `src/features/coupons/coupon-service.test.ts`, `src/features/checkout/pricing.test.ts`, and checkout component tests per FR-004–FR-011 (missing)
+- [x] T042 [US2] Complete invalid-code reasons, minimum shortfall, expiry boundary, rounding/cap, non-negative totals, and Vietnamese feedback already outlined by T019–T021 in the coupon service, pricing, and checkout components per US2 acceptance scenarios (missing)
+- [x] T043 [US2] Run the User Story 2 quality gate with `npm run check` from `package.json` per T022 (missing)
+- [x] T044 [P] [US3] Complete the route, order-service, legacy-order component, and `SHOPLITE10` E2E tests already outlined by T023–T026 in `src/app/api/orders/route.test.ts`, order tests, `src/app/orders/[id]/page.test.tsx`, and `e2e/shopping-flow.spec.ts` per FR-012–FR-015 (missing)
+- [x] T045 [US3] Complete Zod payload validation, optional legacy-safe order fields, server-side coupon revalidation, tamper-resistant totals, checkout submission, API errors, and order-detail display already outlined by T027–T032 in the checkout/order/API files per US3 acceptance scenarios (missing)
+- [x] T046 [US3] Run the User Story 3 quality gate with `npm run check` from `package.json` per T033 (missing)
+- [x] T047 [P] Complete README, accessibility/responsive review, 95%/1-second E2E performance acceptance, and quickstart validation already outlined by T034–T037 in `README.md`, checkout/order UI, `e2e/shopping-flow.spec.ts`, and `specs/001-checkout-discount-codes/quickstart.md` per SC-001 and SC-005 (missing)
+- [x] T048 Run the final feature quality gate with `npm run check` from `package.json` per T038 (missing)
