@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -56,5 +56,26 @@ describe("createJsonFileOrderRepository", () => {
     const orders = await repository.findAll();
     expect(orders).toHaveLength(1);
     expect(orders[0].status).toBe("cancelled");
+  });
+
+  it("đọc được đơn cũ không có trường giảm giá cùng đơn mới có mã", async () => {
+    // Đơn tạo trước khi có tính năng mã giảm giá: không có couponCode/discount.
+    const legacyOrder = sampleOrder("SL-OLD");
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, JSON.stringify([legacyOrder]), "utf8");
+    const repository = createJsonFileOrderRepository(file);
+
+    const newOrder = {
+      ...sampleOrder("SL-NEW"),
+      subtotal: 600_000,
+      couponCode: "GIAM50K",
+      discount: 50_000,
+      total: 550_000,
+    };
+    await repository.save(newOrder);
+
+    expect(await repository.findById("SL-OLD")).toEqual(legacyOrder);
+    expect(await repository.findById("SL-OLD")).not.toHaveProperty("discount");
+    expect(await repository.findById("SL-NEW")).toEqual(newOrder);
   });
 });

@@ -1,0 +1,37 @@
+schema: spec-driven
+
+# Project context: được OpenSpec chèn vào MỌI artifact (proposal, specs, design, tasks) và khi apply.
+# Chỉ ghi ràng buộc + bản đồ code rút gọn. Chi tiết đầy đủ nằm ở AGENTS.md (CLAUDE.md import file này).
+context: |
+  Ngôn ngữ: viết mọi artifact (proposal, design, tasks, specs) bằng tiếng Việt.
+  Giữ nguyên các tiêu đề cấu trúc của OpenSpec và từ khóa SHALL/MUST bằng tiếng Anh.
+
+  Dự án: ShopLite - cửa hàng đồ công nghệ mini. Next.js 16 App Router, React 19, TypeScript strict,
+  Tailwind CSS v4, Zod 4, Vitest + Testing Library, Playwright. Không có database:
+  sản phẩm là dữ liệu tĩnh trong src/data/, đơn hàng lưu file storage/orders.json.
+
+  Codemap (chi tiết: mục "Codemap" trong AGENTS.md):
+  - catalog  -> src/features/catalog/   tìm kiếm, lọc, sắp xếp, phân trang (catalog-service.ts)
+  - cart     -> src/features/cart/      cart-reducer.ts + cart-store.ts (localStorage) + use-cart.ts
+  - checkout -> src/features/checkout/  pricing.ts, checkout-schema.ts, components/checkout-form.tsx
+  - orders   -> src/features/orders/    order-service.ts, order-repository.ts, API src/app/api/orders/
+  - layout   -> src/components/layout/  header.tsx (badge giỏ hàng), nav-links.tsx
+  - src/app/ chỉ chứa route mỏng, mọi logic nằm trong src/features/
+
+  Ràng buộc:
+  - Không thêm dependency hoặc database mới nếu proposal không giải thích lý do.
+  - State chỉ tồn tại ở trình duyệt phải theo pattern của giỏ hàng: store + useSyncExternalStore + localStorage.
+  - Server luôn là nguồn sự thật về giá và tổng tiền.
+  - Text giao diện bằng tiếng Việt; định dạng tiền bằng formatCurrency (src/lib/format.ts).
+  - Definition of Done: `npm run check` pass và mỗi requirement có test tương ứng.
+
+rules:
+  proposal:
+    - Luôn có mục "Ngoài phạm vi" liệt kê những gì KHÔNG làm trong change này
+  specs:
+    - Mỗi requirement có ít nhất một scenario cho trường hợp lỗi hoặc giá trị biên
+  design:
+    - Liệt kê rõ file tạo mới / file sửa, bám theo codemap ở trên
+  tasks:
+    - Mỗi nhóm task kết thúc bằng một task viết hoặc cập nhật test
+    - Task cuối cùng luôn là chạy `npm run check` và kiểm tra giao diện trên trình duyệt

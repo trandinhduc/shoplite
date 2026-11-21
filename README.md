@@ -76,6 +76,11 @@ storage/                    # (tự tạo khi chạy) orders.json - đã đượ
 - **Phí giao hàng:** tiêu chuẩn 30.000 ₫ (miễn phí cho đơn từ 500.000 ₫), giao nhanh 60.000 ₫.
 - **Đặt hàng:** server tự tính lại giá từ dữ liệu sản phẩm, không tin giá do client gửi lên.
 - **Hủy đơn:** chỉ được hủy khi đơn đang ở trạng thái _Chờ xác nhận_.
+- **Mã giảm giá:** mỗi đơn tối đa một mã; giảm theo % (có mức tối đa) hoặc số tiền cố định, có thể kèm
+  giá trị đơn tối thiểu và ngày hết hạn (hết ngày theo giờ Việt Nam). Phí giao hàng tính theo tạm tính
+  _trước_ khi giảm. Server luôn kiểm tra lại mã và tính lại số tiền khi đặt hàng. Mã có sẵn:
+  `SHOPLITE10` (10%, tối đa 100.000 ₫, đơn từ 300.000 ₫), `GIAM50K` (50.000 ₫, đơn từ 500.000 ₫),
+  `TET2026` (đã hết hạn, dùng để kiểm thử).
 
 ## API
 
@@ -84,11 +89,14 @@ storage/                    # (tự tạo khi chạy) orders.json - đã đượ
 | `GET`   | `/api/products`       | Danh sách sản phẩm. Query: `q, category, minPrice, maxPrice, inStock, sort, page` |
 | `GET`   | `/api/products/:slug` | Chi tiết sản phẩm                                                                 |
 | `GET`   | `/api/orders`         | Danh sách đơn hàng                                                                |
-| `POST`  | `/api/orders`         | Tạo đơn hàng                                                                      |
+| `POST`  | `/api/orders`         | Tạo đơn hàng. Body có thể kèm `couponCode` (tùy chọn)                             |
 | `GET`   | `/api/orders/:id`     | Chi tiết đơn hàng                                                                 |
 | `PATCH` | `/api/orders/:id`     | Hủy đơn: `{ "status": "cancelled" }`                                              |
+| `GET`   | `/api/coupons/:code`  | Tra một mã giảm giá (404 `COUPON_NOT_FOUND` nếu không tồn tại)                    |
 
 Lỗi trả về dạng `{ "error": { "code": "...", "message": "...", "details": { ... } } }`.
+Mã giảm giá không dùng được khi đặt hàng trả `422 INVALID_COUPON` với
+`details.reason` là `not_found`, `expired` hoặc `below_minimum`.
 
 Ví dụ tạo đơn hàng:
 
@@ -99,7 +107,8 @@ curl -X POST http://localhost:3000/api/orders \
     "customer": { "fullName": "Nguyễn Văn A", "phone": "0912345678", "address": "12 Nguyễn Huệ, Quận 1, TP.HCM" },
     "shippingMethod": "standard",
     "paymentMethod": "cod",
-    "items": [{ "productId": "p006", "quantity": 2 }]
+    "items": [{ "productId": "p006", "quantity": 2 }],
+    "couponCode": "SHOPLITE10"
   }'
 ```
 

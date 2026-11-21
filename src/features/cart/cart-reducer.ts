@@ -29,6 +29,12 @@ export function toCartItem(product: Product): Omit<CartItem, "quantity"> {
   };
 }
 
+/** Cập nhật danh sách sản phẩm, giữ mã giảm giá; giỏ trống thì bỏ luôn mã. */
+function withItems(state: CartState, items: CartItem[]): CartState {
+  if (items.length === 0) return { items };
+  return { ...state, items };
+}
+
 export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "add": {
@@ -37,33 +43,48 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
 
       const existing = state.items.find((line) => line.productId === item.productId);
       if (!existing) {
-        return {
-          items: [...state.items, { ...item, quantity: clampQuantity(quantity, item.stock) }],
-        };
+        return withItems(state, [
+          ...state.items,
+          { ...item, quantity: clampQuantity(quantity, item.stock) },
+        ]);
       }
-      return {
-        items: state.items.map((line) =>
+      return withItems(
+        state,
+        state.items.map((line) =>
           line.productId === item.productId
             ? { ...line, ...item, quantity: clampQuantity(line.quantity + quantity, item.stock) }
             : line,
         ),
-      };
+      );
     }
 
     case "update-quantity":
-      return {
-        items: state.items.map((line) =>
+      return withItems(
+        state,
+        state.items.map((line) =>
           line.productId === action.productId
             ? { ...line, quantity: clampQuantity(action.quantity, line.stock) }
             : line,
         ),
-      };
+      );
 
     case "remove":
-      return { items: state.items.filter((line) => line.productId !== action.productId) };
+      return withItems(
+        state,
+        state.items.filter((line) => line.productId !== action.productId),
+      );
 
     case "clear":
       return EMPTY_CART;
+
+    case "apply-coupon": {
+      const code = action.code.trim().toUpperCase();
+      if (!code) return state;
+      return { ...state, couponCode: code };
+    }
+
+    case "remove-coupon":
+      return { items: state.items };
   }
 }
 
