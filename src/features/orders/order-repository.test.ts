@@ -17,7 +17,11 @@ const sampleOrder = (id: string): Order => ({
   items: [],
   subtotal: 0,
   shippingFee: 0,
+  discountAmount: 0,
   total: 0,
+
+
+
 });
 
 describe("createJsonFileOrderRepository", () => {

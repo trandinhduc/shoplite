@@ -60,6 +60,7 @@ export const placeOrderSchema = z.object({
       }),
     )
     .min(1, "Giỏ hàng đang trống"),
+  couponCode: z.string().trim().max(50).optional(),
 });
 
 export type PlaceOrderInput = z.infer<typeof placeOrderSchema>;

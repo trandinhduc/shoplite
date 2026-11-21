@@ -34,9 +34,13 @@ test("khách hàng tìm sản phẩm, thêm vào giỏ và đặt hàng thành c
   await expect(page.getByText("Đặt hàng thành công!")).toBeVisible();
   await expect(page.getByTestId("cart-count")).toHaveCount(0);
 
+  // Mở lại đơn bằng mã đơn (không đi qua danh sách /orders, trang này sẽ chuyển hướng
+  // sang Tra cứu đơn): đơn mới đặt vẫn "Chờ xác nhận" và khách còn hủy được.
   const orderId = page.url().match(/SL-\d{8}-[0-9A-F]{6}/)![0];
-  await page.getByRole("link", { name: "Tất cả đơn hàng" }).click();
-  await expect(page.getByTestId("order-row").filter({ hasText: orderId })).toBeVisible();
+  await page.goto(`/orders/${orderId}`);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(orderId);
+  await expect(page.getByText("Chờ xác nhận", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hủy đơn hàng" })).toBeVisible();
 });
 
 test("lọc theo danh mục và sắp xếp theo giá", async ({ page }) => {

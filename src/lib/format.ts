@@ -10,9 +10,13 @@ const dateTimeFormatter = new Intl.DateTimeFormat("vi-VN", {
   timeZone: "Asia/Ho_Chi_Minh",
 });
 
-/** 1290000 -> "1.290.000 ₫" */
+/** 1290000 -> "1.290.000\u00A0₫" */
 export function formatCurrency(amount: number): string {
-  return currencyFormatter.format(amount);
+  const sign = amount < 0 ? "-" : "";
+  const abs = Math.abs(amount);
+  const formatted = abs.toLocaleString("vi-VN");
+  // U+00A0 non-breaking space before ₫, matching vi-VN Intl convention
+  return `${sign}${formatted}\u00A0₫`;
 }
 
 export function formatDateTime(isoDate: string): string {
@@ -26,7 +30,7 @@ export function formatDateTime(isoDate: string): string {
 export function normalizeText(value: string): string {
   return value
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
     .toLowerCase()

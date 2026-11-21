@@ -1,7 +1,8 @@
 import { getProductById } from "@/features/catalog/catalog-service";
 import type { Product } from "@/features/catalog/types";
 import { placeOrderSchema, toFieldErrors } from "@/features/checkout/checkout-schema";
-import { calculateOrderTotals } from "@/features/checkout/pricing";
+import { calculateOrderTotals, calculateSubtotal } from "@/features/checkout/pricing";
+import { validateCoupon } from "@/features/checkout/promotions";
 import { OrderError } from "./order-errors";
 import type { OrderRepository } from "./order-repository";
 import type { Order, OrderItem } from "./types";
@@ -11,6 +12,7 @@ export interface OrderServiceDeps {
   findProduct?: (id: string) => Product | undefined;
   now?: () => Date;
   generateId?: (date: Date) => string;
+  validateCouponFn?: typeof validateCoupon;
 }
 
 /** Mã đơn hàng dạng SL-20261021-4F9A2C */
@@ -34,6 +36,7 @@ export function createOrderService({
   findProduct = getProductById,
   now = () => new Date(),
   generateId = generateOrderId,
+  validateCouponFn = validateCoupon,
 }: OrderServiceDeps) {
   async function getOrder(id: string): Promise<Order> {
     const order = await repository.findById(id);
@@ -60,7 +63,7 @@ export function createOrderService({
         );
       }
 
-      const { customer, items, shippingMethod, paymentMethod } = parsed.data;
+      const { customer, items, shippingMethod, paymentMethod, couponCode } = parsed.data;
 
       const orderItems: OrderItem[] = mergeItems(items).map(({ productId, quantity }) => {
         const product = findProduct(productId);
@@ -86,6 +89,18 @@ export function createOrderService({
         };
       });
 
+      const subtotal = calculateSubtotal(orderItems);
+      let appliedCoupon = undefined;
+      if (couponCode) {
+        const couponResult = validateCouponFn(couponCode, subtotal, { now });
+        if (!couponResult.valid) {
+          throw new OrderError("INVALID_COUPON", couponResult.message);
+        }
+        appliedCoupon = couponResult.coupon;
+      }
+
+      const totals = calculateOrderTotals(orderItems, shippingMethod, { coupon: appliedCoupon });
+
       const createdAt = now();
       const order: Order = {
         id: generateId(createdAt),
@@ -102,7 +117,7 @@ export function createOrderService({
         shippingMethod,
         paymentMethod,
         items: orderItems,
-        ...calculateOrderTotals(orderItems, shippingMethod),
+        ...totals,
       };
 
       await repository.save(order);

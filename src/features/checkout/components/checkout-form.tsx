@@ -21,6 +21,7 @@ import {
   SHIPPING_OPTIONS,
   type ShippingMethod,
 } from "@/features/checkout/pricing";
+import type { Coupon } from "@/features/checkout/promotions";
 import type { ApiErrorBody } from "@/lib/http";
 import type { Order } from "@/features/orders/types";
 import { cn } from "@/lib/cn";
@@ -54,6 +55,8 @@ export function CheckoutForm() {
   const router = useRouter();
   const { items, subtotal, hydrated, clear } = useCart();
   const [values, setValues] = useState<CheckoutFormValues>(INITIAL_VALUES);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
@@ -116,6 +119,7 @@ export function CheckoutForm() {
           shippingMethod,
           paymentMethod,
           items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          couponCode: appliedCoupon?.code,
         }),
       });
 

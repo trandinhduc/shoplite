@@ -49,6 +49,8 @@ export interface Order {
   paymentMethod: PaymentMethod;
   items: OrderItem[];
   subtotal: number;
+  discountAmount: number;
+  couponCode?: string;
   shippingFee: number;
   total: number;
 }
