@@ -43,3 +43,6 @@ storage/
 !_bmad-output/
 _bmad-output/*
 !_bmad-output/implementation-artifacts/
+
+# log CI đã che secret (bài 7.4)
+.ci/
