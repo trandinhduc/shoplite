@@ -3,6 +3,7 @@
 Cửa hàng đồ công nghệ mini viết bằng **Next.js 16 (App Router) + TypeScript + Tailwind CSS v4**.
 Dự án dùng làm mẫu cho các bài thực hành phát triển phần mềm: đủ nhỏ để đọc hiểu trong một buổi,
 đủ thật để mở rộng thêm nhiều tính năng.
+Dự án có workflow GitHub Actions tự kiểm tra khi mở PR vào `main`.
 
 > Dữ liệu sản phẩm là dữ liệu mẫu, đơn hàng được lưu vào file JSON trên máy - không cần database,
 > không cần tài khoản dịch vụ bên ngoài.
