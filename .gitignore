@@ -38,3 +38,8 @@ storage/
 !.claude/
 .claude/settings.local.json
 .claude/logs/
+
+# Cho phép commit artifact triển khai BMAD (global ignore đang chặn _bmad-output/)
+!_bmad-output/
+_bmad-output/*
+!_bmad-output/implementation-artifacts/

@@ -1,0 +1,100 @@
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 11-21-2026 14:13
+last_updated: 11-21-2026 15:32
+project: shoplite
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+# GHI CHÚ SPRINT PLANNING (11-21-2026), từ bước kiểm tra mức sẵn sàng (kết quả CONCERNS, đã quyết tiếp tục):
+# - Epic là thứ tự xây dựng, KHÔNG phải đơn vị phát hành: toàn bộ Must ra mắt cùng một đợt (PRD §6.1). Thứ tự: 1 -> 2 -> 3 -> 4 -> 5 -> 6.
+# - Story 6-4 (FR-23, Could) mâu thuẫn với SPEC Non-goals / PRD §6.2 (v2). Giữ ở cuối sprint, hoãn được; bỏ qua nếu hết thời gian.
+# - Từ chối hàng loạt Đơn tồn đọng (PRD §13, Should) KHÔNG có story: chấp nhận phương án runbook (story 5-8) hướng dẫn Từ chối từng đơn.
+# - Câu hỏi PM còn mở, đang dùng mặc định đã ghi trong epics.md: OQ-12 (Từ chối đơn confirmed), OQ-1 (mốc 4 giờ), thời hạn grant 30 phút, nâng Next 16.4.6.
+# - Khóa story giữ dấu tiếng Việt và cắt ở độ dài tối đa (ví dụ 3-5 kết thúc "wishlis"); đây là hành vi của script, không phải lỗi.
+
+development_status:
+  epic-1: done
+  1-1-khóa-khu-vực-quản-trị-khi-chưa-cấu-hình: done
+  1-2-phiên-quản-trị-ký-hmac-và-api-đăng-nhập-đăng-xuất: done
+  1-3-giới-hạn-đăng-nhập-sai-theo-ip: done
+  1-4-màn-đăng-nhập-và-khung-quản-trị: done
+  1-5-kiểm-chứng-đầu-cuối-bật-khu-vực-quản-trị: done
+  epic-1-retrospective: optional
+
+  epic-2: done
+  2-1-che-thông-tin-cá-nhân-trong-đơn: done
+  2-2-quyền-xem-đơn-bằng-cookie-và-api-tra-cứu: done
+  2-3-khóa-api-đơn-hàng-theo-quyền: done
+  2-4-khách-thấy-bản-xem-che-sau-khi-đặt-hàng: done
+  2-5-form-tra-cứu-đơn-và-bỏ-danh-sách-công-khai: done
+  2-6-khách-tự-hủy-đơn-khi-có-quyền-xem: done
+  2-7-kiểm-chứng-không-lộ-thông-tin-cá-nhân: done
+  epic-2-retrospective: optional
+
+  epic-3: done
+  3-1-ghi-đơn-tuần-tự-và-nguyên-tử: done
+  3-2-snapshot-bất-biến-và-phát-hiện-file-bị-đổi-từ-ngoài: done
+  3-3-tính-tồn-hiện-tại-và-kiểm-tồn-lúc-đặt-hàng: done
+  3-4-tách-catalog-thuần-khỏi-dữ-liệu-tĩnh: done
+  3-5-khách-thấy-tồn-hiện-tại-ở-trang-sản-phẩm-danh-mục-và-wishlis: done
+  3-6-giỏ-hàng-tự-làm-mới-tồn-và-báo-món-vượt-tồn: done
+  epic-3-retrospective: optional
+
+  epic-4: done
+  4-1-cặp-chuyển-trạng-thái-hợp-lệ-và-thứ-tự-kiểm: done
+  4-2-route-và-schema-chuyển-trạng-thái-của-nhân-viên: done
+  4-3-chi-tiết-đơn-của-nhân-viên: done
+  4-4-hàng-việc-theo-trạng-thái: done
+  4-5-màn-duyệt-hiện-tồn-cạnh-số-lượng-đặt: done
+  4-6-xác-nhận-đơn-ở-màn-duyệt: done
+  4-7-chuyển-đang-giao-và-đã-giao: done
+  4-8-đơn-chờ-quá-4-giờ-nổi-lên: done
+  4-9-số-lượng-đang-chờ-của-đơn-khác: done
+  epic-4-retrospective: optional
+
+  epic-5: done
+  5-1-ghi-lý-do-và-người-khởi-tạo-khi-hủy-đơn: done
+  5-2-lịch-sử-trạng-thái-của-đơn: done
+  5-3-từ-chối-đơn-ở-màn-duyệt: done
+  5-4-nhân-viên-thấy-ai-hủy-đơn-và-vì-sao: done
+  5-5-khách-thấy-lý-do-bị-từ-chối: done
+  5-6-hành-trình-trạng-thái-của-đơn: done
+  5-7-báo-thiếu-hàng-ở-bước-đóng-gói: done
+  5-8-runbook-ra-mắt-và-đo-chỉ-số-thành-công: done
+  epic-5-retrospective: optional
+
+  epic-6: in-progress
+  6-1-tìm-đơn-theo-số-điện-thoại-ở-server: done
+  6-2-ô-tìm-sđt-và-kết-quả-trong-khu-vực-quản-trị: done
+  6-3-đơn-đã-đặt-trên-máy-này: done
+  6-4-cam-kết-thời-gian-xác-nhận: backlog
+  epic-6-retrospective: optional
