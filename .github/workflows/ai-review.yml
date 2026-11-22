@@ -44,7 +44,14 @@ jobs:
           mkdir -p .ci
           # 1. Những file chỉ dẫn mà claude-code-action KHÔNG tự lấy lại từ nhánh đích:
           #    lấy bản của main để PR không đổi được luật review của chính nó.
-          git checkout "${BASE_SHA}" -- AGENTS.md .github/review-checklist.md _bmad/custom
+          #    Base chưa có đường dẫn nào thì bỏ qua (vd. _bmad/custom chưa vào main).
+          for p in AGENTS.md .github/review-checklist.md _bmad/custom; do
+            if git cat-file -e "${BASE_SHA}:${p}" 2>/dev/null; then
+              git checkout "${BASE_SHA}" -- "${p}"
+            else
+              echo "::warning::Base không có ${p}, bỏ qua."
+            fi
+          done
           # 2. Diff và "lời tự nhận" của PR, ghi ra file: AI đọc như dữ liệu.
           git diff "${BASE_SHA}"...HEAD > .ci/pr.diff
           {
