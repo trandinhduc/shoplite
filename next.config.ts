@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   experimental: { agentUpgrade: false },
   // Chỉ E2E đặt biến này để chạy server thứ hai song song; mặc định vẫn là `.next`.
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
+  // Docker: sinh `.next/standalone` (server tối giản) để image chạy bằng `node server.js`.
+  output: "standalone",
   turbopack: {
     rules: {
       "*.css": {
