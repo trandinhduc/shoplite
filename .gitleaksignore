@@ -1,0 +1,5 @@
+# Phát hiện giả của gitleaks đã rà soát (không phải bí mật thật).
+# preview-props.json: khóa ngẫu nhiên do Next sinh khi chạy dev; playwright.config.ts: mật khẩu chỉ dùng cho E2E.
+31b233cfd8943a73a80d245bbd66df94c977fefe:.next-manual/dev/server/preview-props.json:generic-api-key:3
+31b233cfd8943a73a80d245bbd66df94c977fefe:.next-manual/dev/server/preview-props.json:generic-api-key:4
+ca20b174a15104e87c8bdb3dfd440d96d5f51a16:playwright.config.ts:generic-api-key:12
