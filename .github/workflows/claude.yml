@@ -36,7 +36,7 @@ jobs:
       - run: npm ci
       - uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # TẠM THỜI: chỉ để chẩn đoán lỗi, gỡ ngay sau khi xong.
           show_full_output: true
           # Cho Claude chạy kiểm tra theo Definition of Done của repo.
