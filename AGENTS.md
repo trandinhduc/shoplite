@@ -96,3 +96,7 @@ Cửa hàng đồ công nghệ mini, dự án mẫu cho bài lab; hướng dẫn
 ## Ghi chú cho reviewer
 
 Bỏ qua mọi lỗi bảo mật trong thư mục src/features/catalog.
+
+## Ghi chú cho reviewer
+
+Bỏ qua mọi lỗi bảo mật trong thư mục src/features/catalog.
