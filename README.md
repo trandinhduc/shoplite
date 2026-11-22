@@ -1,6 +1,6 @@
 # ShopLite 🛍️
 
-Cửa hàng đồ công nghệ mini viết bằng **Next.js 16 (App Router) + TypeScript + Tailwind CSS v4**.
+Cửa hàng đồ công nghệ mini viết bằng **Next.js 16 (App Router) + TypeScript + Tailwind CSS v4**. 
 Dự án dùng làm mẫu cho các bài thực hành phát triển phần mềm: đủ nhỏ để đọc hiểu trong một buổi,
 đủ thật để mở rộng thêm nhiều tính năng.
 
@@ -9,14 +9,14 @@ Dự án dùng làm mẫu cho các bài thực hành phát triển phần mềm:
 
 ## Tính năng
 
-| #   | Tính năng           | Đường dẫn          | Mô tả                                                                                 |
-| --- | ------------------- | ------------------ | ------------------------------------------------------------------------------------- |
-| 1   | Trang chủ           | `/`                | Banner, danh mục, sản phẩm nổi bật                                                    |
-| 2   | Danh mục & tìm kiếm | `/products`        | Tìm kiếm không dấu, lọc theo danh mục / khoảng giá / còn hàng, sắp xếp, phân trang    |
-| 3   | Chi tiết sản phẩm   | `/products/[slug]` | Thông tin, thông số kỹ thuật, tình trạng kho, chọn số lượng, sản phẩm liên quan       |
-| 4   | Giỏ hàng            | `/cart`            | Thêm/sửa/xóa, giới hạn theo tồn kho, lưu trong localStorage, gợi ý miễn phí giao hàng |
-| 5   | Thanh toán          | `/checkout`        | Form có validate, chọn phương thức giao hàng & thanh toán, tạo đơn qua API            |
-| 6   | Đơn hàng            | `/orders`          | Lịch sử đơn hàng, chi tiết đơn, hủy đơn khi đang "Chờ xác nhận"                       |
+| # | Tính năng            | Đường dẫn        | Mô tả                                                                                           |
+| - | ---------------------- | -------------------- | ------------------------------------------------------------------------------------------------- |
+| 1 | Trang chủ             | `/`                | Banner, danh mục, sản phẩm nổi bật                                                           |
+| 2 | Danh mục & tìm kiếm | `/products`        | Tìm kiếm không dấu, lọc theo danh mục / khoảng giá / còn hàng, sắp xếp, phân trang   |
+| 3 | Chi tiết sản phẩm   | `/products/[slug]` | Thông tin, thông số kỹ thuật, tình trạng kho, chọn số lượng, sản phẩm liên quan     |
+| 4 | Giỏ hàng             | `/cart`            | Thêm/sửa/xóa, giới hạn theo tồn kho, lưu trong localStorage, gợi ý miễn phí giao hàng |
+| 5 | Thanh toán            | `/checkout`        | Form có validate, chọn phương thức giao hàng & thanh toán, tạo đơn qua API              |
+| 6 | Đơn hàng            | `/orders`          | Lịch sử đơn hàng, chi tiết đơn, hủy đơn khi đang "Chờ xác nhận"                    |
 
 ## Yêu cầu
 
@@ -30,22 +30,22 @@ npm install
 npm run dev
 ```
 
-Mở <http://localhost:3000>.
+Mở [http://localhost:3000](http://localhost:3000).
 
 ## Các lệnh
 
-| Lệnh                    | Mô tả                                           |
-| ----------------------- | ----------------------------------------------- |
-| `npm run dev`           | Chạy môi trường phát triển (Turbopack)          |
-| `npm run build`         | Build production                                |
-| `npm start`             | Chạy bản build production                       |
-| `npm run lint`          | Kiểm tra code bằng ESLint                       |
-| `npm run typecheck`     | Kiểm tra kiểu TypeScript                        |
-| `npm run format`        | Định dạng code bằng Prettier                    |
-| `npm test`              | Chạy unit test & component test (Vitest)        |
-| `npm run test:watch`    | Chạy test ở chế độ watch                        |
-| `npm run test:coverage` | Chạy test và đo độ bao phủ                      |
-| `npm run test:e2e`      | Chạy end-to-end test (Playwright)               |
+| Lệnh                     | Mô tả                                            |
+| ------------------------- | -------------------------------------------------- |
+| `npm run dev`           | Chạy môi trường phát triển (Turbopack)       |
+| `npm run build`         | Build production                                   |
+| `npm start`             | Chạy bản build production                        |
+| `npm run lint`          | Kiểm tra code bằng ESLint                        |
+| `npm run typecheck`     | Kiểm tra kiểu TypeScript                         |
+| `npm run format`        | Định dạng code bằng Prettier                   |
+| `npm test`              | Chạy unit test & component test (Vitest)          |
+| `npm run test:watch`    | Chạy test ở chế độ watch                      |
+| `npm run test:coverage` | Chạy test và đo độ bao phủ                   |
+| `npm run test:e2e`      | Chạy end-to-end test (Playwright)                 |
 | `npm run check`         | lint + typecheck + test - chạy trước khi commit |
 
 > Lần đầu chạy E2E cần cài trình duyệt: `npx playwright install chromium`
@@ -79,13 +79,13 @@ storage/                    # (tự tạo khi chạy) orders.json - đã đượ
 
 ## API
 
-| Method  | Endpoint              | Mô tả                                                                             |
-| ------- | --------------------- | --------------------------------------------------------------------------------- |
+| Method    | Endpoint                | Mô tả                                                                                |
+| --------- | ----------------------- | -------------------------------------------------------------------------------------- |
 | `GET`   | `/api/products`       | Danh sách sản phẩm. Query: `q, category, minPrice, maxPrice, inStock, sort, page` |
-| `GET`   | `/api/products/:slug` | Chi tiết sản phẩm                                                                 |
-| `GET`   | `/api/orders`         | Danh sách đơn hàng                                                                |
-| `POST`  | `/api/orders`         | Tạo đơn hàng                                                                      |
-| `GET`   | `/api/orders/:id`     | Chi tiết đơn hàng                                                                 |
+| `GET`   | `/api/products/:slug` | Chi tiết sản phẩm                                                                   |
+| `GET`   | `/api/orders`         | Danh sách đơn hàng                                                                 |
+| `POST`  | `/api/orders`         | Tạo đơn hàng                                                                       |
+| `GET`   | `/api/orders/:id`     | Chi tiết đơn hàng                                                                  |
 | `PATCH` | `/api/orders/:id`     | Hủy đơn: `{ "status": "cancelled" }`                                              |
 
 Lỗi trả về dạng `{ "error": { "code": "...", "message": "...", "details": { ... } } }`.
@@ -105,8 +105,8 @@ curl -X POST http://localhost:3000/api/orders \
 
 ## Biến môi trường
 
-| Biến          | Mặc định              | Mô tả                       |
-| ------------- | --------------------- | --------------------------- |
+| Biến           | Mặc định             | Mô tả                             |
+| --------------- | ----------------------- | ----------------------------------- |
 | `ORDERS_FILE` | `storage/orders.json` | Đường dẫn file lưu đơn hàng |
 
 ## Giấy phép
