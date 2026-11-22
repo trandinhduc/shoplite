@@ -1,6 +1,7 @@
 name: Claude
 
 # Kích hoạt khi ai đó nhắc @claude trong issue hoặc PR.
+# Claude chỉ đọc code và đăng nhận xét: không đẩy commit, không sửa workflow, không chạy code của repo.
 on:
   issue_comment:
     types: [created]
@@ -11,6 +12,9 @@ on:
   pull_request_review:
     types: [submitted]
 
+# Không cấp quyền gì ở mức workflow; job tự khai báo đúng phần cần.
+permissions: {}
+
 jobs:
   claude:
     if: |
@@ -19,26 +23,30 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
+    timeout-minutes: 12 # trần thời gian của MỘT lần chạy
     permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-      id-token: write
-      actions: read
+      contents: read # đọc code; không đẩy được commit
+      pull-requests: write # đăng nhận xét trên PR
+      issues: write # đăng nhận xét trên issue
     steps:
-      - uses: actions/checkout@v4
+      - name: Lấy code (chỉ để đọc)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22.12
-          cache: npm
-      - run: npm ci
-      - uses: anthropics/claude-code-action@v1
+          persist-credentials: false # action tự đặt token của nó, xem Read(./.git/**)
+
+      - name: Claude
+        uses: anthropics/claude-code-action@ae68417a745a5df4b2124873632bd73a2255e6f6 # v1.0.259
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # TẠM THỜI: chỉ để chẩn đoán lỗi, gỡ ngay sau khi xong.
-          show_full_output: true
-          # Cho Claude chạy kiểm tra theo Definition of Done của repo.
+          # Token của chính workflow: chỉ có đúng quyền khai báo ở "permissions" phía trên.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Trần cho mỗi lần chạy và danh sách công cụ được dùng (không shell tự do, không sửa file).
           claude_args: |
-            --allowedTools "Bash(npm run check),Bash(npm run format:check),Bash(npx vitest run:*)"
+            --model sonnet
+            --max-turns 30
+            --max-budget-usd 2.00
+            --allowedTools "Read,Glob,Grep,Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue comment:*),Bash(gh issue view:*)"
+            --disallowedTools "Edit,Write,NotebookEdit,WebFetch,WebSearch,Read(./.git/**)"
+            --setting-sources user
+            --strict-mcp-config
