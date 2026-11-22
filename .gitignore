@@ -24,3 +24,9 @@ test-results/
 
 # OS
 .DS_Store
+
+# Module 7 - file sinh ra khi chạy gate ở máy
+gate-*.log
+gate-*.json
+.ci/
+storage/
