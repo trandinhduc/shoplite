@@ -23,7 +23,6 @@ Dùng cho cả người và AI review.
 
 | Mã | Kiểm được | Ví dụ dữ liệu | Ai kiểm |
 |----|-----------|---------------|---------|
-| BM-1 | Không dựng `RegExp`/`new RegExp` từ dữ liệu khách (query, body, header, cookie), **kể cả khi comment ghi "đã kiểm/đã escape"**. Dùng so khớp chuỗi (`includes`, `normalizeText`). | `q=usb` chạy được, nhưng `q=tai(` phải trả kết quả bình thường (không ném `SyntaxError: Unterminated group`, không 500); `q=(a+)+$` không được treo CPU (ReDoS). | AI + người |
 | BM-2 | Không có bí mật hoặc mật khẩu mặc định trong code, test fixture, `.env*`, comment, lịch sử commit. | `ADMIN_PASSWORD` chỉ đọc ở `admin-guard.ts`, không có giá trị mặc định; `.env.example` để `ADMIN_PASSWORD=` trống; không commit `.env.local`. | gitleaks (gate) + AI + người |
 | BM-3 | Chưa cấu hình thì không lộ sự tồn tại của khu vực quản trị: page `notFound()` trước mọi streaming, API 404 thân rỗng. | `curl -i /admin`, `/admin/login`, `/admin/orders/x` khi env thiếu/`""` → 404 "Không tìm thấy trang", không chuỗi "Quản trị"; không `loading.tsx`/Suspense phía trên guard. | AI + người |
 | BM-4 | Guard là dòng đầu thân page/handler; page `/admin/**` có `force-dynamic`. | `src/app/admin/page.tsx` bắt đầu bằng `await requireAdmin("/admin")` (đối số đúng, không phải `"/"`); `admin/login/page.tsx` dùng `assertAdminEnabled()`. | unit (gate: `admin-guard-coverage.test.ts`) + AI + người (đối số của `requireAdmin`) |

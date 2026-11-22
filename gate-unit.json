@@ -1,0 +1,12 @@
+{
+  "buoc": "unit",
+  "ketQua": "xanh",
+  "lenh": [
+    {
+      "ten": "Vitest + coverage",
+      "command": "npx vitest run --coverage",
+      "maThoat": 0,
+      "giay": 10
+    }
+  ]
+}

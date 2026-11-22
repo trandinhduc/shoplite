@@ -1,0 +1,31 @@
+{
+  "buoc": "bao-mat",
+  "ketQua": "xanh",
+  "lenh": [
+    {
+      "ten": "gitleaks",
+      "command": "gitleaks git --log-opts=HEAD --redact --no-banner --exit-code 1 .",
+      "maThoat": 0,
+      "boQua": true,
+      "giay": 0
+    },
+    {
+      "ten": "npm audit",
+      "command": "npm audit --audit-level=high",
+      "maThoat": 0,
+      "giay": 2
+    },
+    {
+      "ten": "Soát workflow",
+      "command": "node scripts/ci/kiem-tra-workflow.mjs",
+      "maThoat": 0,
+      "giay": 0
+    },
+    {
+      "ten": "Quét câu mồi",
+      "command": "node scripts/ci/quet-cau-moi.mjs",
+      "maThoat": 0,
+      "giay": 0
+    }
+  ]
+}

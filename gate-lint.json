@@ -1,0 +1,18 @@
+{
+  "buoc": "lint",
+  "ketQua": "xanh",
+  "lenh": [
+    {
+      "ten": "ESLint",
+      "command": "npm run lint",
+      "maThoat": 0,
+      "giay": 4
+    },
+    {
+      "ten": "TypeScript",
+      "command": "npm run typecheck",
+      "maThoat": 0,
+      "giay": 1
+    }
+  ]
+}

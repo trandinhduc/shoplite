@@ -1,0 +1,12 @@
+{
+  "buoc": "e2e",
+  "ketQua": "xanh",
+  "lenh": [
+    {
+      "ten": "Playwright",
+      "command": "npx playwright test --retries=1 --fail-on-flaky-tests",
+      "maThoat": 0,
+      "giay": 31
+    }
+  ]
+}
